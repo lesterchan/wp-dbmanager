@@ -1,0 +1,21 @@
+/*
++----------------------------------------------------------------+
+|																							|
+|	WordPress 2.8 Plugin: WP-DBManager 2.63								|
+|	Copyright (c) 2009 Lester "GaMerZ" Chan									|
+|																							|
+|	File Written By:																	|
+|	- Lester "GaMerZ" Chan															|
+|	- http://lesterchan.net															|
+|																							|
+|	File Information:																	|
+|	- Database Admin CSS Styles													|
+|	- wp-content/plugins/wp-dbmanager/database-admin-css.css		|
+|																							|
++----------------------------------------------------------------+
+*/
+
+
+#icon-wp-dbmanager {
+	background: transparent url(images/database_admin_icon.png) no-repeat;
+}
