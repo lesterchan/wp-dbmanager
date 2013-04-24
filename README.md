@@ -1,10 +1,10 @@
 # WP-DBManager
-Contributors: GamerZ
-Donate link: http://lesterchan.net/site/donation/
-Tags: database, manage, wp-dbmanager, manager, table, optimize, backup, queries, query, drop, empty, tables, table, run, repair, cron, schedule, scheduling, automatic
-Requires at least: 2.8
-Tested up to: 3.5
-Stable tag: trunk
+Contributors: GamerZ  
+Donate link: http://lesterchan.net/site/donation/  
+Tags: database, manage, wp-dbmanager, manager, table, optimize, backup, queries, query, drop, empty, tables, table, run, repair, cron, schedule, scheduling, automatic  
+Requires at least: 2.8  
+Tested up to: 3.5  
+Stable tag: trunk  
 
 Manages your WordPress database.
 
@@ -41,7 +41,7 @@ Allows you to optimize database, repair database, backup database, restore datab
 * NEW: Added nonce To All Forms For Added Security
 
 ### Version 2.61 (30-04-2011)
-* FIXED: Checks File Extension And Sanitise File Name That Is Pass Through The URL When Downloading Database File. Props to [Joakim Jardenberg](http://jardenberg.se "Joakim Jardenberg"), [Jonas Nordstršm](http://jonasnordstrom.se "Jonas Nordstršm"), [Andreas Viklund](http://andreasviklund.com/ "Andreas Viklund")
+* FIXED: Checks File Extension And Sanitise File Name That Is Pass Through The URL When Downloading Database File. Props to [Joakim Jardenberg](http://jardenberg.se "Joakim Jardenberg"), [Jonas Nordstrï¿½m](http://jonasnordstrom.se "Jonas Nordstrï¿½m"), [Andreas Viklund](http://andreasviklund.com/ "Andreas Viklund")
 
 ### Version 2.60 (01-12-2009)
 * FIXED: Bug In Cron Backup On Windows Server
