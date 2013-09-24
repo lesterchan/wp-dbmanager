@@ -43,7 +43,7 @@ Allows you to optimize database, repair database, backup database, restore datab
 * NEW: Added nonce To All Forms For Added Security
 
 ### Version 2.61 (30-04-2011)
-* FIXED: Checks File Extension And Sanitise File Name That Is Pass Through The URL When Downloading Database File. Props to [Joakim Jardenberg](http://jardenberg.se "Joakim Jardenberg"), [Jonas Nordstr�m](http://jonasnordstrom.se "Jonas Nordstr�m"), [Andreas Viklund](http://andreasviklund.com/ "Andreas Viklund")
+* FIXED: Checks File Extension And Sanitise File Name That Is Pass Through The URL When Downloading Database File. Props to [Joakim Jardenberg](http://jardenberg.se "Joakim Jardenberg"), [Jonas Nordstram](http://jonasnordstrom.se "Jonas Nordstr�m"), [Andreas Viklund](http://andreasviklund.com/ "Andreas Viklund")
 
 ### Version 2.60 (01-12-2009)
 * FIXED: Bug In Cron Backup On Windows Server
