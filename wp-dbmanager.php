@@ -88,7 +88,7 @@ function cron_dbmanager_backup() {
 		if(strpos(DB_HOST, ':') !== false) {
 			$db_host = explode(':', DB_HOST);
 			$backup['host'] = $db_host[0];
-			if(is_int($db_host[1])) {
+			if(intval($db_host[1]) != 0) {
 				$backup['port'] = ' --port="'.intval($db_host[1]).'"';
 			} else {
 				$backup['sock'] = ' --socket="'.$db_host[1].'"';
