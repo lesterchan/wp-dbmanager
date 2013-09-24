@@ -3,7 +3,7 @@ Contributors: GamerZ
 Donate link: http://lesterchan.net/site/donation/  
 Tags: database, manage, wp-dbmanager, manager, table, optimize, backup, queries, query, drop, empty, tables, table, run, repair, cron, schedule, scheduling, automatic  
 Requires at least: 2.8  
-Tested up to: 3.5  
+Tested up to: 3.6  
 Stable tag: trunk  
 
 Manages your WordPress database.
@@ -35,6 +35,8 @@ Allows you to optimize database, repair database, backup database, restore datab
 * I spent most of my free time creating, updating, maintaining and supporting these plugins, if you really love my plugins and could spare me a couple of bucks, I will really appericiate it. If not feel free to use it without any obligations.
 
 ## Changelog
+### Version 2.64
+* FIXED: Use intval() instead of is_int() when checking for port number. Props [Webby Scots](http://webbyscots.com/ "Webby Scots")
 
 ### Version 2.63 (03-05-2011)
 * NEW: Added Auto Repair Functionality
