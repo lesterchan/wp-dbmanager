@@ -170,7 +170,16 @@ N/A
 ## Frequently Asked Questions
 
 ### My database is not backed up / My backup file is 0Kb
-* Ensure that your host allows you to access mysqldump. You can try to narrow the problem by [Debugging via SSH](http://forums.lesterchan.net/index.php/topic,4549.0.html "Debugging via SSH").
+* Ensure that your host allows you to access mysqldump. You can try to narrow the problem by Debugging via SSH:
+1. In `wp-dbmanager.php`
+2. Find `check_backup_files();` on line 243
+3. Add below it `echo $command;`
+4. Go to `WP-Admin -> Database -> Backup`
+5. Click `Backup`
+6. It should print some debugging statements
+7. Copy that line than run it in SSH
+8. If you need help on SSH contact your host or google for more info
+
 
 ### What is the difference between WP-DBManager and WP-DB-Backup?
 * WP-DBManager uses `mysqldump` application to generate the backup and `mysql` application to restore them via shell.
@@ -179,4 +188,4 @@ N/A
 
 ### Why do I get the message "Warning: Your backup folder MIGHT be visible to the public!"?
 * Ensure that you have renamed `htaccess.txt` to `.htaccess` and placed it in your backup folder (defaults to `wp-content/backup-db/`)
-* If you are 100% sure you have did that and have verfied that the folder no longer is accessible to the public by visiting the URL `http://yousite.com/wp-content/backup-db/`, you can safely remove it by deleting `add_action('admin_notices', 'dbmanager_admin_notices');` on `line 191` in `wp-dbmanager.php`.
+* If you are 100% sure you have did that and have verfied that the folder no longer is accessible to the public by visiting the URL `http://yousite.com/wp-content/backup-db/`, you can safely remove it by deleting `add_action('admin_notices', 'dbmanager_admin_notices');` on `line 204` in `wp-dbmanager.php`.
