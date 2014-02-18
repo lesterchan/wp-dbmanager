@@ -106,45 +106,9 @@ function cron_dbmanager_backup() {
 			$backup['command'] = $brace.$backup['mysqldumppath'].$brace.' --force --host="'.$backup['host'].'" --user="'.DB_USER.'" --password="'.$backup['password'].'"'.$backup['port'].$backup['sock'].' --add-drop-table --skip-lock-tables '.DB_NAME.' > '.$brace.$backup['filepath'].$brace;
 		}
 		execute_backup($backup['command']);
-		if(!empty($backup_email)) {
-				// Get And Read The Database Backup File
-				$file_path = $backup['filepath'];
-				$file_size = format_size(filesize($file_path));
-				$file_date = mysql2date(sprintf(__('%s @ %s', 'wp-dbmanager'), get_option('date_format'), get_option('time_format')), gmdate('Y-m-d H:i:s', substr($backup['filename'], 0, 10)));
-				$file = fopen($file_path,'rb');
-				$file_data = fread($file,filesize($file_path));
-				fclose($file);
-				$file_data = chunk_split(base64_encode($file_data));
-				// Create Mail To, Mail Subject And Mail Header
-				$mail_subject = sprintf(__('%s Database Backup File For %s', 'wp-dbmanager'), wp_specialchars_decode(get_option('blogname')), $file_date);
-				$mail_header = 'From: "'.wp_specialchars_decode(get_option('blogname')).' Administrator" <'.get_option('admin_email').'>';
-				// MIME Boundary
-				$random_time = md5(time());
-				$mime_boundary = "==WP-DBManager- $random_time";
-				// Create Mail Header And Mail Message
-				$mail_header .= "\nMIME-Version: 1.0\n" .
-										"Content-Type: multipart/mixed;\n" .
-										" boundary=\"{$mime_boundary}\"";
-				$mail_message = __('Website Name:', 'wp-dbmanager').' '.wp_specialchars_decode(get_option('blogname'))."\n".
-										__('Website URL:', 'wp-dbmanager').' '.get_bloginfo('siteurl')."\n".
-										__('Backup File Name:', 'wp-dbmanager').' '.$backup['filename']."\n".
-										__('Backup File Date:', 'wp-dbmanager').' '.$file_date."\n".
-										__('Backup File Size:', 'wp-dbmanager').' '.$file_size."\n\n".
-										__('With Regards,', 'wp-dbmanager')."\n".
-										wp_specialchars_decode(get_option('blogname')).' '. __('Administrator', 'wp-dbmanager')."\n".
-										get_bloginfo('siteurl');
-				$mail_message = "This is a multi-part message in MIME format.\n\n" .
-										"--{$mime_boundary}\n" .
-										"Content-Type: text/plain; charset=\"utf-8\"\n" .
-										"Content-Transfer-Encoding: 7bit\n\n".$mail_message."\n\n";
-				$mail_message .= "--{$mime_boundary}\n" .
-										"Content-Type: application/octet-stream;\n" .
-										" name=\"{$backup['filename']}\"\n" .
-										"Content-Disposition: attachment;\n" .
-										" filename=\"{$backup['filename']}\"\n" .
-										"Content-Transfer-Encoding: base64\n\n" .
-										$file_data."\n\n--{$mime_boundary}--\n";
-			mail($backup_email, $mail_subject, $mail_message, $mail_header);
+		if( !empty( $backup_email ) )
+		{
+			dbmanager_email_backup( $backup_email, $backup['filepath'] );
 		}
 	}
 	return;
@@ -255,6 +219,53 @@ function execute_backup($command) {
 	return $error;
 }
 
+### Function: Email database backup
+function dbmanager_email_backup($to = '', $backup_file_path)
+{
+	if( is_email( $to ) && file_exists( $backup_file_path ) )
+	{
+		$backup_options = get_option( 'dbmanager_options' );
+
+		$file_name = basename( $backup_file_path );
+		$file_gmt_date = gmdate( 'Y-m-d H:i:s', substr( $file_name, 0, 10 ) );
+		$file_size = format_size( filesize( $backup_file_path) );
+		$file_date = mysql2date( sprintf( __( '%s @ %s', 'wp-dbmanager' ), get_option( 'date_format' ), get_option( 'time_format' ) ), $file_gmt_date );
+
+		$to = ( !empty( $to ) ? $to : get_option( 'admin_email' ) );
+
+		$subject = ( !empty( $backup_options['backup_email_subject'] ) ? $backup_options['backup_email_subject'] : dbmanager_default_options( 'backup_email_subject' ) );
+		$subject = str_replace(
+			  array(
+				  '%SITE_NAME%'
+			    , '%POST_DATE%'
+			    , '%POST_TIME%'
+			  )
+			, array(
+				  wp_specialchars_decode( get_option( 'blogname' ) )
+				, mysql2date( get_option( 'date_format' ), $file_gmt_date )
+				, mysql2date( get_option( 'time_format' ), $file_gmt_date )
+			)
+			, $subject
+		);
+		$message = __( 'Website Name:', 'wp-dbmanager').' '.wp_specialchars_decode( get_option( 'blogname' ) )."\n".
+			__( 'Website URL:', 'wp-dbmanager' ).' '.get_bloginfo( 'url' )."\n".
+			__( 'Backup File Name:', 'wp-dbmanager' ).' '.$file_name."\n".
+			__( 'Backup File Date:', 'wp-dbmanager' ).' '.$file_date."\n".
+			__( 'Backup File Size:', 'wp-dbmanager' ).' '.$file_size."\n\n".
+			__( 'With Regards,', 'wp-dbmanager' )."\n".
+			wp_specialchars_decode(get_option('blogname')).' '. __('Administrator', 'wp-dbmanager' )."\n".
+			get_bloginfo('url');
+
+		$from = ( !empty( $backup_options['backup_email_from'] ) ? $backup_options['backup_email_from'] : dbmanager_default_options( 'backup_email_from' ) );
+		$from_name = ( !empty( $backup_options['backup_email_from_name'] ) ? $backup_options['backup_email_from_name'] : dbmanager_default_options( 'backup_email_from_name' ) );
+		$headers[] = 'From: "' . $from_name . '" <'.$from.'>';
+
+		return wp_mail( $to, $subject, $message, $headers, $backup_file_path );
+	}
+
+	return false;
+}
+
 
 ### Function: Format Bytes Into KB/MB
 if(!function_exists('format_size')) {
@@ -326,6 +337,23 @@ function check_backup_files() {
 }
 
 
+### Function: DBManager Default Options
+function dbmanager_default_options( $option_name )
+{
+	switch( $option_name )
+	{
+		case 'backup_email_from':
+			return get_option( 'admin_email' );
+			break;
+		case 'backup_email_from_name':
+			return wp_specialchars_decode( get_option( 'blogname' ) ).' '.__( 'Administrator', 'wp-dbmanager' );
+			break;
+		case 'backup_email_subject':
+			return __( '%SITE_NAME% Database Backup File For %POST_DATE% @ %POST_TIME%', 'wp-dbmanager' );
+			break;
+	}
+}
+
 ### Function: Database Manager Role
 add_action('activate_wp-dbmanager/wp-dbmanager.php', 'dbmanager_init');
 function dbmanager_init() {
@@ -340,7 +368,10 @@ function dbmanager_init() {
 	$backup_options['backup'] = 1;
 	$backup_options['backup_gzip'] = 0;
 	$backup_options['backup_period'] = 604800;
-	$backup_options['backup_email'] = get_option('admin_email');
+	$backup_options['backup_email']             = get_option( 'admin_email' );
+	$backup_options['backup_email_from']        = dbmanager_default_options( 'backup_email_from' );
+	$backup_options['backup_email_from_name']   = dbmanager_default_options( 'backup_email_from_name' );
+	$backup_options['backup_email_subject']     = dbmanager_default_options( 'backup_email_subject' );
 	$backup_options['optimize'] = 3;
 	$backup_options['optimize_period'] = 86400;
 	$backup_options['repair'] = 2;
@@ -389,25 +420,27 @@ function download_database() {
 	}
 }
 
-
 ### Function: Database Options
 function dbmanager_options() {
 	$text = '';
 	$backup_options = get_option('dbmanager_options');
 	if(!empty($_POST['Submit'])) {
 		check_admin_referer('wp-dbmanager_options');
-		$backup_options['mysqldumppath'] = trim($_POST['db_mysqldumppath']);
-		$backup_options['mysqlpath'] = trim($_POST['db_mysqlpath']);
-		$backup_options['path'] = trim($_POST['db_path']);
-		$backup_options['max_backup'] = intval($_POST['db_max_backup']);
-		$backup_options['backup'] = intval($_POST['db_backup']);
-		$backup_options['backup_gzip'] = intval($_POST['db_backup_gzip']);
-		$backup_options['backup_period'] = intval($_POST['db_backup_period']);
-		$backup_options['backup_email'] = trim(addslashes($_POST['db_backup_email']));
-		$backup_options['optimize'] = intval($_POST['db_optimize']);
-		$backup_options['optimize_period'] = intval($_POST['db_optimize_period']);
-		$backup_options['repair'] = intval($_POST['db_repair']);
-		$backup_options['repair_period'] = intval($_POST['db_repair_period']);
+		$backup_options['mysqldumppath']            = sanitize_text_field( $_POST['db_mysqldumppath'] );
+		$backup_options['mysqlpath']                = sanitize_text_field( $_POST['db_mysqlpath'] );
+		$backup_options['path']                     = sanitize_text_field( $_POST['db_path'] );
+		$backup_options['max_backup']               = intval( $_POST['db_max_backup'] );
+		$backup_options['backup']                   = intval( $_POST['db_backup'] );
+		$backup_options['backup_gzip']              = intval( $_POST['db_backup_gzip'] );
+		$backup_options['backup_period']            = intval( $_POST['db_backup_period'] );
+		$backup_options['backup_email']             = sanitize_email( $_POST['db_backup_email'] );
+		$backup_options['backup_email_from']        = sanitize_email( $_POST['db_backup_email_from'] );
+		$backup_options['backup_email_from_name']   = sanitize_text_field( $_POST['db_backup_email_from_name'] );
+		$backup_options['backup_email_subject']     = sanitize_text_field( $_POST['db_backup_email_subject'] );
+		$backup_options['optimize']                 = intval( $_POST['db_optimize'] );
+		$backup_options['optimize_period']          = intval( $_POST['db_optimize_period'] );
+		$backup_options['repair']                   = intval( $_POST['db_repair'] );
+		$backup_options['repair_period']            = intval( $_POST['db_repair_period'] );
 		$update_db_options = update_option('dbmanager_options', $backup_options);
 		if($update_db_options) {
 			$text = '<font color="green">'.__('Database Options Updated', 'wp-dbmanager').'</font>';
@@ -435,6 +468,20 @@ function dbmanager_options() {
 		}
 	}
 	$path = detect_mysql();
+
+	// Default Options
+	if( !isset( $backup_options['backup_email_from'] ) )
+	{
+		$backup_options['backup_email_from'] = dbmanager_default_options( 'backup_email_from' );
+	}
+	if( !isset( $backup_options['backup_email_from_name'] ) )
+	{
+		$backup_options['backup_email_from_name'] = dbmanager_default_options( 'backup_email_from_name' );
+	}
+	if( !isset( $backup_options['backup_email_subject'] ) )
+	{
+		$backup_options['backup_email_subject'] = dbmanager_default_options( 'backup_email_subject' );
+	}
 ?>
 <script type="text/javascript">
 /* <![CDATA[*/
@@ -524,21 +571,20 @@ function dbmanager_options() {
 					?>
 					<p>
 						<?php _e('Every', 'wp-dbmanager'); ?>&nbsp;<input type="text" name="db_backup" size="3" maxlength="5" value="<?php echo intval($backup_options['backup']); ?>" />&nbsp;
-					<select name="db_backup_period" size="1">
-						<option value="0"<?php selected('0', $backup_options['backup_period']); ?>><?php _e('Disable', 'wp-dbmanager'); ?></option>
-						<option value="60"<?php selected('60', $backup_options['backup_period']); ?>><?php _e('Minutes(s)', 'wp-dbmanager'); ?></option>
-						<option value="3600"<?php selected('3600', $backup_options['backup_period']); ?>><?php _e('Hour(s)', 'wp-dbmanager'); ?></option>
-						<option value="86400"<?php selected('86400', $backup_options['backup_period']); ?>><?php _e('Day(s)', 'wp-dbmanager'); ?></option>
-						<option value="604800"<?php selected('604800', $backup_options['backup_period']); ?>><?php _e('Week(s)', 'wp-dbmanager'); ?></option>
-						<option value="18144000"<?php selected('18144000', $backup_options['backup_period']); ?>><?php _e('Month(s)', 'wp-dbmanager'); ?></option>
-					</select>&nbsp;&nbsp;&nbsp;
-					<?php _e('Gzip', 'wp-dbmanager'); ?>
-					<select name="db_backup_gzip" size="1">
-						<option value="0"<?php selected('0', $backup_options['backup_gzip']); ?>><?php _e('No', 'wp-dbmanager'); ?></option>
-						<option value="1"<?php selected('1', $backup_options['backup_gzip']); ?>><?php _e('Yes', 'wp-dbmanager'); ?></option>
-					</select>
+						<select name="db_backup_period" size="1">
+							<option value="0"<?php selected('0', $backup_options['backup_period']); ?>><?php _e('Disable', 'wp-dbmanager'); ?></option>
+							<option value="60"<?php selected('60', $backup_options['backup_period']); ?>><?php _e('Minutes(s)', 'wp-dbmanager'); ?></option>
+							<option value="3600"<?php selected('3600', $backup_options['backup_period']); ?>><?php _e('Hour(s)', 'wp-dbmanager'); ?></option>
+							<option value="86400"<?php selected('86400', $backup_options['backup_period']); ?>><?php _e('Day(s)', 'wp-dbmanager'); ?></option>
+							<option value="604800"<?php selected('604800', $backup_options['backup_period']); ?>><?php _e('Week(s)', 'wp-dbmanager'); ?></option>
+							<option value="18144000"<?php selected('18144000', $backup_options['backup_period']); ?>><?php _e('Month(s)', 'wp-dbmanager'); ?></option>
+						</select>&nbsp;&nbsp;&nbsp;
+						<?php _e('Gzip', 'wp-dbmanager'); ?>
+						<select name="db_backup_gzip" size="1">
+							<option value="0"<?php selected('0', $backup_options['backup_gzip']); ?>><?php _e('No', 'wp-dbmanager'); ?></option>
+							<option value="1"<?php selected('1', $backup_options['backup_gzip']); ?>><?php _e('Yes', 'wp-dbmanager'); ?></option>
+						</select>
 					</p>
-					<p><?php _e('E-mail backup to:', 'wp-dbmanager'); ?> <input type="text" name="db_backup_email" size="30" maxlength="50" value="<?php echo stripslashes($backup_options['backup_email']) ?>" dir="ltr" />&nbsp;&nbsp;&nbsp;<?php _e('(Leave blank to disable this feature)', 'wp-dbmanager'); ?></p>
 					<p><?php _e('WP-DBManager can automatically backup your database after a certain period.', 'wp-dbmanager'); ?></p>
 				</td>
 			</tr>
@@ -590,6 +636,38 @@ function dbmanager_options() {
 					</select>
 					</p>
 					<p><?php _e('WP-DBManager can automatically repair your database after a certain period.', 'wp-dbmanager'); ?></p>
+				</td>
+			</tr>
+		</table>
+
+		<h3><?php _e('Backup Email Options', 'wp-dbmanager'); ?></h3>
+		<table class="form-table">
+			<tr>
+				<td valign="top"><strong><?php _e('To', 'wp-dbmanager'); ?></strong></td>
+				<td>
+					<p>
+						<input type="text" name="db_backup_email" size="30" maxlength="50" placeholder="<?php _e ( 'To E-mail', 'wp-dbmanager' ); ?>"  value="<?php echo esc_attr( stripslashes( $backup_options['backup_email'] ) ) ?>" dir="ltr" />
+					</p>
+					<p><?php _e('(Leave blank to disable this feature)', 'wp-dbmanager'); ?></p>
+				</td>
+			</tr>
+			<tr>
+				<td valign="top"><strong><?php _e('From', 'wp-dbmanager'); ?></strong></td>
+				<td>
+					<p>
+						<input type="text" name="db_backup_email_from_name" size="60" maxlength="250" placeholder="<?php _e ( 'From Name', 'wp-dbmanager' ); ?>" value="<?php echo esc_attr( stripslashes( $backup_options['backup_email_from_name'] ) ) ?>" dir="ltr" />&nbsp;
+						&lt;<input type="text" name="db_backup_email_from" size="30" maxlength="20" placeholder="<?php _e ( 'From E-mail', 'wp-dbmanager' ); ?>"  value="<?php echo esc_attr( stripslashes( $backup_options['backup_email_from'] ) ) ?>" dir="ltr" />&gt;
+					</p>
+					<p><?php _e('(Leave blank to use the default)', 'wp-dbmanager'); ?></p>
+				</td>
+			</tr>
+			<tr>
+				<td valign="top"><strong><?php _e('Subject:', 'wp-dbmanager'); ?></strong></td>
+				<td>
+					<p>
+						<input type="text" name="db_backup_email_subject" size="90" maxlength="255" placeholder="<?php _e ( 'Subject', 'wp-dbmanager' ); ?>"  value="<?php echo esc_attr( stripslashes( $backup_options['backup_email_subject'] ) ) ?>" dir="ltr" />
+					</p>
+					<p><?php _e('(Leave blank to use the default)', 'wp-dbmanager'); ?></p>
 				</td>
 			</tr>
 		</table>

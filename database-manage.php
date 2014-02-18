@@ -60,52 +60,12 @@ if( !empty( $_POST['do'] ) ) {
 			break;
 		case __('E-Mail', 'wp-dbmanager'):
 			if(!empty($database_file)) {
-				// Get And Read The Database Backup File
-				$file_path = $backup['path'].'/'.$database_file;
-				$file_size = format_size(filesize($file_path));
-				$file_date = $nice_file_date;
-				$file = fopen($file_path,'rb');
-				$file_data = fread($file,filesize($file_path));
-				fclose($file);
-				$file_data = chunk_split(base64_encode($file_data));
-				// Create Mail To, Mail Subject And Mail Header
-				if(!empty($_POST['email_to'])) {
-					$mail_to = trim($_POST['email_to']);
+				$to = ( !empty( $_POST['email_to'] ) ? sanitize_email( $_POST['email_to'] ) : get_option( 'admin_email' ) );
+
+				if( dbmanager_email_backup( $to, $backup['path'].'/'.$database_file ) ) {
+					$text .= '<font color="green">'.sprintf(__('Database Backup File For \'%s\' Successfully E-Mailed To \'%s\'', 'wp-dbmanager'), $nice_file_date, $to).'</font><br />';
 				} else {
-					$mail_to = get_option('admin_email');
-				}
-				$mail_subject = sprintf(__('%s Database Backup File For %s', 'wp-dbmanager'), wp_specialchars_decode(get_option('blogname')), $file_date);
-				$mail_header = 'From: "'.wp_specialchars_decode(get_option('blogname')).' Administrator" <'.get_option('admin_email').'>';
-				// MIME Boundary
-				$random_time = md5(time());
-				$mime_boundary = "==WP-DBManager- $random_time";
-				// Create Mail Header And Mail Message
-				$mail_header .= "\nMIME-Version: 1.0\n" .
-										"Content-Type: multipart/mixed;\n" .
-										" boundary=\"{$mime_boundary}\"";
-				$mail_message = __('Website Name:', 'wp-dbmanager').' '.wp_specialchars_decode(get_option('blogname'))."\n".
-										__('Website URL:', 'wp-dbmanager').' '.get_bloginfo('url')."\n".
-										__('Backup File Name:', 'wp-dbmanager').' '.$database_file."\n".
-										__('Backup File Date:', 'wp-dbmanager').' '.$file_date."\n".
-										__('Backup File Size:', 'wp-dbmanager').' '.$file_size."\n\n".
-										__('With Regards,', 'wp-dbmanager')."\n".
-										wp_specialchars_decode(get_option('blogname')).' '. __('Administrator', 'wp-dbmanager')."\n".
-										get_bloginfo('url');
-				$mail_message = "This is a multi-part message in MIME format.\n\n" .
-										"--{$mime_boundary}\n" .
-										"Content-Type: text/plain; charset=\"utf-8\"\n" .
-										"Content-Transfer-Encoding: 7bit\n\n".$mail_message."\n\n";
-				$mail_message .= "--{$mime_boundary}\n" .
-										"Content-Type: application/octet-stream;\n" .
-										" name=\"$database_file\"\n" .
-										"Content-Disposition: attachment;\n" .
-										" filename=\"$database_file\"\n" .
-										"Content-Transfer-Encoding: base64\n\n" .
-										$file_data."\n\n--{$mime_boundary}--\n";
-				if(mail($mail_to, $mail_subject, $mail_message, $mail_header)) {
-					$text .= '<font color="green">'.sprintf(__('Database Backup File For \'%s\' Successfully E-Mailed To \'%s\'', 'wp-dbmanager'), $file_date, $mail_to).'</font><br />';
-				} else {
-					$text = '<font color="red">'.sprintf(__('Unable To E-Mail Database Backup File For \'%s\' To \'%s\'', 'wp-dbmanager'), $file_date, $mail_to).'</font>';
+					$text = '<font color="red">'.sprintf(__('Unable To E-Mail Database Backup File For \'%s\' To \'%s\'', 'wp-dbmanager'), $nice_file_date, $to).'</font>';
 				}
 			} else {
 				$text = '<font color="red">'.__('No Backup Database File Selected', 'wp-dbmanager').'</font>';
@@ -153,6 +113,8 @@ if( !empty( $_POST['do'] ) ) {
 				</tr>
 			</thead>
 			<?php
+				$no = 0;
+				$totalsize = 0;
 				if(!is_emtpy_folder($backup['path'])) {
 					if ($handle = opendir($backup['path'])) {
 						$database_files = array();
@@ -163,8 +125,6 @@ if( !empty( $_POST['do'] ) ) {
 						}
 						closedir($handle);
 						sort($database_files);
-						$no = 0;
-						$totalsize = 0;
 						for($i = (sizeof($database_files)-1); $i > -1; $i--) {
 							if($no%2 == 0) {
 								$style = '';
