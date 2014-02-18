@@ -646,7 +646,7 @@ function dbmanager_options() {
 				<td valign="top"><strong><?php _e('To', 'wp-dbmanager'); ?></strong></td>
 				<td>
 					<p>
-						<input type="text" name="db_backup_email" size="30" maxlength="50" placeholder="<?php _e ( 'To E-mail', 'wp-dbmanager' ); ?>"  value="<?php echo esc_attr( stripslashes( $backup_options['backup_email'] ) ) ?>" dir="ltr" />
+						<input type="text" name="db_backup_email" size="30" maxlength="250" placeholder="<?php _e ( 'To E-mail', 'wp-dbmanager' ); ?>"  value="<?php echo esc_attr( stripslashes( $backup_options['backup_email'] ) ) ?>" dir="ltr" />
 					</p>
 					<p><?php _e('(Leave blank to disable this feature)', 'wp-dbmanager'); ?></p>
 				</td>
@@ -656,7 +656,7 @@ function dbmanager_options() {
 				<td>
 					<p>
 						<input type="text" name="db_backup_email_from_name" size="60" maxlength="250" placeholder="<?php _e ( 'From Name', 'wp-dbmanager' ); ?>" value="<?php echo esc_attr( stripslashes( $backup_options['backup_email_from_name'] ) ) ?>" dir="ltr" />&nbsp;
-						&lt;<input type="text" name="db_backup_email_from" size="30" maxlength="20" placeholder="<?php _e ( 'From E-mail', 'wp-dbmanager' ); ?>"  value="<?php echo esc_attr( stripslashes( $backup_options['backup_email_from'] ) ) ?>" dir="ltr" />&gt;
+						&lt;<input type="text" name="db_backup_email_from" size="30" maxlength="250" placeholder="<?php _e ( 'From E-mail', 'wp-dbmanager' ); ?>"  value="<?php echo esc_attr( stripslashes( $backup_options['backup_email_from'] ) ) ?>" dir="ltr" />&gt;
 					</p>
 					<p><?php _e('(Leave blank to use the default)', 'wp-dbmanager'); ?></p>
 				</td>
