@@ -1,22 +1,4 @@
 <?php
-/*
-+----------------------------------------------------------------+
-|																							|
-|	WordPress 2.8 Plugin: WP-DBManager 2.63								|
-|	Copyright (c) 2009 Lester "GaMerZ" Chan									|
-|																							|
-|	File Written By:																	|
-|	- Lester "GaMerZ" Chan															|
-|	- http://lesterchan.net															|
-|																							|
-|	File Information:																	|
-|	- Database Run Query															|
-|	- wp-content/plugins/wp-dbmanager/database-run.php				|
-|																							|
-+----------------------------------------------------------------+
-*/
-
-
 ### Check Whether User Can Manage Database
 if(!current_user_can('manage_database')) {
 	die('Access Denied');
