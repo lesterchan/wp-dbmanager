@@ -36,7 +36,9 @@ Allows you to optimize database, repair database, backup database, restore datab
 
 ## Changelog
 ## Version 2.66
-* FIXED: Issues with email from field if site title contains , (comma).
+* NEW: Uses wp_mail() to send email instead of PHP mail()
+* NEW: New From E-mail, From Name & Subject template
+* FIXED: Issues with email from field if site title contains , (comma)
 * FIXED: Notices
 
 ### Version 2.65
