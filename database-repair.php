@@ -27,16 +27,18 @@ if(!current_user_can('manage_database')) {
 $base_name = plugin_basename('wp-dbmanager/database-manager.php');
 $base_page = 'admin.php?page='.$base_name;
 
-### Form Processing 
-if($_POST['do']) {
+### Form Processing
+if(!empty($_POST['do'])) {
 	// Lets Prepare The Variables
 	$repair = $_POST['repair'];
+	$text = '';
 
 	// Decide What To Do
 	switch($_POST['do']) {
 		case __('Repair', 'wp-dbmanager'):
 			check_admin_referer('wp-dbmanager_repair');
 			if(!empty($repair)) {
+				$tables_string = '';
 				foreach($repair as $key => $value) {
 					if($value == 'yes') {
 						$tables_string .=  '`, `'.$key;
@@ -50,7 +52,7 @@ if($_POST['do']) {
 			if(!empty($selected_tables)) {
 				$repair2 = $wpdb->query("REPAIR TABLE $selected_tables");
 				if(!$repair2) {
-					$text = '<font color="red">'.sprintf(__('Table(s) \'%s\' NOT Repaired', 'wp-dbmanager'), str_replace('`', '', $selected_tables)).'</font>';					
+					$text = '<font color="red">'.sprintf(__('Table(s) \'%s\' NOT Repaired', 'wp-dbmanager'), str_replace('`', '', $selected_tables)).'</font>';
 				} else {
 					$text = '<font color="green">'.sprintf(__('Table(s) \'%s\' Repaired', 'wp-dbmanager'), str_replace('`', '', $selected_tables)).'</font>';
 				}
@@ -79,9 +81,10 @@ $tables = $wpdb->get_col("SHOW TABLES");
 				</tr>
 			</thead>
 				<?php
+					$no = 0;
 					foreach($tables as $table_name) {
 						if($no%2 == 0) {
-							$style = '';							
+							$style = '';
 						} else {
 							$style = ' class="alternate"';
 						}

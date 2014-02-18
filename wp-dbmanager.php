@@ -117,7 +117,7 @@ function cron_dbmanager_backup() {
 				$file_data = chunk_split(base64_encode($file_data));
 				// Create Mail To, Mail Subject And Mail Header
 				$mail_subject = sprintf(__('%s Database Backup File For %s', 'wp-dbmanager'), wp_specialchars_decode(get_option('blogname')), $file_date);
-				$mail_header = 'From: '.wp_specialchars_decode(get_option('blogname')).' Administrator <'.get_option('admin_email').'>';
+				$mail_header = 'From: "'.wp_specialchars_decode(get_option('blogname')).' Administrator" <'.get_option('admin_email').'>';
 				// MIME Boundary
 				$random_time = md5(time());
 				$mime_boundary = "==WP-DBManager- $random_time";
@@ -283,6 +283,7 @@ if(!function_exists('file_ext')) {
 if(!function_exists('is_emtpy_folder')) {
 	function is_emtpy_folder($folder){
 	   if(is_dir($folder) ){
+		   $folder_content = '';
 		   $handle = opendir($folder);
 		   while( (gettype( $name = readdir($handle)) != 'boolean')){
 				if($name != '.htaccess') {
@@ -391,11 +392,9 @@ function download_database() {
 
 ### Function: Database Options
 function dbmanager_options() {
-	global $wpdb;
 	$text = '';
-	$backup_options = array();
 	$backup_options = get_option('dbmanager_options');
-	if($_POST['Submit']) {
+	if(!empty($_POST['Submit'])) {
 		check_admin_referer('wp-dbmanager_options');
 		$backup_options['mysqldumppath'] = trim($_POST['db_mysqldumppath']);
 		$backup_options['mysqlpath'] = trim($_POST['db_mysqlpath']);

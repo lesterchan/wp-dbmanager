@@ -35,6 +35,10 @@ Allows you to optimize database, repair database, backup database, restore datab
 * I spent most of my free time creating, updating, maintaining and supporting these plugins, if you really love my plugins and could spare me a couple of bucks, I will really appericiate it. If not feel free to use it without any obligations.
 
 ## Changelog
+## Version 2.66
+* FIXED: Issues with email from field if site title contains , (comma).
+* FIXED: Notices
+
 ### Version 2.65
 * FIXED: Set default character set to UTF-8. Props Karsonito
 

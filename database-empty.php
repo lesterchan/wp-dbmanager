@@ -34,16 +34,18 @@ $backup['mysqlpath'] = $backup_options['mysqlpath'];
 $backup['path'] = $backup_options['path'];
 
 
-### Form Processing 
-if($_POST['do']) {
+### Form Processing
+if(!empty($_POST['do'])) {
 	// Lets Prepare The Variables
-	$emptydrop = $_POST['emptydrop'];
+	$emptydrop = (!empty($_POST['emptydrop']) ? $_POST['emptydrop'] : array());
+	$text = '';
 
 	// Decide What To Do
 	switch($_POST['do']) {
 		case __('Empty/Drop', 'wp-dbmanager'):
 			check_admin_referer('wp-dbmanager_empty');
 			$empty_tables = array();
+			$drop_tables = '';
 			if(!empty($emptydrop)) {
 				foreach($emptydrop as $key => $value) {
 					if($value == 'empty') {
@@ -80,7 +82,7 @@ $tables = $wpdb->get_col("SHOW TABLES");
 	<?php wp_nonce_field('wp-dbmanager_empty'); ?>
 	<div class="wrap">
 		<div id="icon-wp-dbmanager" class="icon32"><br /></div>
-		<h2><?php _e('Empty/Drop Tables', 'wp-dbmanager'); ?></h2>	
+		<h2><?php _e('Empty/Drop Tables', 'wp-dbmanager'); ?></h2>
 		<br style="clear" />
 		<table class="widefat">
 			<thead>
@@ -91,9 +93,10 @@ $tables = $wpdb->get_col("SHOW TABLES");
 				</tr>
 			</thead>
 				<?php
+					$no = 0;
 					foreach($tables as $table_name) {
 						if($no%2 == 0) {
-							$style = '';							
+							$style = '';
 						} else {
 							$style = ' class="alternate"';
 						}
@@ -107,7 +110,7 @@ $tables = $wpdb->get_col("SHOW TABLES");
 				<td colspan="3">
 					<?php _e('1. EMPTYING a table means all the rows in the table will be deleted. This action is not REVERSIBLE.', 'wp-dbmanager'); ?>
 					<br />
-					<?php _e('2. DROPPING a table means deleting the table. This action is not REVERSIBLE.', 'wp-dbmanager'); ?>				
+					<?php _e('2. DROPPING a table means deleting the table. This action is not REVERSIBLE.', 'wp-dbmanager'); ?>
 				</td>
 			</tr>
 			<tr>

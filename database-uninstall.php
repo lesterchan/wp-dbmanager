@@ -26,12 +26,12 @@ if(!current_user_can('manage_database')) {
 ### Variables Variables Variables
 $base_name = plugin_basename('wp-dbmanager/database-manager.php');
 $base_page = 'admin.php?page='.$base_name;
-$mode = trim($_GET['mode']);
+$mode = (!empty($_GET['mode']) ? trim($_GET['mode']) : '');
 $db_settings = array('dbmanager_options');
 $backup_options = get_option('dbmanager_options');
 $backup_options_path = $backup_options['path'];
 
-### Form Processing 
+### Form Processing
 if(!empty($_POST['do'])) {
 	// Decide What To Do
 	switch($_POST['do']) {
@@ -59,7 +59,7 @@ if(!empty($_POST['do'])) {
 				echo '<br />';
 				printf(__('The path to the backup folder is <strong>\'%s\'</strong>.', 'wp-dbmanager'), $backup_options_path);
 				echo '</p>';
-				echo '</div>'; 
+				echo '</div>';
 				$mode = 'end-UNINSTALL';
 			}
 			break;
@@ -72,7 +72,7 @@ switch($mode) {
 		//  Deactivating WP-DBManager
 		case 'end-UNINSTALL':
 			$deactivate_url = 'plugins.php?action=deactivate&amp;plugin=wp-dbmanager/wp-dbmanager.php';
-			if(function_exists('wp_nonce_url')) { 
+			if(function_exists('wp_nonce_url')) {
 				$deactivate_url = wp_nonce_url($deactivate_url, 'deactivate-plugin_wp-dbmanager/wp-dbmanager.php');
 			}
 			echo '<div class="wrap">';

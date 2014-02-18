@@ -27,8 +27,8 @@ if(!current_user_can('manage_database')) {
 $base_name = plugin_basename('wp-dbmanager/database-manager.php');
 $base_page = 'admin.php?page='.$base_name;
 
-### Form Processing 
-if($_POST['do']) {
+### Form Processing
+if(!empty($_POST['do'])) {
 	// Lets Prepare The Variables
 	$optimize = $_POST['optimize'];
 
@@ -37,6 +37,7 @@ if($_POST['do']) {
 		case __('Optimize', 'wp-dbmanager'):
 			check_admin_referer('wp-dbmanager_optimize');
 			if(!empty($optimize)) {
+				$tables_string = '';
 				foreach($optimize as $key => $value) {
 					if($value == 'yes') {
 						$tables_string .=  '`, `'.$key;
@@ -70,7 +71,7 @@ $tables = $wpdb->get_col("SHOW TABLES");
 	<div class="wrap">
 		<div id="icon-wp-dbmanager" class="icon32"><br /></div>
 		<h2><?php _e('Optimize Database', 'wp-dbmanager'); ?></h2>
-		<br style="clear" />	
+		<br style="clear" />
 		<table class="widefat">
 			<thead>
 				<tr>
@@ -79,9 +80,10 @@ $tables = $wpdb->get_col("SHOW TABLES");
 				</tr>
 			</thead>
 				<?php
+					$no = 0;
 					foreach($tables as $table_name) {
 						if($no%2 == 0) {
-							$style = '';							
+							$style = '';
 						} else {
 							$style = ' class="alternate"';
 						}

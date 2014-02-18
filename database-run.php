@@ -34,8 +34,9 @@ $backup['mysqlpath'] = $backup_options['mysqlpath'];
 $backup['path'] = $backup_options['path'];
 
 
-### Form Processing 
-if($_POST['do']) {
+### Form Processing
+if(!empty($_POST['do'])) {
+	$text = '';
 	// Decide What To Do
 	switch($_POST['do']) {
 		case __('Run', 'wp-dbmanager'):
@@ -54,7 +55,7 @@ if($_POST['do']) {
 					}
 				}
 				if($sql_queries) {
-					foreach($sql_queries as $sql_query) {			
+					foreach($sql_queries as $sql_query) {
 						if (preg_match("/^\\s*(insert|update|replace|delete|create|alter) /i",$sql_query)) {
 							$run_query = $wpdb->query($sql_query);
 							if(!$run_query) {
@@ -66,7 +67,7 @@ if($_POST['do']) {
 							$totalquerycount++;
 						} elseif (preg_match("/^\\s*(select|drop|show|grant) /i",$sql_query)) {
 							$text .= "<span dir=\"ltr\"><font color=\"red\">$sql_query</font></span><br />";
-							$totalquerycount++;						
+							$totalquerycount++;
 						}
 					}
 					$text .= '<font color="blue">'.number_format_i18n($successquery).'/'.number_format_i18n($totalquerycount).' '.__('Query(s) Executed Successfully', 'wp-dbmanager').'</font>';
