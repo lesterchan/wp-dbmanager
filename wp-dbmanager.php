@@ -257,24 +257,24 @@ function dbmanager_email_backup($to = '', $backup_file_path)
 			    , '%POST_TIME%'
 			  )
 			, array(
-				  wp_specialchars_decode( get_option( 'blogname' ) )
+				  wp_specialchars_decode( get_bloginfo( 'name' ), ENT_QUOTES )
 				, mysql2date( get_option( 'date_format' ), $file_gmt_date )
 				, mysql2date( get_option( 'time_format' ), $file_gmt_date )
 			)
 			, $subject
 		);
-		$message = __( 'Website Name:', 'wp-dbmanager').' '.wp_specialchars_decode( get_option( 'blogname' ) )."\n".
+		$message = __( 'Website Name:', 'wp-dbmanager').' '. wp_specialchars_decode( get_bloginfo( 'name' ), ENT_QUOTES ) . "\n".
 			__( 'Website URL:', 'wp-dbmanager' ).' '.get_bloginfo( 'url' )."\n".
 			__( 'Backup File Name:', 'wp-dbmanager' ).' '.$file_name."\n".
 			__( 'Backup File Date:', 'wp-dbmanager' ).' '.$file_date."\n".
 			__( 'Backup File Size:', 'wp-dbmanager' ).' '.$file_size."\n\n".
 			__( 'With Regards,', 'wp-dbmanager' )."\n".
-			wp_specialchars_decode(get_option('blogname')).' '. __('Administrator', 'wp-dbmanager' )."\n".
+			wp_specialchars_decode( get_bloginfo( 'name' ),  ENT_QUOTES ). ' ' . __('Administrator', 'wp-dbmanager' )."\n".
 			get_bloginfo('url');
 
 		$from = ( !empty( $backup_options['backup_email_from'] ) ? $backup_options['backup_email_from'] : dbmanager_default_options( 'backup_email_from' ) );
 		$from_name = ( !empty( $backup_options['backup_email_from_name'] ) ? $backup_options['backup_email_from_name'] : dbmanager_default_options( 'backup_email_from_name' ) );
-		$headers[] = 'From: "' . $from_name . '" <'.$from.'>';
+		$headers[] = 'From: "' . wp_specialchars_decode( stripslashes_deep( $from_name ), ENT_QUOTES ) . '" <'.$from.'>';
 
 		return wp_mail( $to, $subject, $message, $headers, $backup_file_path );
 	}
@@ -362,7 +362,7 @@ function dbmanager_default_options( $option_name )
 			return get_option( 'admin_email' );
 			break;
 		case 'backup_email_from_name':
-			return wp_specialchars_decode( get_option( 'blogname' ) ).' '.__( 'Administrator', 'wp-dbmanager' );
+			return wp_specialchars_decode( get_bloginfo( 'name' ),  ENT_QUOTES )  .' '.__( 'Administrator', 'wp-dbmanager' );
 			break;
 		case 'backup_email_subject':
 			return __( '%SITE_NAME% Database Backup File For %POST_DATE% @ %POST_TIME%', 'wp-dbmanager' );
