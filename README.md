@@ -4,7 +4,7 @@ Donate link: http://lesterchan.net/site/donation/
 Tags: database, manage, wp-dbmanager, manager, table, optimize, backup, queries, query, drop, empty, tables, table, run, repair, cron, schedule, scheduling, automatic  
 Requires at least: 2.8  
 Tested up to: 3.7  
-Stable tag: trunk  
+Stable tag: 2.70  
 
 Manages your WordPress database.
 
@@ -35,7 +35,10 @@ Allows you to optimize database, repair database, backup database, restore datab
 * I spent most of my free time creating, updating, maintaining and supporting these plugins, if you really love my plugins and could spare me a couple of bucks, I will really appericiate it. If not feel free to use it without any obligations.
 
 ## Changelog
-## Version 2.66
+## Version 2.70
+* NEW: Allow you to hide admin notices in the DB Options page
+* NEW: Allow Multisite Network Activate
+* NEW: Uses WordPress uninstall.pgp file to uninstall the plugin
 * NEW: Uses wp_mail() to send email instead of PHP mail()
 * NEW: New From E-mail, From Name & Subject template
 * FIXED: Issues with email from field if site title contains , (comma)
@@ -194,4 +197,4 @@ N/A
 
 ### Why do I get the message "Warning: Your backup folder MIGHT be visible to the public!"?
 * Ensure that you have renamed `htaccess.txt` to `.htaccess` and placed it in your backup folder (defaults to `wp-content/backup-db/`)
-* If you are 100% sure you have did that and have verfied that the folder no longer is accessible to the public by visiting the URL `http://yousite.com/wp-content/backup-db/`, you can safely remove it by deleting `add_action('admin_notices', 'dbmanager_admin_notices');` on `line 204` in `wp-dbmanager.php`.
+* If you are 100% sure you have did that and have verfied that the folder no longer is accessible to the public by visiting the URL `http://yousite.com/wp-content/backup-db/`, you can safely disable the notice by going to `WP-Admin -> Database -> DB Options` and set `Hide Admin Notices` to `Yes`.
