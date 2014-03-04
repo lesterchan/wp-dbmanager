@@ -30,9 +30,9 @@ Text Domain: wp-dbmanager
 
 
 ### Create Text Domain For Translations
-add_action('init', 'dbmanager_textdomain');
+add_action( 'plugins_loaded', 'dbmanager_textdomain' );
 function dbmanager_textdomain() {
-	load_plugin_textdomain('wp-dbmanager', false, 'wp-dbmanager');
+	load_plugin_textdomain( 'wp-dbmanager', false, dirname( plugin_basename( __FILE__ ) ) );
 }
 
 
