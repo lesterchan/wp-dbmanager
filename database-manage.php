@@ -99,7 +99,6 @@ if( !empty( $_POST['do'] ) ) {
 <form method="post" action="<?php echo admin_url('admin.php?page='.plugin_basename(__FILE__)); ?>">
 	<?php wp_nonce_field('wp-dbmanager_manage'); ?>
 	<div class="wrap">
-		<div id="icon-wp-dbmanager" class="icon32"><br /></div>
 		<h2><?php _e('Manage Backup Database', 'wp-dbmanager'); ?></h2>
 		<p><?php _e('Choose A Backup Date To E-Mail, Restore, Download Or Delete', 'wp-dbmanager'); ?></p>
 		<table class="widefat">

@@ -68,7 +68,6 @@ if(!empty($_POST['do'])) {
 <form method="post" action="<?php echo admin_url('admin.php?page='.plugin_basename(__FILE__)); ?>">
 	<?php wp_nonce_field('wp-dbmanager_run'); ?>
 	<div class="wrap">
-		<div id="icon-wp-dbmanager" class="icon32"><br /></div>
 		<h2><?php _e('Run SQL Query', 'wp-dbmanager'); ?></h2>
 		<br style="clear" />
 		<div>

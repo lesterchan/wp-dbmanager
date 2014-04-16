@@ -40,7 +40,7 @@ function dbmanager_textdomain() {
 add_action('admin_menu', 'dbmanager_menu');
 function dbmanager_menu() {
 	if (function_exists('add_menu_page')) {
-		add_menu_page(__('Database', 'wp-dbmanager'), __('Database', 'wp-dbmanager'), 'manage_database', 'wp-dbmanager/database-manager.php', '', plugins_url('wp-dbmanager/images/database.png'));
+		add_menu_page(__('Database', 'wp-dbmanager'), __('Database', 'wp-dbmanager'), 'manage_database', 'wp-dbmanager/database-manager.php', '', 'dashicons-archive');
 	}
 	if (function_exists('add_submenu_page')) {
 		add_submenu_page('wp-dbmanager/database-manager.php', __('Backup DB', 'wp-dbmanager'), __('Backup DB', 'wp-dbmanager'), 'manage_database', 'wp-dbmanager/database-backup.php');
@@ -50,16 +50,6 @@ function dbmanager_menu() {
 		add_submenu_page('wp-dbmanager/database-manager.php', __('Empty/Drop Tables', 'wp-dbmanager'), __('Empty/Drop Tables', 'wp-dbmanager'), 'manage_database', 'wp-dbmanager/database-empty.php');
 		add_submenu_page('wp-dbmanager/database-manager.php', __('Run SQL Query', 'wp-dbmanager'), __('Run SQL Query', 'wp-dbmanager'), 'manage_database', 'wp-dbmanager/database-run.php');
 		add_submenu_page('wp-dbmanager/database-manager.php', __('DB Options', 'wp-dbmanager'),  __('DB Options', 'wp-dbmanager'), 'manage_database', 'wp-dbmanager/wp-dbmanager.php', 'dbmanager_options');
-	}
-}
-
-
-### Function: Displays DBManager Header In WP-Admin
-add_action('admin_enqueue_scripts', 'dbmanager_stylesheets_admin');
-function dbmanager_stylesheets_admin($hook_suffix) {
-	$dbmanager_admin_pages = array('wp-dbmanager/database-manager.php', 'wp-dbmanager/database-backup.php', 'wp-dbmanager/database-manage.php', 'wp-dbmanager/database-optimize.php', 'wp-dbmanager/database-repair.php', 'wp-dbmanager/database-empty.php', 'wp-dbmanager/database-run.php', 'database_page_wp-dbmanager/wp-dbmanager', 'wp-dbmanager/database-uninstall.php');
-	if(in_array($hook_suffix, $dbmanager_admin_pages)) {
-		wp_enqueue_style('wp-dbmanager-admin', plugins_url('wp-dbmanager/database-admin-css.css'), false, '2.63', 'all');
 	}
 }
 
@@ -558,7 +548,6 @@ function dbmanager_options() {
 <form method="post" action="<?php echo admin_url('admin.php?page='.plugin_basename(__FILE__)); ?>">
 	<?php wp_nonce_field('wp-dbmanager_options'); ?>
 	<div class="wrap">
-		<div id="icon-wp-dbmanager" class="icon32"><br /></div>
 		<h2><?php _e('Database Options', 'wp-dbmanager'); ?></h2>
 		<h3><?php _e('Paths', 'wp-dbmanager'); ?></h3>
 		<table class="form-table">

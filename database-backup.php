@@ -77,7 +77,6 @@ $stats_function_disabled = 0;
 <?php if(!empty($text)) { echo '<!-- Last Action --><div id="message" class="updated fade"><p>'.$text.'</p></div>'; } ?>
 <!-- Checking Backup Status -->
 <div class="wrap">
-	<div id="icon-wp-dbmanager" class="icon32"><br /></div>
 	<h2><?php _e('Backup Database', 'wp-dbmanager'); ?></h2>
 	<h3><?php _e('Checking Backup Status', 'wp-dbmanager'); ?></h3>
 	<p>

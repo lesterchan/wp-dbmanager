@@ -2,8 +2,8 @@
 Contributors: GamerZ  
 Donate link: http://lesterchan.net/site/donation/  
 Tags: database, manage, wp-dbmanager, manager, table, optimize, backup, queries, query, drop, empty, tables, table, run, repair, cron, schedule, scheduling, automatic  
-Requires at least: 2.8  
-Tested up to: 3.7  
+Requires at least: 3.9  
+Tested up to: 3.9  
 Stable tag: 2.70  
 
 Manages your WordPress database.
@@ -12,14 +12,8 @@ Manages your WordPress database.
 
 Allows you to optimize database, repair database, backup database, restore database, delete backup database , drop/empty tables and run selected queries. Supports automatic scheduling of backing up, optimizing and repairing of database.
 
-### Previous Versions
-* [WP-DBManager 2.40 For WordPress 2.7.x](http://downloads.wordpress.org/plugin/wp-dbmanager.2.40.zip "WP-DBManager 2.40 For WordPress 2.7.x")
-* [WP-DBManager 2.31 For WordPress 2.1.x To 2.6.x](http://downloads.wordpress.org/plugin/wp-dbmanager.2.31.zip "WP-DBManager 2.31 For WordPress 2.1.x To 2.6.x")
-* [WP-DBManager 2.05 For WordPress 2.0.x](http://downloads.wordpress.org/plugin/wp-dbmanager.2.05.zip "WP-DBManager 2.05 For WordPress 2.0.x")
-* [WP-DBManager 1.00 For WordPress 1.5.2](http://downloads.wordpress.org/plugin/wp-dbmanager.1.00.zip "WP-DBManager 1.00 For WordPress 1.5.2")
-
 ### Development
-* [http://dev.wp-plugins.org/browser/wp-dbmanager/](http://dev.wp-plugins.org/browser/wp-dbmanager/ "http://dev.wp-plugins.org/browser/wp-dbmanager/")
+* [https://github.com/lesterchan/wp-dbmanager](https://github.com/lesterchan/wp-dbmanager "https://github.com/lesterchan/wp-dbmanager")
 
 ### Translations
 * [http://dev.wp-plugins.org/browser/wp-dbmanager/i18n/](http://dev.wp-plugins.org/browser/wp-dbmanager/i18n/ "http://dev.wp-plugins.org/browser/wp-dbmanager/i18n/")
@@ -36,6 +30,7 @@ Allows you to optimize database, repair database, backup database, restore datab
 
 ## Changelog
 ## Version 2.70
+* New: Uses WordPress 3.9 Dashicons
 * NEW: Allow you to hide admin notices in the DB Options page
 * NEW: Allow Multisite Network Activate
 * NEW: Uses WordPress uninstall.pgp file to uninstall the plugin

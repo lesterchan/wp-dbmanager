@@ -51,7 +51,6 @@ $tables = $wpdb->get_col("SHOW TABLES");
 <form method="post" action="<?php echo admin_url('admin.php?page='.plugin_basename(__FILE__)); ?>">
 	<?php wp_nonce_field('wp-dbmanager_optimize'); ?>
 	<div class="wrap">
-		<div id="icon-wp-dbmanager" class="icon32"><br /></div>
 		<h2><?php _e('Optimize Database', 'wp-dbmanager'); ?></h2>
 		<br style="clear" />
 		<table class="widefat">
