@@ -18,9 +18,6 @@ Allows you to optimize database, repair database, backup database, restore datab
 ### Translations
 * [http://dev.wp-plugins.org/browser/wp-dbmanager/i18n/](http://dev.wp-plugins.org/browser/wp-dbmanager/i18n/ "http://dev.wp-plugins.org/browser/wp-dbmanager/i18n/")
 
-### Support Forums
-* [http://forums.lesterchan.net/index.php?board=11.0](http://forums.lesterchan.net/index.php?board=11.0 "http://forums.lesterchan.net/index.php?board=11.0")
-
 ### Credits
 * __ngetext() by [Anna Ozeritskaya](http://hweia.ru/ "Anna Ozeritskaya")
 * Right To Left Language Support by [Kambiz R. Khojasteh](http://persian-programming.com/ "Kambiz R. Khojasteh")
@@ -33,7 +30,7 @@ Allows you to optimize database, repair database, backup database, restore datab
 * New: Uses WordPress 3.9 Dashicons
 * NEW: Allow you to hide admin notices in the DB Options page
 * NEW: Allow Multisite Network Activate
-* NEW: Uses WordPress uninstall.pgp file to uninstall the plugin
+* NEW: Uses WordPress uninstall.php file to uninstall the plugin
 * NEW: Uses wp_mail() to send email instead of PHP mail()
 * NEW: New From E-mail, From Name & Subject template
 * FIXED: Issues with email from field if site title contains , (comma)
