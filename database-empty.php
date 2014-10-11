@@ -37,18 +37,18 @@ if(!empty($_POST['do'])) {
 					}
 				}
 			} else {
-				$text = '<font color="red">'.__('No Tables Selected.', 'wp-dbmanager').'</font>';
+				$text = '<p style="color: red;">'.__('No Tables Selected.', 'wp-dbmanager').'</p>';
 			}
 			$drop_tables = substr($drop_tables, 2);
 			if(!empty($empty_tables)) {
 				foreach($empty_tables as $empty_table) {
 					$empty_query = $wpdb->query("TRUNCATE $empty_table");
-					$text .= '<font color="green">'.sprintf(__('Table \'%s\' Emptied', 'wp-dbmanager'), $empty_table).'</font><br />';
+					$text .= '<p style="color: green;">'.sprintf(__('Table \'%s\' Emptied', 'wp-dbmanager'), $empty_table).'</p>';
 				}
 			}
 			if(!empty($drop_tables)) {
 				$drop_query = $wpdb->query("DROP TABLE $drop_tables");
-				$text = '<font color="green">'.sprintf(__('Table(s) \'%s\' Dropped', 'wp-dbmanager'), $drop_tables).'</font>';
+				$text = '<p style="color: green;">'.sprintf(__('Table(s) \'%s\' Dropped', 'wp-dbmanager'), $drop_tables).'</p>';
 			}
 			break;
 	}

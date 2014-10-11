@@ -26,16 +26,16 @@ if(!empty($_POST['do'])) {
 					}
 				}
 			} else {
-				$text = '<font color="red">'.__('No Tables Selected', 'wp-dbmanager').'</font>';
+				$text = '<p style="color: red;">'.__('No Tables Selected', 'wp-dbmanager').'</p>';
 			}
 			$selected_tables = substr($tables_string, 3);
 			$selected_tables .= '`';
 			if(!empty($selected_tables)) {
 				$optimize2 = $wpdb->query("OPTIMIZE TABLE $selected_tables");
 				if(!$optimize2) {
-					$text = '<font color="red">'.sprintf(__('Table(s) \'%s\' NOT Optimized', 'wp-dbmanager'), str_replace('`', '', $selected_tables)).'</font>';
+					$text = '<p style="color: red;">'.sprintf(__('Table(s) \'%s\' NOT Optimized', 'wp-dbmanager'), str_replace('`', '', $selected_tables)).'</p>';
 				} else {
-					$text = '<font color="green">'.sprintf(__('Table(s) \'%s\' Optimized', 'wp-dbmanager'), str_replace('`', '', $selected_tables)).'</font>';
+					$text = '<p style="color: green;">'.sprintf(__('Table(s) \'%s\' Optimized', 'wp-dbmanager'), str_replace('`', '', $selected_tables)).'</p>';
 				}
 			}
 			break;

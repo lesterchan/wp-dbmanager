@@ -27,16 +27,16 @@ if(!empty($_POST['do'])) {
 					}
 				}
 			} else {
-				$text = '<font color="red">'.__('No Tables Selected', 'wp-dbmanager').'</font>';
+				$text = '<p style="color: red;">'.__('No Tables Selected', 'wp-dbmanager').'</p>';
 			}
 			$selected_tables = substr($tables_string, 2);
 			$selected_tables .= '`';
 			if(!empty($selected_tables)) {
 				$repair2 = $wpdb->query("REPAIR TABLE $selected_tables");
 				if(!$repair2) {
-					$text = '<font color="red">'.sprintf(__('Table(s) \'%s\' NOT Repaired', 'wp-dbmanager'), str_replace('`', '', $selected_tables)).'</font>';
+					$text = '<p style="color: red;">'.sprintf(__('Table(s) \'%s\' NOT Repaired', 'wp-dbmanager'), str_replace('`', '', $selected_tables)).'</p>';
 				} else {
-					$text = '<font color="green">'.sprintf(__('Table(s) \'%s\' Repaired', 'wp-dbmanager'), str_replace('`', '', $selected_tables)).'</font>';
+					$text = '<p style="color: green;">'.sprintf(__('Table(s) \'%s\' Repaired', 'wp-dbmanager'), str_replace('`', '', $selected_tables)).'</p>';
 				}
 			}
 			break;

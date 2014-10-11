@@ -41,23 +41,23 @@ if(!empty($_POST['do'])) {
 						if (preg_match("/^\\s*(insert|update|replace|delete|create|alter) /i",$sql_query)) {
 							$run_query = $wpdb->query($sql_query);
 							if(!$run_query) {
-								$text .= "<span dir=\"ltr\"><font color=\"red\">$sql_query</font></span><br />";
+								$text .= "<p style=\"color: red;\">$sql_query</p>";
 							} else {
 								$successquery++;
-								$text .= "<span dir=\"ltr\"><font color=\"green\">$sql_query</font></span><br />";
+								$text .= "<p style=\"color: green;\">$sql_query</p>";
 							}
 							$totalquerycount++;
 						} elseif (preg_match("/^\\s*(select|drop|show|grant) /i",$sql_query)) {
-							$text .= "<span dir=\"ltr\"><font color=\"red\">$sql_query</font></span><br />";
+							$text .= "<p style=\"color: red;\">$sql_query</p>";
 							$totalquerycount++;
 						}
 					}
-					$text .= '<font color="blue">'.number_format_i18n($successquery).'/'.number_format_i18n($totalquerycount).' '.__('Query(s) Executed Successfully', 'wp-dbmanager').'</font>';
+					$text .= '<p style="color: blue;">'.number_format_i18n($successquery).'/'.number_format_i18n($totalquerycount).' '.__('Query(s) Executed Successfully', 'wp-dbmanager').'</p>';
 				} else {
-					$text = '<font color="red">'.__('Empty Query', 'wp-dbmanager').'</font>';
+					$text = '<p style="color: red;">'.__('Empty Query', 'wp-dbmanager').'</p>';
 				}
 			} else {
-				$text = '<font color="red">'.__('Empty Query', 'wp-dbmanager').'</font>';
+				$text = '<p style="color: red;">'.__('Empty Query', 'wp-dbmanager').'</p>';
 			}
 			break;
 	}
@@ -72,7 +72,7 @@ if(!empty($_POST['do'])) {
 		<br style="clear" />
 		<div>
 			<strong><?php _e('Seperate Multiple Queries With A New Line', 'wp-dbmanager'); ?></strong><br />
-			<font color="green"><?php _e('Use Only INSERT, UPDATE, REPLACE, DELETE, CREATE and ALTER statements.', 'wp-dbmanager'); ?></font>
+			<p style="color: green;"><?php _e('Use Only INSERT, UPDATE, REPLACE, DELETE, CREATE and ALTER statements.', 'wp-dbmanager'); ?></p>
 		</div>
 		<table class="form-table">
 			<tr>

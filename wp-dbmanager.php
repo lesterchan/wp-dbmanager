@@ -488,10 +488,10 @@ function dbmanager_options() {
 
 		$update_db_options = update_option('dbmanager_options', $backup_options);
 		if($update_db_options) {
-			$text = '<font color="green">'.__('Database Options Updated', 'wp-dbmanager').'</font>';
+			$text = '<p style="color: green;">'.__('Database Options Updated', 'wp-dbmanager').'</p>';
 		}
 		if(empty($text)) {
-			$text = '<font color="red">'.__('No Database Option Updated', 'wp-dbmanager').'</font>';
+			$text = '<p style="color: red;">'.__('No Database Option Updated', 'wp-dbmanager').'</p>';
 		}
 		wp_clear_scheduled_hook('dbmanager_cron_backup');
 		if($backup_options['backup_period'] > 0) {
