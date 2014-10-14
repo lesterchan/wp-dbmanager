@@ -48,7 +48,11 @@ if( !empty( $_POST['do'] ) ) {
 				} else {
 					$backup['command'] = $brace.$backup['mysqlpath'].$brace.' --host="'.$backup['host'].'" --user="'.DB_USER.'" --password="'.$backup['password'].'"'.$backup['port'].$backup['sock'].$backup['charset'].' '.DB_NAME.' < '.$brace.$backup['path'].'/'.$database_file.$brace;
 				}
-				passthru($backup['command'], $error);
+				if( realpath( $backup['path'] ) === false ) {
+					$text = '<p style="color: red;">' . sprintf( __( '%s is not a valid backup path', 'wp-dbmanager' ), $backup['path'] ) .'</p>';
+				} else {
+					passthru( $backup['command'], $error );
+				}
 				if($error) {
 					$text = '<p style="color: red;">'.sprintf(__('Database On \'%s\' Failed To Restore', 'wp-dbmanager'), $nice_file_date).'</p>';
 				} else {
@@ -94,7 +98,7 @@ if( !empty( $_POST['do'] ) ) {
 	}
 }
 ?>
-<?php if(!empty($text)) { echo '<!-- Last Action --><div id="message" class="updated fade"><p>'.$text.'</p></div>'; } ?>
+<?php if(!empty($text)) { echo '<!-- Last Action --><div id="message" class="updated">'.$text.'</div>'; } ?>
 <!-- Manage Backup Database -->
 <form method="post" action="<?php echo admin_url('admin.php?page='.plugin_basename(__FILE__)); ?>">
 	<?php wp_nonce_field('wp-dbmanager_manage'); ?>

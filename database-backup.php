@@ -82,17 +82,22 @@ $stats_function_disabled = 0;
 	<p>
 		<?php _e('Checking Backup Folder', 'wp-dbmanager'); ?> <span dir="ltr">(<strong><?php echo stripslashes($backup['path']); ?></strong>)</span> ...<br />
 		<?php
-			if(@is_dir(stripslashes($backup['path']))) {
-				echo '<p style="color: green;">'.__('Backup folder exists', 'wp-dbmanager').'</p>';
+			if( realpath( $backup['path'] ) === false ) {
+				echo '<p style="color: red;">' . sprintf( __( '%s is not a valid backup path', 'wp-dbmanager' ), $backup['path'] ) . '</p>';
 				$status_count++;
 			} else {
-				echo '<p style="color: red;">'.sprintf(__('Backup folder does NOT exist. Please create \'backup-db\' folder in \'%s\' folder and CHMOD it to \'777\' or change the location of the backup folder under DB Option.', 'wp-dbmanager'), WP_CONTENT_DIR).'</p>';
-			}
-			if(@is_writable(stripslashes($backup['path']))) {
-				echo '<p style="color: green;">'.__('Backup folder is writable', 'wp-dbmanager').'</p>';
-				$status_count++;
-			} else {
-				echo '<p style="color: red;">'.__('Backup folder is NOT writable. Please CHMOD it to \'777\'.', 'wp-dbmanager').'</p>';
+				if (@is_dir(stripslashes($backup['path']))) {
+					echo '<p style="color: green;">' . __('Backup folder exists', 'wp-dbmanager') . '</p>';
+					$status_count++;
+				} else {
+					echo '<p style="color: red;">' . sprintf(__('Backup folder does NOT exist. Please create \'backup-db\' folder in \'%s\' folder and CHMOD it to \'777\' or change the location of the backup folder under DB Option.', 'wp-dbmanager'), WP_CONTENT_DIR) . '</p>';
+				}
+				if (@is_writable(stripslashes($backup['path']))) {
+					echo '<p style="color: green;">' . __('Backup folder is writable', 'wp-dbmanager') . '</p>';
+					$status_count++;
+				} else {
+					echo '<p style="color: red;">' . __('Backup folder is NOT writable. Please CHMOD it to \'777\'.', 'wp-dbmanager') . '</p>';
+				}
 			}
 		?>
 	</p>
