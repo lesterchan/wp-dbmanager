@@ -208,9 +208,15 @@ function detect_mysql() {
 function execute_backup($command) {
 	$backup_options = get_option('dbmanager_options');
 	check_backup_files();
+
 	if( realpath( $backup_options['path'] ) === false ) {
-		return sprintf( __( '%s is not a valid backup path', 'wp-dbmanager' ), $backup_options['path'] );
+		return sprintf( __( '%s is not a valid backup path', 'wp-dbmanager' ), stripslashes( $backup_options['path'] ) );
+	} else if( dbmanager_is_valid_path( $backup_options['mysqldumppath'] ) === 0 ) {
+		return sprintf( __( '%s is not a valid mysqldump path', 'wp-dbmanager' ), stripslashes( $backup_options['mysqldumppath'] ) );
+	} else if( dbmanager_is_valid_path( $backup_options['mysqlpath'] ) === 0 ) {
+		return sprintf( __( '%s is not a valid mysql path', 'wp-dbmanager' ), stripslashes( $backup_options['mysqlpath'] ) );
 	}
+
 	if(substr(PHP_OS, 0, 3) == 'WIN') {
 		$writable_dir = $backup_options['path'];
 		$tmpnam = $writable_dir.'/wp-dbmanager.bat';
@@ -223,6 +229,11 @@ function execute_backup($command) {
 		passthru($command, $error);
 	}
 	return $error;
+}
+
+### Function: Check for valid file path
+function dbmanager_is_valid_path( $path ) {
+	return preg_match( '/^[^*?"<>|;]*$/', $path );
 }
 
 ### Function: Email database backup
@@ -488,8 +499,14 @@ function dbmanager_options() {
 		$backup_options['hide_admin_notices']       = intval( $_POST['db_hide_admin_notices'] );
 
 		if( realpath( $backup_options['path'] ) === false ) {
-			$text = '<div id="message" class="error"><p>' . sprintf( __( '%s is not a valid backup path', 'wp-dbmanager' ), $backup_options['path'] ) . '</p></div>';
+			$text = '<div id="message" class="error"><p>' . sprintf( __( '%s is not a valid backup path', 'wp-dbmanager' ), stripslashes( $backup_options['path'] ) ) . '</p></div>';
 			$backup_options['path'] = $old_backup_options['path'];
+		} else if( dbmanager_is_valid_path( $backup_options['mysqldumppath'] ) === 0 ) {
+			$text = '<div id="message" class="error"><p>' . sprintf( __( '%s is not a valid mysqldump path', 'wp-dbmanager' ), stripslashes( $backup_options['mysqldumppath'] ) ) . '</p></div>';
+			$backup_options['mysqldumppath'] = $old_backup_options['mysqldumppath'];
+		} else if( dbmanager_is_valid_path( $backup_options['mysqlpath'] ) === 0 ) {
+			$text = '<div id="message" class="error"><p>' . sprintf( __( '%s is not a valid mysql path', 'wp-dbmanager' ), stripslashes( $backup_options['mysqlpath'] ) ) . '</p></div>';
+			$backup_options['mysqlpath'] = $old_backup_options['mysqlpath'];
 		}
 
 		$update_db_options = update_option( 'dbmanager_options', $backup_options );

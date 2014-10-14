@@ -49,7 +49,9 @@ if( !empty( $_POST['do'] ) ) {
 					$backup['command'] = $brace.$backup['mysqlpath'].$brace.' --host="'.$backup['host'].'" --user="'.DB_USER.'" --password="'.$backup['password'].'"'.$backup['port'].$backup['sock'].$backup['charset'].' '.DB_NAME.' < '.$brace.$backup['path'].'/'.$database_file.$brace;
 				}
 				if( realpath( $backup['path'] ) === false ) {
-					$text = '<p style="color: red;">' . sprintf( __( '%s is not a valid backup path', 'wp-dbmanager' ), $backup['path'] ) .'</p>';
+					$text = '<p style="color: red;">' . sprintf(__('%s is not a valid backup path', 'wp-dbmanager'), stripslashes( $backup['path'] ) ) . '</p>';
+				} else if( dbmanager_is_valid_path( $backup['mysqlpath'] ) === 0 ) {
+					$text = '<p style="color: red;">' . sprintf(__('%s is not a valid mysql path', 'wp-dbmanager'), stripslashes( $backup['mysqlpath'] ) ) . '</p>';
 				} else {
 					passthru( $backup['command'], $error );
 				}

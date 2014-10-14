@@ -83,7 +83,7 @@ $stats_function_disabled = 0;
 		<?php _e('Checking Backup Folder', 'wp-dbmanager'); ?> <span dir="ltr">(<strong><?php echo stripslashes($backup['path']); ?></strong>)</span> ...<br />
 		<?php
 			if( realpath( $backup['path'] ) === false ) {
-				echo '<p style="color: red;">' . sprintf( __( '%s is not a valid backup path', 'wp-dbmanager' ), $backup['path'] ) . '</p>';
+				echo '<p style="color: red;">' . sprintf( __( '%s is not a valid backup path', 'wp-dbmanager' ), stripslashes( $backup['path'] ) ) . '</p>';
 				$status_count++;
 			} else {
 				if (@is_dir(stripslashes($backup['path']))) {
@@ -103,25 +103,35 @@ $stats_function_disabled = 0;
 	</p>
 	<p>
 		<?php
-			if(@file_exists(stripslashes($backup['mysqldumppath']))) {
-				echo __('Checking MYSQL Dump Path', 'wp-dbmanager').' <span dir="ltr">(<strong>'.stripslashes($backup['mysqldumppath']).'</strong>)</span> ...<br />';
-				echo '<p style="color: green;">'.__('MYSQL dump path exists.', 'wp-dbmanager').'</p>';
+			if( dbmanager_is_valid_path( $backup['mysqldumppath'] ) === 0 ) {
+				echo '<p style="color: red;">' . sprintf( __( '%s is not a valid backup mysqldump path', 'wp-dbmanager' ), stripslashes( $backup['mysqldumppath'] ) ) . '</p>';
 				$status_count++;
 			} else {
-				echo __('Checking MYSQL Dump Path', 'wp-dbmanager').' ...<br />';
-				echo '<p style="color: red;">'.__('MYSQL dump path does NOT exist. Please check your mysqldump path under DB Options. If uncertain, contact your server administrator.', 'wp-dbmanager').'</p>';
+				if (@file_exists(stripslashes($backup['mysqldumppath']))) {
+					echo __('Checking MYSQL Dump Path', 'wp-dbmanager') . ' <span dir="ltr">(<strong>' . stripslashes($backup['mysqldumppath']) . '</strong>)</span> ...<br />';
+					echo '<p style="color: green;">' . __('MYSQL dump path exists.', 'wp-dbmanager') . '</p>';
+					$status_count++;
+				} else {
+					echo __('Checking MYSQL Dump Path', 'wp-dbmanager') . ' ...<br />';
+					echo '<p style="color: red;">' . __('MYSQL dump path does NOT exist. Please check your mysqldump path under DB Options. If uncertain, contact your server administrator.', 'wp-dbmanager') . '</p>';
+				}
 			}
 		?>
 	</p>
 	<p>
 		<?php
-			if(@file_exists(stripslashes($backup['mysqlpath']))) {
-				echo __('Checking MYSQL Path', 'wp-dbmanager').' <span dir="ltr">(<strong>'.stripslashes($backup['mysqlpath']).'</strong>)</span> ...<br />';
-				echo '<p style="color: green;">'.__('MYSQL path exists.', 'wp-dbmanager').'</p>';
+			if( dbmanager_is_valid_path( $backup['mysqlpath'] ) === 0 ) {
+				echo '<p style="color: red;">' . sprintf( __( '%s is not a valid backup mysql path', 'wp-dbmanager' ), stripslashes( $backup['mysqlpath'] ) ) . '</p>';
 				$status_count++;
 			} else {
-				echo __('Checking MYSQL Path', 'wp-dbmanager').' ...<br />';
-				echo '<p style="color: red;">'.__('MYSQL path does NOT exist. Please check your mysql path under DB Options. If uncertain, contact your server administrator.', 'wp-dbmanager').'</p>';
+				if (@file_exists(stripslashes($backup['mysqlpath']))) {
+					echo __('Checking MYSQL Path', 'wp-dbmanager') . ' <span dir="ltr">(<strong>' . stripslashes($backup['mysqlpath']) . '</strong>)</span> ...<br />';
+					echo '<p style="color: green;">' . __('MYSQL path exists.', 'wp-dbmanager') . '</p>';
+					$status_count++;
+				} else {
+					echo __('Checking MYSQL Path', 'wp-dbmanager') . ' ...<br />';
+					echo '<p style="color: red;">' . __('MYSQL path does NOT exist. Please check your mysql path under DB Options. If uncertain, contact your server administrator.', 'wp-dbmanager') . '</p>';
+				}
 			}
 		?>
 	</p>

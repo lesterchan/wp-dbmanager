@@ -27,7 +27,10 @@ Allows you to optimize database, repair database, backup database, restore datab
 * I spent most of my free time creating, updating, maintaining and supporting these plugins, if you really love my plugins and could spare me a couple of bucks, I will really appericiate it. If not feel free to use it without any obligations.
 
 ## Changelog
-* NEW: Use realpath() to check for backup path. Fixes arbitrary command injection using backup path. Props Larry W. Cashdollar
+### Version 2.72
+* FIXED: Use dbmanager_is_valid_path() to check for mysql and mysqldump path. Fixes arbitrary command injection using backup path. Props Larry W. Cashdollari.
+* FIXED: Use realpath() to check for backup path. Fixes arbitrary command injection using backup path. Props Larry W. Cashdollari.
+
 ### Version 2.71
 * NEW: Bump to 4.0
 
@@ -178,7 +181,7 @@ N/A
 ### My database is not backed up / My backup file is 0Kb
 * Ensure that your host allows you to access mysqldump. You can try to narrow the problem by Debugging via SSH:
 1. In `wp-dbmanager.php`
-2. Find `check_backup_files();` on line 243
+2. Find `check_backup_files();` on line 210
 3. Add below it `echo $command;`
 4. Go to `WP-Admin -> Database -> Backup`
 5. Click `Backup`
