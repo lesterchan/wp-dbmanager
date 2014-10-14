@@ -26,6 +26,12 @@ Allows you to optimize database, repair database, backup database, restore datab
 ### Donations
 * I spent most of my free time creating, updating, maintaining and supporting these plugins, if you really love my plugins and could spare me a couple of bucks, I will really appericiate it. If not feel free to use it without any obligations.
 
+### Disclaimer
+* Note that this plugin passes your datababase password via --password in the command line of mysqldump. This is convenient but as a trade off, it is insecure.
+* On some systems, your password becomes visible to system status programs such as ps that may be invoked by other users to display command lines. MySQL clients typically overwrite the command-line password argument with zeros during their initialization sequence. However, there is still a brief interval during which the value is visible. Also, on some systems this overwriting strategy is ineffective and the password remains visible to ps. Source: [End-User Guidelines for Password Security](http://dev.mysql.com/doc/refman/5.5/en/password-security-user.html)
+* If this is a concern to you, I recommend another database backup plugin called [WP-DB-Backup](https://wordpress.org/plugins/wp-db-backup/)
+* To know about the difference between WP-DBManager and WP-DB-backup, checkout __What is the difference between WP-DBManager and WP-DB-Backup?__ in the [FAQ section](https://wordpress.org/plugins/wp-dbmanager/faq/).
+
 ## Changelog
 ### Version 2.72
 * FIXED: Use dbmanager_is_valid_path() to check for mysql and mysqldump path. Fixes arbitrary command injection using backup path. Props Larry W. Cashdollari.
@@ -55,7 +61,7 @@ Allows you to optimize database, repair database, backup database, restore datab
 * NEW: Added nonce To All Forms For Added Security
 
 ### Version 2.61 (30-04-2011)
-* FIXED: Checks File Extension And Sanitise File Name That Is Pass Through The URL When Downloading Database File. Props to [Joakim Jardenberg](http://jardenberg.se "Joakim Jardenberg"), [Jonas Nordstram](http://jonasnordstrom.se "Jonas Nordstr�m"), [Andreas Viklund](http://andreasviklund.com/ "Andreas Viklund")
+* FIXED: Checks File Extension And Sanitise File Name That Is Pass Through The URL When Downloading Database File. Props to [Joakim Jardenberg](http://jardenberg.se "Joakim Jardenberg"), [Jonas Nordstram](http://jonasnordstrom.se "Jonas Nordstram"), [Andreas Viklund](http://andreasviklund.com/ "Andreas Viklund")
 
 ### Version 2.60 (01-12-2009)
 * FIXED: Bug In Cron Backup On Windows Server
@@ -188,7 +194,6 @@ N/A
 6. It should print some debugging statements
 7. Copy that line than run it in SSH
 8. If you need help on SSH contact your host or google for more info
-
 
 ### What is the difference between WP-DBManager and WP-DB-Backup?
 * WP-DBManager uses `mysqldump` application to generate the backup and `mysql` application to restore them via shell.
