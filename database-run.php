@@ -37,18 +37,21 @@ if(!empty($_POST['do'])) {
 					}
 				}
 				if($sql_queries) {
-					foreach($sql_queries as $sql_query) {
-						if (preg_match("/^\\s*(insert|update|replace|delete|create|alter) /i",$sql_query)) {
-							$run_query = $wpdb->query($sql_query);
-							if(!$run_query) {
+					foreach( $sql_queries as $sql_query ) {
+						if ( preg_match( "/LOAD_FILE/i", $sql_query ) ) {
+							$text .= "<p style=\"color: red;\">$sql_query</p>";
+							$totalquerycount++;
+						} elseif( preg_match( "/^\\s*(select|drop|show|grant) /i", $sql_query ) ) {
+							$text .= "<p style=\"color: red;\">$sql_query</p>";
+							$totalquerycount++;
+						} else if ( preg_match( "/^\\s*(insert|update|replace|delete|create|alter) /i", $sql_query ) ) {
+							$run_query = $wpdb->query( $sql_query );
+							if( ! $run_query ) {
 								$text .= "<p style=\"color: red;\">$sql_query</p>";
 							} else {
 								$successquery++;
 								$text .= "<p style=\"color: green;\">$sql_query</p>";
 							}
-							$totalquerycount++;
-						} elseif (preg_match("/^\\s*(select|drop|show|grant) /i",$sql_query)) {
-							$text .= "<p style=\"color: red;\">$sql_query</p>";
 							$totalquerycount++;
 						}
 					}

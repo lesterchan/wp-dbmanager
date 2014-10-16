@@ -60,7 +60,6 @@ add_action('dbmanager_cron_backup', 'cron_dbmanager_backup');
 add_action('dbmanager_cron_optimize', 'cron_dbmanager_optimize');
 add_action('dbmanager_cron_repair', 'cron_dbmanager_repair');
 function cron_dbmanager_backup() {
-	global $wpdb;
 	$backup_options = get_option('dbmanager_options');
 	$backup_email = stripslashes($backup_options['backup_email']);
 	if(intval($backup_options['backup_period']) > 0) {
@@ -87,14 +86,14 @@ function cron_dbmanager_backup() {
 		if(intval($backup_options['backup_gzip']) == 1) {
 			$backup['filename'] = $backup['date'].'_-_'.DB_NAME.'.sql.gz';
 			$backup['filepath'] = $backup['path'].'/'.$backup['filename'];
-			$backup['command'] = $brace.$backup['mysqldumppath'].$brace.' --force --host="'.$backup['host'].'" --user="'.DB_USER.'" --password="'.$backup['password'].'"'.$backup['port'].$backup['sock'].' --add-drop-table --skip-lock-tables '.DB_NAME.' | gzip > '.$brace.$backup['filepath'].$brace;
+			$backup['command'] = escapeshellcmd( $brace.$backup['mysqldumppath'].$brace.' --force --host="'.$backup['host'].'" --user="'.DB_USER.'" --password="'.$backup['password'].'"'.$backup['port'].$backup['sock'].' --add-drop-table --skip-lock-tables '.DB_NAME ). ' | gzip > '.escapeshellcmd( $brace.$backup['filepath'].$brace );
 		} else {
 			$backup['filename'] = $backup['date'].'_-_'.DB_NAME.'.sql';
 			$backup['filepath'] = $backup['path'].'/'.$backup['filename'];
-			$backup['command'] = $brace.$backup['mysqldumppath'].$brace.' --force --host="'.$backup['host'].'" --user="'.DB_USER.'" --password="'.$backup['password'].'"'.$backup['port'].$backup['sock'].' --add-drop-table --skip-lock-tables '.DB_NAME.' > '.$brace.$backup['filepath'].$brace;
+			$backup['command'] = escapeshellcmd( $brace.$backup['mysqldumppath'].$brace.' --force --host="'.$backup['host'].'" --user="'.DB_USER.'" --password="'.$backup['password'].'"'.$backup['port'].$backup['sock'].' --add-drop-table --skip-lock-tables '.DB_NAME ). ' > '.escapeshellcmd( $brace.$backup['filepath'].$brace );
 		}
 		execute_backup($backup['command']);
-		if( !empty( $backup_email ) )
+		if( ! empty( $backup_email ) )
 		{
 			dbmanager_email_backup( $backup_email, $backup['filepath'] );
 		}
@@ -217,16 +216,16 @@ function execute_backup($command) {
 		return sprintf( __( '%s is not a valid mysql path', 'wp-dbmanager' ), stripslashes( $backup_options['mysqlpath'] ) );
 	}
 
-	if(substr(PHP_OS, 0, 3) == 'WIN') {
+	if( substr( PHP_OS, 0, 3 ) === 'WIN' ) {
 		$writable_dir = $backup_options['path'];
 		$tmpnam = $writable_dir.'/wp-dbmanager.bat';
-		$fp = fopen($tmpnam, 'w');
-		fwrite($fp, $command);
-		fclose($fp);
-		system($tmpnam.' > NUL', $error);
-		unlink($tmpnam);
+		$fp = fopen( $tmpnam, 'w' );
+		fwrite ($fp, $command );
+		fclose( $fp );
+		system( $tmpnam.' > NUL', $error );
+		unlink( $tmpnam );
 	} else {
-		passthru($command, $error);
+		passthru( $command, $error );
 	}
 	return $error;
 }

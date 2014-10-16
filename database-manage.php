@@ -44,9 +44,9 @@ if( !empty( $_POST['do'] ) ) {
 					}
 				}
 				if(stristr($database_file, '.gz')) {
-					$backup['command'] = 'gunzip < '.$brace.$backup['path'].'/'.$database_file.$brace.' | '.$brace.$backup['mysqlpath'].$brace.' --host="'.$backup['host'].'" --user="'.DB_USER.'" --password="'.$backup['password'].'"'.$backup['port'].$backup['sock'].$backup['charset'].' '.DB_NAME;
+					$backup['command'] = 'gunzip < '.escapeshellcmd( $brace.$backup['path'].'/'.$database_file.$brace ).' | '.escapeshellcmd( $brace.$backup['mysqlpath'].$brace.' --host="'.$backup['host'].'" --user="'.DB_USER.'" --password="'.$backup['password'].'"'.$backup['port'].$backup['sock'].$backup['charset'].' '.DB_NAME );
 				} else {
-					$backup['command'] = $brace.$backup['mysqlpath'].$brace.' --host="'.$backup['host'].'" --user="'.DB_USER.'" --password="'.$backup['password'].'"'.$backup['port'].$backup['sock'].$backup['charset'].' '.DB_NAME.' < '.$brace.$backup['path'].'/'.$database_file.$brace;
+					$backup['command'] = escapeshellcmd( $brace.$backup['mysqlpath'].$brace.' --host="'.$backup['host'].'" --user="'.DB_USER.'" --password="'.$backup['password'].'"'.$backup['port'].$backup['sock'].$backup['charset'].' '.DB_NAME ).' < '.escapeshellcmd( $brace.$backup['path'].'/'.$database_file.$brace );
 				}
 				if( realpath( $backup['path'] ) === false ) {
 					$text = '<p style="color: red;">' . sprintf(__('%s is not a valid backup path', 'wp-dbmanager'), stripslashes( $backup['path'] ) ) . '</p>';
