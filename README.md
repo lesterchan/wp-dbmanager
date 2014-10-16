@@ -34,8 +34,8 @@ Allows you to optimize database, repair database, backup database, restore datab
 
 ## Changelog
 ### Version 2.72
-* FIXED: Uses escapeshellcmd() to escape shell commands
-* FIXED: Do not allow LOAD_FILE to be run
+* FIXED: Uses escapeshellcmd() to escape shell commands. Props Larry W. Cashdollari.
+* FIXED: Do not allow LOAD_FILE to be run. Props Larry W. Cashdollari.
 * FIXED: Uses dbmanager_is_valid_path() to check for mysql and mysqldump path. Fixes arbitrary command injection using backup path. Props Larry W. Cashdollari.
 * FIXED: Uses realpath() to check for backup path. Fixes arbitrary command injection using backup path. Props Larry W. Cashdollari.
 
