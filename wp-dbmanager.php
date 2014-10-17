@@ -76,9 +76,9 @@ function cron_dbmanager_backup() {
 			$db_host = explode(':', DB_HOST);
 			$backup['host'] = $db_host[0];
 			if(intval($db_host[1]) != 0) {
-				$backup['port'] = ' --port="'.intval($db_host[1]).'"';
+				$backup['port'] = ' --port=' . escapeshellarg( intval( $db_host[1] ) );
 			} else {
-				$backup['sock'] = ' --socket="'.$db_host[1].'"';
+				$backup['sock'] = ' --socket=' . escapeshellarg( $db_host[1] );
 			}
 		}
 		$backup['command'] = '';
@@ -86,11 +86,11 @@ function cron_dbmanager_backup() {
 		if(intval($backup_options['backup_gzip']) == 1) {
 			$backup['filename'] = $backup['date'].'_-_'.DB_NAME.'.sql.gz';
 			$backup['filepath'] = $backup['path'].'/'.$backup['filename'];
-			$backup['command'] = escapeshellcmd( $brace.$backup['mysqldumppath'].$brace.' --force --host="'.$backup['host'].'" --user="'.DB_USER.'" --password="'.$backup['password'].'"'.$backup['port'].$backup['sock'].' --add-drop-table --skip-lock-tables '.DB_NAME ). ' | gzip > '.escapeshellcmd( $brace.$backup['filepath'].$brace );
+			$backup['command'] = escapeshellcmd( $brace . $backup['mysqldumppath'] . $brace ) . ' --force --host=' . escapeshellarg( $backup['host'] ).' --user=' . escapeshellarg( DB_USER ) . ' --password=' . escapeshellarg( $backup['password'] ) . $backup['port'] . $backup['sock'] . ' --add-drop-table --skip-lock-tables ' . DB_NAME . ' | gzip > '.escapeshellcmd( $brace . $backup['filepath'] . $brace );
 		} else {
 			$backup['filename'] = $backup['date'].'_-_'.DB_NAME.'.sql';
 			$backup['filepath'] = $backup['path'].'/'.$backup['filename'];
-			$backup['command'] = escapeshellcmd( $brace.$backup['mysqldumppath'].$brace.' --force --host="'.$backup['host'].'" --user="'.DB_USER.'" --password="'.$backup['password'].'"'.$backup['port'].$backup['sock'].' --add-drop-table --skip-lock-tables '.DB_NAME ). ' > '.escapeshellcmd( $brace.$backup['filepath'].$brace );
+			$backup['command'] = escapeshellcmd( $brace . $backup['mysqldumppath'] . $brace ) . ' --force --host=' . escapeshellarg( $backup['host'] ).' --user=' . escapeshellarg( DB_USER ). ' --password=' . escapeshellarg( $backup['password'] ) . $backup['port'] . $backup['sock'] . ' --add-drop-table --skip-lock-tables ' . DB_NAME . ' > '.escapeshellcmd( $brace . $backup['filepath'] . $brace );
 		}
 		execute_backup($backup['command']);
 		if( ! empty( $backup_email ) )
