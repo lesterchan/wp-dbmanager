@@ -4,7 +4,7 @@ Donate link: http://lesterchan.net/site/donation/
 Tags: database, manage, wp-dbmanager, manager, table, optimize, backup, queries, query, drop, empty, tables, table, run, repair, cron, schedule, scheduling, automatic  
 Requires at least: 3.9  
 Tested up to: 4.0  
-Stable tag: 2.73
+Stable tag: 2.73  
 
 Manages your WordPress database.
 
