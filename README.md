@@ -4,7 +4,7 @@ Donate link: http://lesterchan.net/site/donation/
 Tags: database, manage, wp-dbmanager, manager, table, optimize, backup, queries, query, drop, empty, tables, table, run, repair, cron, schedule, scheduling, automatic  
 Requires at least: 3.9  
 Tested up to: 4.0  
-Stable tag: 2.73  
+Stable tag: 2.74  
 
 Manages your WordPress database.
 
@@ -33,6 +33,8 @@ Allows you to optimize database, repair database, backup database, restore datab
 * To know about the difference between WP-DBManager and WP-DB-backup, checkout __What is the difference between WP-DBManager and WP-DB-Backup?__ in the [FAQ section](https://wordpress.org/plugins/wp-dbmanager/faq/).
 
 ## Changelog
+* FIXED: Lots of people are still having problems with database password. Now I don't pass it through escapeshellarg()
+
 ### Version 2.73
 * FIXED: Unable to backup/restore database if user database password has certain special characters in them
 
