@@ -42,11 +42,11 @@ if(!empty($_POST['do'])) {
 			if($gzip == 1) {
 				$backup['filename'] = $backup['date'].'_-_'.DB_NAME.'.sql.gz';
 				$backup['filepath'] = $backup['path'].'/'.$backup['filename'];
-				$backup['command'] = escapeshellcmd( $brace . $backup['mysqldumppath'] . $brace ) . ' --force --host=' . escapeshellarg( $backup['host'] ) . ' --user=' . escapeshellarg( DB_USER ) . ' --password=' . escapeshellarg( $backup['password'] ) . $backup['port'] . $backup['sock'] . $backup['charset'] . ' --add-drop-table --skip-lock-tables ' . DB_NAME . ' | gzip > ' . escapeshellcmd( $brace . $backup['filepath'] . $brace );
+				$backup['command'] = escapeshellcmd( $brace . $backup['mysqldumppath'] . $brace ) . ' --force --host=' . escapeshellarg( $backup['host'] ) . ' --user=' . escapeshellarg( DB_USER ) . ' --password="' . $backup['password'] . '"' . $backup['port'] . $backup['sock'] . $backup['charset'] . ' --add-drop-table --skip-lock-tables ' . DB_NAME . ' | gzip > ' . escapeshellcmd( $brace . $backup['filepath'] . $brace );
 			} else {
 				$backup['filename'] = $backup['date'].'_-_'.DB_NAME.'.sql';
 				$backup['filepath'] = $backup['path'].'/'.$backup['filename'];
-				$backup['command'] = escapeshellcmd( $brace . $backup['mysqldumppath'] . $brace ) . ' --force --host=' . escapeshellarg( $backup['host'] ) . ' --user=' . escapeshellarg( DB_USER ) . ' --password=' . escapeshellarg( $backup['password'] ) . $backup['port'] . $backup['sock'] . $backup['charset'] . ' --add-drop-table --skip-lock-tables ' . DB_NAME . ' > ' . escapeshellcmd( $brace . $backup['filepath'] . $brace );
+				$backup['command'] = escapeshellcmd( $brace . $backup['mysqldumppath'] . $brace ) . ' --force --host=' . escapeshellarg( $backup['host'] ) . ' --user=' . escapeshellarg( DB_USER ) . ' --password="' . $backup['password'] . '"' . $backup['port'] . $backup['sock'] . $backup['charset'] . ' --add-drop-table --skip-lock-tables ' . DB_NAME . ' > ' . escapeshellcmd( $brace . $backup['filepath'] . $brace );
 			}
 
 			$error = execute_backup($backup['command']);

@@ -3,7 +3,7 @@
 Plugin Name: WP-DBManager
 Plugin URI: http://lesterchan.net/portfolio/programming/php/
 Description: Manages your WordPress database. Allows you to optimize database, repair database, backup database, restore database, delete backup database , drop/empty tables and run selected queries. Supports automatic scheduling of backing up, optimizing and repairing of database.
-Version: 2.73
+Version: 2.74
 Author: Lester 'GaMerZ' Chan
 Author URI: http://lesterchan.net
 Text Domain: wp-dbmanager
@@ -86,11 +86,11 @@ function cron_dbmanager_backup() {
 		if(intval($backup_options['backup_gzip']) == 1) {
 			$backup['filename'] = $backup['date'].'_-_'.DB_NAME.'.sql.gz';
 			$backup['filepath'] = $backup['path'].'/'.$backup['filename'];
-			$backup['command'] = escapeshellcmd( $brace . $backup['mysqldumppath'] . $brace ) . ' --force --host=' . escapeshellarg( $backup['host'] ).' --user=' . escapeshellarg( DB_USER ) . ' --password=' . escapeshellarg( $backup['password'] ) . $backup['port'] . $backup['sock'] . ' --add-drop-table --skip-lock-tables ' . DB_NAME . ' | gzip > '.escapeshellcmd( $brace . $backup['filepath'] . $brace );
+			$backup['command'] = escapeshellcmd( $brace . $backup['mysqldumppath'] . $brace ) . ' --force --host=' . escapeshellarg( $backup['host'] ).' --user=' . escapeshellarg( DB_USER ) . ' --password="' . $backup['password'] . '"' . $backup['port'] . $backup['sock'] . ' --add-drop-table --skip-lock-tables ' . DB_NAME . ' | gzip > '.escapeshellcmd( $brace . $backup['filepath'] . $brace );
 		} else {
 			$backup['filename'] = $backup['date'].'_-_'.DB_NAME.'.sql';
 			$backup['filepath'] = $backup['path'].'/'.$backup['filename'];
-			$backup['command'] = escapeshellcmd( $brace . $backup['mysqldumppath'] . $brace ) . ' --force --host=' . escapeshellarg( $backup['host'] ).' --user=' . escapeshellarg( DB_USER ). ' --password=' . escapeshellarg( $backup['password'] ) . $backup['port'] . $backup['sock'] . ' --add-drop-table --skip-lock-tables ' . DB_NAME . ' > '.escapeshellcmd( $brace . $backup['filepath'] . $brace );
+			$backup['command'] = escapeshellcmd( $brace . $backup['mysqldumppath'] . $brace ) . ' --force --host=' . escapeshellarg( $backup['host'] ).' --user=' . escapeshellarg( DB_USER ). ' --password="' . $backup['password'] . '"' . $backup['port'] . $backup['sock'] . ' --add-drop-table --skip-lock-tables ' . DB_NAME . ' > '.escapeshellcmd( $brace . $backup['filepath'] . $brace );
 		}
 		execute_backup($backup['command']);
 		if( ! empty( $backup_email ) )
