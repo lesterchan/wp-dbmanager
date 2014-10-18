@@ -15,7 +15,6 @@ $backup['date'] = current_time('timestamp');
 $backup['mysqldumppath'] = $backup_options['mysqldumppath'];
 $backup['mysqlpath'] = $backup_options['mysqlpath'];
 $backup['path'] = $backup_options['path'];
-$backup['password'] = str_replace('$', '\$', DB_PASSWORD);
 $backup['charset'] = ' --default-character-set="utf8"';
 
 ### Form Processing
@@ -42,22 +41,20 @@ if(!empty($_POST['do'])) {
 			if($gzip == 1) {
 				$backup['filename'] = $backup['date'].'_-_'.DB_NAME.'.sql.gz';
 				$backup['filepath'] = $backup['path'].'/'.$backup['filename'];
-				$backup['command'] = escapeshellcmd( $brace . $backup['mysqldumppath'] . $brace ) . ' --force --host=' . escapeshellarg( $backup['host'] ) . ' --user=' . escapeshellarg( DB_USER ) . ' --password="' . $backup['password'] . '"' . $backup['port'] . $backup['sock'] . $backup['charset'] . ' --add-drop-table --skip-lock-tables ' . DB_NAME . ' | gzip > ' . escapeshellcmd( $brace . $backup['filepath'] . $brace );
+				$backup['command'] = escapeshellcmd( $brace . $backup['mysqldumppath'] . $brace ) . ' --force --host=' . escapeshellarg( $backup['host'] ) . ' --user=' . escapeshellarg( DB_USER ) . ' --password=' . escapeshellarg( DB_PASSWORD ) . $backup['port'] . $backup['sock'] . $backup['charset'] . ' --add-drop-table --skip-lock-tables ' . DB_NAME . ' | gzip > ' . escapeshellcmd( $brace . $backup['filepath'] . $brace );
 			} else {
 				$backup['filename'] = $backup['date'].'_-_'.DB_NAME.'.sql';
 				$backup['filepath'] = $backup['path'].'/'.$backup['filename'];
-				$backup['command'] = escapeshellcmd( $brace . $backup['mysqldumppath'] . $brace ) . ' --force --host=' . escapeshellarg( $backup['host'] ) . ' --user=' . escapeshellarg( DB_USER ) . ' --password="' . $backup['password'] . '"' . $backup['port'] . $backup['sock'] . $backup['charset'] . ' --add-drop-table --skip-lock-tables ' . DB_NAME . ' > ' . escapeshellcmd( $brace . $backup['filepath'] . $brace );
+				$backup['command'] = escapeshellcmd( $brace . $backup['mysqldumppath'] . $brace ) . ' --force --host=' . escapeshellarg( $backup['host'] ) . ' --user=' . escapeshellarg( DB_USER ) . ' --password=' . escapeshellarg( DB_PASSWORD ) . $backup['port'] . $backup['sock'] . $backup['charset'] . ' --add-drop-table --skip-lock-tables ' . DB_NAME . ' > ' . escapeshellcmd( $brace . $backup['filepath'] . $brace );
 			}
-
-			$error = execute_backup($backup['command']);
-			if(!is_writable($backup['path'])) {
+			$error = execute_backup( $backup['command'] );
+			if(!is_writable( $backup['path'] ) ) {
 				$text = '<p style="color: red;">'.sprintf(__('Database Failed To Backup On \'%s\'. Backup Folder Not Writable.', 'wp-dbmanager'), $current_date).'</p>';
-			} elseif(filesize($backup['filepath']) == 0) {
-				unlink($backup['filepath']);
+			} elseif( is_file( $backup['filepath'] ) && filesize( $backup['filepath'] ) === 0 ) {
 				$text = '<p style="color: red;">'.sprintf(__('Database Failed To Backup On \'%s\'. Backup File Size Is 0KB.', 'wp-dbmanager'), $current_date).'</p>';
-			} elseif(!is_file($backup['filepath'])) {
+			} elseif( ! is_file( $backup['filepath'] ) ) {
 				$text = '<p style="color: red;">'.sprintf(__('Database Failed To Backup On \'%s\'. Invalid Backup File Path.', 'wp-dbmanager'), $current_date).'</p>';
-			} elseif($error) {
+			} elseif( $error ) {
 				$text = '<p style="color: red;">'.sprintf(__('Database Failed To Backup On \'%s\'.', 'wp-dbmanager'), $current_date).'</p>';
 			} else {
 				$text = '<p style="color: green;">'.sprintf(__('Database Backed Up Successfully On \'%s\'.', 'wp-dbmanager'), $current_date).'</p>';
@@ -75,7 +72,7 @@ $backup['filename'] = $backup['date'].'_-_'.DB_NAME.'.sql';
 $status_count = 0;
 $stats_function_disabled = 0;
 ?>
-<?php if(!empty($text)) { echo '<!-- Last Action --><div id="message" class="updated fade"><p>'.$text.'</p></div>'; } ?>
+<?php if( ! empty( $text ) ) { echo '<div id="message" class="updated">'.$text.'</div>'; } ?>
 <!-- Checking Backup Status -->
 <div class="wrap">
 	<h2><?php _e('Backup Database', 'wp-dbmanager'); ?></h2>

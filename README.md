@@ -33,13 +33,13 @@ Allows you to optimize database, repair database, backup database, restore datab
 * To know about the difference between WP-DBManager and WP-DB-backup, checkout __What is the difference between WP-DBManager and WP-DB-Backup?__ in the [FAQ section](https://wordpress.org/plugins/wp-dbmanager/faq/).
 
 ## Changelog
-* FIXED: Lots of people are still having problems with database password. Now I don't pass it through escapeshellarg()
+* FIXED: escapeshellarg() already escape $, no need to double escape it
 
 ### Version 2.73
 * FIXED: Unable to backup/restore database if user database password has certain special characters in them
 
 ### Version 2.72
-* FIXED: Uses escapeshellcmd() to escape shell commands. Props Larry W. Cashdollari.
+* FIXED: Use escapeshellcmd() to escape shell commands. Props Larry W. Cashdollari.
 * FIXED: Do not allow LOAD_FILE to be run. Props Larry W. Cashdollari.
 * FIXED: Uses dbmanager_is_valid_path() to check for mysql and mysqldump path. Fixes arbitrary command injection using backup path. Props Larry W. Cashdollari.
 * FIXED: Uses realpath() to check for backup path. Fixes arbitrary command injection using backup path. Props Larry W. Cashdollari.
