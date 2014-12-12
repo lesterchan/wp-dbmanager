@@ -34,6 +34,8 @@ Allows you to optimize database, repair database, backup database, restore datab
 
 ## Changelog
 ### Version 2.75
+* FIXED: When activating the plugin, copy index.php to the backup folder
+* FIXED: If you are on Apache, .htaccess will be copied to the backup folder, if you are on IIS, Web.config will be copied to the backup folder
 * FIXED: When choosing 1 Month(s) for Backup/Optimize/Repair, the next date calculation is wrong
 
 ### Version 2.74
@@ -164,10 +166,12 @@ Allows you to optimize database, repair database, backup database, restore datab
 2. Put: `Folder: wp-dbmanager`
 3. Activate `WP-DBManager` Plugin
 4. Rename `htaccess.txt` to `.htaccess` file in `Folder: wp-content/plugins/wp-dbmanager`
-5. The script will automatically create a folder called `backup-db` in the wp-content folder if that folder is writable. If it is not created, please create it and CHMOD it to 777
+5. The script will automatically create a folder called `backup-db` in the wp-content folder if that folder is writable. If it is not created, please create the folder and ensure that the folder is writable
 6. Open `Folder: wp-content/backup-db`
-7. Move the `.htaccess` file from `Folder: wp-content/plugins/wp-dbmanager` to `Folder: wp-content/backup-db`
-8. Go to `WP-Admin -> Database -> DB Options` to configure the database options.
+7. If you are on Apache, move the `htaccess.txt` file from `Folder: wp-content/plugins/wp-dbmanager` to `Folder: wp-content/backup-db/.htaccess` if it is not there already
+8. If you are on IIS, move the `Web.config.txt` file from `Folder: wp-content/plugins/wp-dbmanager` to `Folder: wp-content/backup-db/Web.config` if it is not there already
+9. Move `index.php` file from `Folder: wp-content/plugins/wp-dbmanager` to `Folder: wp-content/backup-db/index.php` if it is not there already
+10. Go to `WP-Admin -> Database -> DB Options` to configure the database options
 
 ## Upgrading
 

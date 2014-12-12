@@ -201,6 +201,15 @@ function detect_mysql() {
 	return $paths;
 }
 
+### Function: Check if WordPress is installed on IIS
+function is_iis() {
+	$server_software = strtolower( $_SERVER['SERVER_SOFTWARE'] );
+	if ( strpos( $server_software, 'microsoft-iis') !== false ) {
+		return true;
+	}
+
+	return false;
+}
 
 ### Executes OS-Dependent mysqldump Command (By: Vlad Sharanhovich)
 function execute_backup($command) {
@@ -423,15 +432,30 @@ function dbmanager_activation( $network_wide )
 
 function dbmanager_activate() {
 	$plugin_path = plugin_dir_path( __FILE__ );
-	$default_backup_folder = WP_CONTENT_DIR . '/backup-db';
+	$backup_path = WP_CONTENT_DIR . '/backup-db';
+	$backup_options = get_option( 'dbmanager_options' );
+
+	if( ! empty( $backup_options['path'] ) ) {
+		$backup_path = $backup_options['path'];
+	}
 
 	// Create Backup Folder
-	if( is_dir( $default_backup_folder ) && wp_is_writable( $default_backup_folder ) )
+	if( is_dir( $backup_path ) && wp_is_writable( $backup_path ) )
 	{
-		if( wp_mkdir_p( $default_backup_folder ) )
+		if( wp_mkdir_p( $backup_path ) )
 		{
-			@copy( $plugin_path . 'htaccess.txt', $default_backup_folder . '/.htaccess' );
-			@chmod( $default_backup_folder, 0750 );
+			if( ! is_file( $backup_path . '/.htaccess' ) ) {
+				@copy( $plugin_path . 'htaccess.txt', $backup_path . '/.htaccess' );
+			}
+			if( is_iis() ) {
+				if ( ! is_file( $backup_path . '/Web.config' ) ) {
+					@copy( $plugin_path . 'Web.config.txt', $backup_path . '/Web.config' );
+				}
+			}
+			if( ! is_file( $backup_path . '/index.php' ) ) {
+				@copy( $plugin_path . 'index.php', $backup_path . '/index.php' );
+			}
+			@chmod( $backup_path, 0750 );
 		}
 	}
 
