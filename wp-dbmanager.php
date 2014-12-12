@@ -154,21 +154,34 @@ function dbmanager_admin_notices() {
 	$backup_options = get_option( 'dbmanager_options' );
 	$backup_folder_writable = ( is_dir( $backup_options['path'] ) && wp_is_writable( $backup_options['path'] ) );
 	$htaccess_exists = ( file_exists( $backup_options['path'] . '/.htaccess' ) );
+	$webconfig_exists =  ( file_exists( $backup_options['path'] . '/Web.config' ) );
+	$index_exists =  ( file_exists( $backup_options['path'] . '/index.php' ) );
 
-	if( !isset( $backup_options['hide_admin_notices'] ) || intval( $backup_options['hide_admin_notices'] ) === 0 )
+	if( ! isset( $backup_options['hide_admin_notices'] ) || intval( $backup_options['hide_admin_notices'] ) === 0 )
 	{
-		if( !$backup_folder_writable || !$htaccess_exists ) {
+		if( ! $backup_folder_writable || ! $index_exists || ( is_iis() && ! $webconfig_exists ) || ( ! is_iis() && ! $htaccess_exists ) ) {
+
 			echo '<div class="error">';
-
 			if( !$backup_folder_writable ) {
-				echo '<p style="font-weight: bold;">'.__('Your backup folder is NOT writable', 'wp-postratings').'</p>';
-				echo '<p>'.sprintf( __( 'To correct this issue, make the folder <strong>%s</strong> writable.', 'wp-dbmanager'), $backup_options['path'] ).'</p>';
+				echo '<p style="font-weight: bold;">' . __( 'Your backup folder is NOT writable', 'wp-postratings') . '</p>';
+				echo '<p>'.sprintf( __( 'To correct this issue, make the folder <strong>%s</strong> writable.', 'wp-dbmanager' ), $backup_options['path'] ).'</p>';
 			}
-			if( !$htaccess_exists ) {
-				echo '<p style="font-weight: bold;">'.__('Your backup folder MIGHT be visible to the public', 'wp-dbmanager').'</p>';
-				echo '<p>'.sprintf( __( 'To correct this issue, move the file from <strong>%s</strong> to <strong>%s</strong>', 'wp-dbmanager'), plugin_dir_path( __FILE__ ) . 'htaccess.txt', $backup_options['path'] .'/.htaccess' ).'</p>';
+			if( ! $index_exists || ( is_iis() && ! $webconfig_exists ) || ( ! is_iis() && ! $htaccess_exists ) ) {
+				echo '<p style="font-weight: bold;">'.__( 'Your backup folder MIGHT be visible to the public', 'wp-dbmanager' ).'</p>';
 			}
-
+			if( is_iis() ) {
+				if( ! $webconfig_exists ) {
+					echo '<p>'.sprintf( __( 'To correct this issue, move the file from <strong>%s</strong> to <strong>%s</strong>', 'wp-dbmanager'), plugin_dir_path( __FILE__ ) . 'Web.config.txt', $backup_options['path'] .'/Web.config' ).'</p>';
+				}
+			} else {
+				if( ! $htaccess_exists ) {
+					echo '<p>'.sprintf( __( 'To correct this issue, move the file from <strong>%s</strong> to <strong>%s</strong>', 'wp-dbmanager'), plugin_dir_path( __FILE__ ) . 'htaccess.txt', $backup_options['path'] .'/.htaccess' ).'</p>';
+				}
+			}
+			if( ! $index_exists ) {
+				echo '<p>'.sprintf( __( 'To correct this issue, move the file from <strong>%s</strong> to <strong>%s</strong>', 'wp-dbmanager'), plugin_dir_path( __FILE__ ) . 'index.php', $backup_options['path'] .'/index.php' ).'</p>';
+			}
+			echo '<p>' . sprintf( __( '<a href="%s">Click here</a> to let WP-DBManager try to fix it', 'wp-dbmanager' ), wp_nonce_url( admin_url( 'admin.php?page=wp-dbmanager/database-backup.php&try_fix=1' ), 'wp-dbmanager_fix' ) ) . '</a></p>';
 			echo '</div>';
 		}
 	}
@@ -431,6 +444,17 @@ function dbmanager_activation( $network_wide )
 }
 
 function dbmanager_activate() {
+	dbmanager_create_backup_folder();
+
+	// Set 'manage_database' Capabilities To Administrator
+	$role = get_role( 'administrator' );
+	if( ! $role->has_cap( 'manage_database') )
+	{
+		$role->add_cap( 'manage_database' );
+	}
+}
+
+function dbmanager_create_backup_folder() {
 	$plugin_path = plugin_dir_path( __FILE__ );
 	$backup_path = WP_CONTENT_DIR . '/backup-db';
 	$backup_options = get_option( 'dbmanager_options' );
@@ -444,12 +468,13 @@ function dbmanager_activate() {
 	{
 		if( wp_mkdir_p( $backup_path ) )
 		{
-			if( ! is_file( $backup_path . '/.htaccess' ) ) {
-				@copy( $plugin_path . 'htaccess.txt', $backup_path . '/.htaccess' );
-			}
 			if( is_iis() ) {
 				if ( ! is_file( $backup_path . '/Web.config' ) ) {
 					@copy( $plugin_path . 'Web.config.txt', $backup_path . '/Web.config' );
+				}
+			} else {
+				if( ! is_file( $backup_path . '/.htaccess' ) ) {
+					@copy( $plugin_path . 'htaccess.txt', $backup_path . '/.htaccess' );
 				}
 			}
 			if( ! is_file( $backup_path . '/index.php' ) ) {
@@ -458,12 +483,15 @@ function dbmanager_activate() {
 			@chmod( $backup_path, 0750 );
 		}
 	}
+}
 
-	// Set 'manage_database' Capabilities To Administrator
-	$role = get_role( 'administrator' );
-	if( !$role->has_cap( 'manage_database') )
-	{
-		$role->add_cap( 'manage_database' );
+add_action( 'init', 'dbmanager_try_fix' );
+function dbmanager_try_fix() {
+	if ( ! empty( $_GET['try_fix'] ) ) {
+		if ( intval( $_GET['try_fix'] ) === 1 ) {
+			check_admin_referer( 'wp-dbmanager_fix' );
+			dbmanager_create_backup_folder();
+		}
 	}
 }
 

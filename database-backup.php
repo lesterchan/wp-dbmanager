@@ -63,7 +63,6 @@ if(!empty($_POST['do'])) {
 	}
 }
 
-
 ### Backup File Name
 $backup['filename'] = $backup['date'].'_-_'.DB_NAME.'.sql';
 $backup_path = stripslashes( $backup['path'] );
@@ -79,16 +78,17 @@ $stats_function_disabled = 0;
 	<h3><?php _e('Checking Security Status', 'wp-dbmanager'); ?></h3>
 	<p>
 		<?php
-			if( ! is_file( $backup_path . '/.htaccess' ) ) {
-				echo '<p style="color: red;">' . sprintf( __( '.htaccess is missing from %s', 'wp-dbmanager' ), $backup_path ) . '</p>';
-			} else {
-				echo '<p style="color: green;">' . sprintf( __( '.htaccess is present in %s', 'wp-dbmanager' ), $backup_path ) . '</p>';
-			}
 			if( is_iis() ) {
 				if ( ! is_file( $backup_path . '/Web.config' ) ) {
 					echo '<p style="color: red;">' . sprintf( __( 'Web.config is missing from %s', 'wp-dbmanager' ), $backup_path ) . '</p>';
 				} else {
 					echo '<p style="color: green;">' . sprintf( __( 'Web.config is present in %s', 'wp-dbmanager' ), $backup_path ) . '</p>';
+				}
+			} else {
+				if( ! is_file( $backup_path . '/.htaccess' ) ) {
+					echo '<p style="color: red;">' . sprintf( __( '.htaccess is missing from %s', 'wp-dbmanager' ), $backup_path ) . '</p>';
+				} else {
+					echo '<p style="color: green;">' . sprintf( __( '.htaccess is present in %s', 'wp-dbmanager' ), $backup_path ) . '</p>';
 				}
 			}
 			if( ! is_file( $backup_path . '/index.php' ) ) {
