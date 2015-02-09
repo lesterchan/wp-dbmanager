@@ -34,6 +34,7 @@ Allows you to optimize database, repair database, backup database, restore datab
 
 ## Changelog
 ### Version 2.76
+* FIXED: Missing / for Windows
 
 ### Version 2.75
 * FIXED: When activating the plugin, copy index.php to the backup folder
