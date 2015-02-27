@@ -34,6 +34,7 @@ Allows you to optimize database, repair database, backup database, restore datab
 
 ## Changelog
 ### Version 2.76
+* NEW: Add wp_dbmanager_before_escapeshellcmd action just before escapeshellcmd()
 * FIXED: Missing / for Windows
 
 ### Version 2.75
