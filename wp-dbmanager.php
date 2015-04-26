@@ -499,28 +499,26 @@ function dbmanager_try_fix() {
 
 
 ### Function: Download Database
-add_action('init', 'download_database');
+add_action( 'init', 'download_database' );
 function download_database() {
-	if(isset($_POST['do']) && $_POST['do'] == __('Download', 'wp-dbmanager') && !empty($_POST['database_file'])) {
-		if(strpos($_SERVER['HTTP_REFERER'], admin_url('admin.php?page=wp-dbmanager/database-manage.php')) !== false) {
-			$database_file = trim($_POST['database_file']);
-			if(substr($database_file, strlen($database_file) - 4, 4) == '.sql' || substr($database_file, strlen($database_file) - 7, 7) == '.sql.gz') {
-				check_admin_referer('wp-dbmanager_manage');
-				$backup_options = get_option('dbmanager_options');
-				$clean_file_name = sanitize_file_name($database_file);
-				$clean_file_name = str_replace('sql_.gz', 'sql.gz', $clean_file_name);
-				$file_path = $backup_options['path'].'/'.$clean_file_name;
-				header("Pragma: public");
-				header("Expires: 0");
-				header("Cache-Control: must-revalidate, post-check=0, pre-check=0");
-				header("Content-Type: application/force-download");
-				header("Content-Type: application/octet-stream");
-				header("Content-Type: application/download");
-				header("Content-Disposition: attachment; filename=".basename($file_path).";");
-				header("Content-Transfer-Encoding: binary");
-				header("Content-Length: ".filesize($file_path));
-				@readfile($file_path);
-			}
+	if( isset( $_POST['do'] ) && $_POST['do'] === __( 'Download', 'wp-dbmanager' ) && ! empty( $_POST['database_file'] ) ) {
+		check_admin_referer( 'wp-dbmanager_manage' );
+		$database_file = trim( $_POST['database_file'] );
+		if( substr( $database_file, strlen( $database_file ) -4, 4 ) === '.sql' || substr( $database_file, strlen( $database_file ) -7, 7 ) === '.sql.gz' ) {
+			$backup_options = get_option( 'dbmanager_options' );
+			$clean_file_name = sanitize_file_name( $database_file );
+			$clean_file_name = str_replace( 'sql_.gz', 'sql.gz', $clean_file_name );
+			$file_path = $backup_options['path'].'/'.$clean_file_name;
+			header( 'Pragma: public' );
+			header( 'Expires: 0' );
+			header( 'Cache-Control: must-revalidate, post-check=0, pre-check=0' );
+			header( 'Content-Type: application/force-download' );
+			header( 'Content-Type: application/octet-stream' );
+			header( 'Content-Type: application/download' );
+			header( 'Content-Disposition: attachment; filename=' . basename( $file_path ) . ';' );
+			header( 'Content-Transfer-Encoding: binary' );
+			header( 'Content-Length: '.filesize( $file_path ) );
+			@readfile( $file_path );
 		}
 		exit();
 	}

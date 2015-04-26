@@ -34,6 +34,7 @@ Allows you to optimize database, repair database, backup database, restore datab
 
 ## Changelog
 ### Version 2.77
+* FIXED: Blank screen downloading backup
 * FIXED: Remove MySQL Version check to display tables stats
 
 ### Version 2.76
