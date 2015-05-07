@@ -44,10 +44,10 @@ if( !empty( $_POST['do'] ) ) {
 				}
 				if(stristr($database_file, '.gz')) {
 					do_action( 'wp_dbmanager_before_escapeshellcmd' );
-					$backup['command'] = 'gunzip < ' . escapeshellcmd( $brace . $backup['path'] . '/' . $database_file . $brace ) .' | '. escapeshellcmd( $brace . $backup['mysqlpath'] . $brace ) . ' --host=' . escapeshellarg( $backup['host'] ) . ' --user=' . escapeshellarg( DB_USER ) . ' --password=' . escapeshellarg( DB_PASSWORD ) . $backup['port'] . $backup['sock'] . $backup['charset'] . ' ' . DB_NAME;
+					$backup['command'] = 'gunzip < ' . $brace . escapeshellcmd( $backup['path'] . '/' . $database_file ) . $brace . ' | ' . $brace . escapeshellcmd( $backup['mysqlpath'] ) . $brace . ' --host=' . escapeshellarg( $backup['host'] ) . ' --user=' . escapeshellarg( DB_USER ) . ' --password=' . escapeshellarg( DB_PASSWORD ) . $backup['port'] . $backup['sock'] . $backup['charset'] . ' ' . DB_NAME;
 				} else {
 					do_action( 'wp_dbmanager_before_escapeshellcmd' );
-					$backup['command'] = escapeshellcmd( $brace . $backup['mysqlpath'] . $brace ) . ' --host=' . escapeshellarg( $backup['host'] ) . ' --user=' . escapeshellarg( DB_USER ) . ' --password=' . escapeshellarg( DB_PASSWORD ) . $backup['port'] . $backup['sock'] . $backup['charset'] . ' ' . DB_NAME . ' < '.escapeshellcmd( $brace . $backup['path'] . '/' . $database_file . $brace );
+					$backup['command'] = $brace . escapeshellcmd( $backup['mysqlpath'] ) . $brace . ' --host=' . escapeshellarg( $backup['host'] ) . ' --user=' . escapeshellarg( DB_USER ) . ' --password=' . escapeshellarg( DB_PASSWORD ) . $backup['port'] . $backup['sock'] . $backup['charset'] . ' ' . DB_NAME . ' < ' . $brace . escapeshellcmd( $backup['path'] . '/' . $database_file ) . $brace;
 				}
 				if( realpath( $backup['path'] ) === false ) {
 					$text = '<p style="color: red;">' . sprintf(__('%s is not a valid backup path', 'wp-dbmanager'), stripslashes( $backup['path'] ) ) . '</p>';

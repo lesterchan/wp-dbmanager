@@ -43,12 +43,12 @@ if(!empty($_POST['do'])) {
 				$backup['filename'] = $backup['date'].'_-_'.DB_NAME.'.sql.gz';
 				$backup['filepath'] = $backup['path'].'/'.$backup['filename'];
 				do_action( 'wp_dbmanager_before_escapeshellcmd' );
-				$backup['command'] = escapeshellcmd( $brace . $backup['mysqldumppath'] . $brace ) . ' --force --host=' . escapeshellarg( $backup['host'] ) . ' --user=' . escapeshellarg( DB_USER ) . ' --password=' . escapeshellarg( DB_PASSWORD ) . $backup['port'] . $backup['sock'] . $backup['charset'] . ' --add-drop-table --skip-lock-tables ' . DB_NAME . ' | gzip > ' . escapeshellcmd( $brace . $backup['filepath'] . $brace );
+				$backup['command'] = $brace . escapeshellcmd( $backup['mysqldumppath'] ) . $brace . ' --force --host=' . escapeshellarg( $backup['host'] ) . ' --user=' . escapeshellarg( DB_USER ) . ' --password=' . escapeshellarg( DB_PASSWORD ) . $backup['port'] . $backup['sock'] . $backup['charset'] . ' --add-drop-table --skip-lock-tables ' . DB_NAME . ' | gzip > ' . $brace . escapeshellcmd( $backup['filepath'] ) . $brace;
 			} else {
 				$backup['filename'] = $backup['date'].'_-_'.DB_NAME.'.sql';
 				$backup['filepath'] = $backup['path'].'/'.$backup['filename'];
 				do_action( 'wp_dbmanager_before_escapeshellcmd' );
-				$backup['command'] = escapeshellcmd( $brace . $backup['mysqldumppath'] . $brace ) . ' --force --host=' . escapeshellarg( $backup['host'] ) . ' --user=' . escapeshellarg( DB_USER ) . ' --password=' . escapeshellarg( DB_PASSWORD ) . $backup['port'] . $backup['sock'] . $backup['charset'] . ' --add-drop-table --skip-lock-tables ' . DB_NAME . ' > ' . escapeshellcmd( $brace . $backup['filepath'] . $brace );
+				$backup['command'] = $brace . escapeshellcmd( $backup['mysqldumppath'] ) . $brace . ' --force --host=' . escapeshellarg( $backup['host'] ) . ' --user=' . escapeshellarg( DB_USER ) . ' --password=' . escapeshellarg( DB_PASSWORD ) . $backup['port'] . $backup['sock'] . $backup['charset'] . ' --add-drop-table --skip-lock-tables ' . DB_NAME . ' > ' . $brace . escapeshellcmd( $backup['filepath'] ) . $brace;
 			}
 			$error = execute_backup( $backup['command'] );
 			if(!is_writable( $backup['path'] ) ) {
