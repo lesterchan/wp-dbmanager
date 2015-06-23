@@ -197,9 +197,9 @@ function detect_mysql() {
 	if(substr(PHP_OS,0,3) == 'WIN') {
 		$mysql_install = $wpdb->get_row("SHOW VARIABLES LIKE 'basedir'");
 		if($mysql_install) {
-			$install_path = str_replace('\\', '/', $mysql_install->Value);
-			$paths['mysql'] = $install_path.'/bin/mysql.exe';
-			$paths['mysqldump'] = $install_path.'/bin/mysqldump.exe';
+			$install_path = trailingslashit( str_replace('\\', '/', $mysql_install->Value) );
+			$paths['mysql'] = $install_path.'bin/mysql.exe';
+			$paths['mysqldump'] = $install_path.'bin/mysqldump.exe';
 		} else {
 			$paths['mysql'] = 'mysql.exe';
 			$paths['mysqldump'] = 'mysqldump.exe';
