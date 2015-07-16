@@ -466,24 +466,21 @@ function dbmanager_create_backup_folder() {
 	}
 
 	// Create Backup Folder
-	if( is_dir( $backup_path ) && wp_is_writable( $backup_path ) )
-	{
-		if( wp_mkdir_p( $backup_path ) )
-		{
-			if( is_iis() ) {
-				if ( ! is_file( $backup_path . '/Web.config' ) ) {
-					@copy( $plugin_path . 'Web.config.txt', $backup_path . '/Web.config' );
-				}
-			} else {
-				if( ! is_file( $backup_path . '/.htaccess' ) ) {
-					@copy( $plugin_path . 'htaccess.txt', $backup_path . '/.htaccess' );
-				}
+	wp_mkdir_p( $backup_path );
+	if( is_dir( $backup_path ) && wp_is_writable( $backup_path ) ) {
+		if( is_iis() ) {
+			if ( ! is_file( $backup_path . '/Web.config' ) ) {
+				@copy( $plugin_path . 'Web.config.txt', $backup_path . '/Web.config' );
 			}
-			if( ! is_file( $backup_path . '/index.php' ) ) {
-				@copy( $plugin_path . 'index.php', $backup_path . '/index.php' );
+		} else {
+			if( ! is_file( $backup_path . '/.htaccess' ) ) {
+				@copy( $plugin_path . 'htaccess.txt', $backup_path . '/.htaccess' );
 			}
-			@chmod( $backup_path, 0750 );
 		}
+		if( ! is_file( $backup_path . '/index.php' ) ) {
+			@copy( $plugin_path . 'index.php', $backup_path . '/index.php' );
+		}
+		@chmod( $backup_path, 0750 );
 	}
 }
 
