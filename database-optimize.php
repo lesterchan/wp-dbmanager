@@ -74,7 +74,7 @@ $tables = $wpdb->get_col("SHOW TABLES");
 					}
 				?>
 			<tr>
-				<td colspan="2" align="center"><?php _e('Database should be optimize once every month.', 'wp-dbmanager'); ?></td>
+				<td colspan="2" align="center"><?php _e('Database should be optimized once every month.', 'wp-dbmanager'); ?></td>
 			</tr>
 			<tr>
 				<td colspan="2" align="center"><input type="submit" name="do" value="<?php _e('Optimize', 'wp-dbmanager'); ?>" class="button" />&nbsp;&nbsp;<input type="button" name="cancel" value="<?php _e('Cancel', 'wp-dbmanager'); ?>" class="button" onclick="javascript:history.go(-1)" /></td>

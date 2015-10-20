@@ -74,7 +74,7 @@ if(!empty($_POST['do'])) {
 		<h2><?php _e('Run SQL Query', 'wp-dbmanager'); ?></h2>
 		<br style="clear" />
 		<div>
-			<strong><?php _e('Seperate Multiple Queries With A New Line', 'wp-dbmanager'); ?></strong><br />
+			<strong><?php _e('Separate Multiple Queries With A New Line', 'wp-dbmanager'); ?></strong><br />
 			<p style="color: green;"><?php _e('Use Only INSERT, UPDATE, REPLACE, DELETE, CREATE and ALTER statements.', 'wp-dbmanager'); ?></p>
 		</div>
 		<table class="form-table">
