@@ -11,7 +11,7 @@ Text Domain: wp-dbmanager
 
 
 /*
-	Copyright 2015  Lester Chan  (email : lesterchan@gmail.com)
+	Copyright 2016  Lester Chan  (email : lesterchan@gmail.com)
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -130,22 +130,36 @@ function cron_dbmanager_repair() {
 	return;
 }
 function cron_dbmanager_reccurences($schedules) {
-	$backup_options = get_option('dbmanager_options');
-	$backup = intval($backup_options['backup'])*intval($backup_options['backup_period']);
-	$optimize = intval($backup_options['optimize'])*intval($backup_options['optimize_period']);
-	$repair = intval($backup_options['repair'])*intval($backup_options['repair_period']);
-	if($backup == 0) {
+	$backup_options = get_option( 'dbmanager_options' );
+
+	if( isset( $backup_options['backup'] ) && isset( $backup_options['backup_period'] ) ) {
+		$backup = intval( $backup_options['backup'] ) * intval( $backup_options['backup_period'] );
+	} else {
+		$backup = 0;
+	}
+	if( isset( $backup_options['optimize'] ) && isset( $backup_options['optimize_period'] ) ) {
+		$optimize = intval( $backup_options['optimize'] ) * intval( $backup_options['optimize_period'] );
+	} else {
+		$optimize = 0;
+	}
+	if( isset( $backup_options['repair'] ) && isset( $backup_options['repair_period'] ) ) {
+		$repair = intval( $backup_options['repair'] ) * intval( $backup_options['repair_period'] );
+	} else {
+		$repair = 0;
+	}
+
+	if( $backup === 0 ) {
 		$backup = 31536000;
 	}
-	if($optimize == 0) {
+	if( $optimize === 0 ) {
 		$optimize = 31536000;
 	}
-	if($repair == 0) {
+	if( $repair === 0 ) {
 		$repair = 31536000;
 	}
-   $schedules['dbmanager_backup'] = array('interval' => $backup, 'display' => __('WP-DBManager Backup Schedule', 'wp-dbmanager'));
-   $schedules['dbmanager_optimize'] = array('interval' => $optimize, 'display' => __('WP-DBManager Optimize Schedule', 'wp-dbmanager'));
-   $schedules['dbmanager_repair'] = array('interval' => $repair, 'display' => __('WP-DBManager Repair Schedule', 'wp-dbmanager'));
+   $schedules['dbmanager_backup'] = array( 'interval' => $backup, 'display' => __( 'WP-DBManager Backup Schedule', 'wp-dbmanager' ) );
+   $schedules['dbmanager_optimize'] = array( 'interval' => $optimize, 'display' => __( 'WP-DBManager Optimize Schedule', 'wp-dbmanager' ) );
+   $schedules['dbmanager_repair'] = array( 'interval' => $repair, 'display' => __( 'WP-DBManager Repair Schedule', 'wp-dbmanager' ) );
    return $schedules;
 }
 
