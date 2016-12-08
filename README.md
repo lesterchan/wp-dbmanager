@@ -2,8 +2,8 @@
 Contributors: GamerZ  
 Donate link: http://lesterchan.net/site/donation/  
 Tags: database, manage, wp-dbmanager, manager, table, optimize, backup, queries, query, drop, empty, tables, table, run, repair, cron, schedule, scheduling, automatic  
-Requires at least: 3.9  
-Tested up to: 4.5  
+Requires at least: 4.0  
+Tested up to: 4.7  
 Stable tag: 2.78.1  
 
 Manages your WordPress database.
@@ -34,7 +34,7 @@ Allows you to optimize database, repair database, backup database, restore datab
 
 ## Changelog
 ### Version 2.78.1
-* NEW: Bump WordPress 4.5
+* NEW: Bump WordPress 4.7
 * FIXED: Undefined index: repair and repair_period
 
 ### Version 2.78
