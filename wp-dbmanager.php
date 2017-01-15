@@ -1,17 +1,17 @@
 <?php
 /*
 Plugin Name: WP-DBManager
-Plugin URI: http://lesterchan.net/portfolio/programming/php/
+Plugin URI: https://lesterchan.net/portfolio/programming/php/
 Description: Manages your WordPress database. Allows you to optimize database, repair database, backup database, restore database, delete backup database , drop/empty tables and run selected queries. Supports automatic scheduling of backing up, optimizing and repairing of database.
-Version: 2.78.1
+Version: 2.79
 Author: Lester 'GaMerZ' Chan
-Author URI: http://lesterchan.net
+Author URI: https://lesterchan.net
 Text Domain: wp-dbmanager
 */
 
 
 /*
-	Copyright 2016  Lester Chan  (email : lesterchan@gmail.com)
+	Copyright 2017  Lester Chan  (email : lesterchan@gmail.com)
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -412,8 +412,7 @@ function dbmanager_default_options( $option_name )
 
 ### Function: Acticate Plugin
 register_activation_hook( __FILE__, 'dbmanager_activation' );
-function dbmanager_activation( $network_wide )
-{
+function dbmanager_activation( $network_wide ) {
 	$auto = detect_mysql();
 	// Add Options
 	$option_name = 'dbmanager_options';
@@ -436,24 +435,20 @@ function dbmanager_activation( $network_wide )
 		, 'hide_admin_notices'      => 0
 	);
 
-	if ( is_multisite() && $network_wide )
-	{
-		$ms_sites = wp_get_sites();
+	if ( is_multisite() && $network_wide ) {
+		$ms_sites = function_exists( 'get_sites' ) ? get_sites() : wp_get_sites();
 
-		if( 0 < sizeof( $ms_sites ) )
-		{
-			foreach ( $ms_sites as $ms_site )
-			{
-				switch_to_blog( $ms_site['blog_id'] );
+		if( 0 < sizeof( $ms_sites ) ) {
+			foreach ( $ms_sites as $ms_site ) {
+				$blog_id = class_exists( 'WP_Site' ) ? $ms_site->blog_id : $ms_site['blog_id'];
+				switch_to_blog( $blog_id );
 				add_option( $option_name, $option );
 				dbmanager_activate();
 			}
 		}
 
 		restore_current_blog();
-	}
-	else
-	{
+	} else {
 		add_option( $option_name, $option );
 		dbmanager_activate();
 	}
@@ -533,6 +528,12 @@ function download_database() {
 		}
 		exit();
 	}
+}
+
+### Function: Check whether a function is disabled.
+function dbmanager_is_function_disabled( $function_name ) {
+	$disabled = explode( ',', ini_get( 'disable_functions' ) );
+	return in_array( $function_name, $disabled, true );
 }
 
 ### Function: Database Options

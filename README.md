@@ -4,7 +4,7 @@ Donate link: http://lesterchan.net/site/donation/
 Tags: database, manage, wp-dbmanager, manager, table, optimize, backup, queries, query, drop, empty, tables, table, run, repair, cron, schedule, scheduling, automatic  
 Requires at least: 4.0  
 Tested up to: 4.7  
-Stable tag: 2.78.1  
+Stable tag: 2.79  
 
 Manages your WordPress database.
 
@@ -33,6 +33,9 @@ Allows you to optimize database, repair database, backup database, restore datab
 * To know about the difference between WP-DBManager and WP-DB-backup, checkout __What is the difference between WP-DBManager and WP-DB-Backup?__ in the [FAQ section](https://wordpress.org/plugins/wp-dbmanager/faq/).
 
 ## Changelog
+### Version 2.79
+* FIXED: Proper check for disabled functions
+
 ### Version 2.78.1
 * NEW: Bump WordPress 4.7
 * FIXED: Undefined index: repair and repair_period
@@ -217,7 +220,7 @@ N/A
 ### My database is not backed up / My backup file is 0Kb
 * Ensure that your host allows you to access mysqldump. You can try to narrow the problem by Debugging via SSH:
 1. In `wp-dbmanager.php`
-2. Find `check_backup_files();` on line 230
+2. Find `check_backup_files();` on line 246
 3. Add below it `echo $command;`
 4. Go to `WP-Admin -> Database -> Backup`
 5. Click `Backup`
