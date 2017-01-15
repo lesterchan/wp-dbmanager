@@ -532,8 +532,7 @@ function download_database() {
 
 ### Function: Check whether a function is disabled.
 function dbmanager_is_function_disabled( $function_name ) {
-	$disabled = explode( ',', ini_get( 'disable_functions' ) );
-	return in_array( $function_name, $disabled, true );
+	return in_array( $function_name, array_map( 'trim', explode( ',', ini_get( 'disable_functions' ) ) ) );
 }
 
 ### Function: Database Options
