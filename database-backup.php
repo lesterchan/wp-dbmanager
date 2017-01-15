@@ -72,7 +72,7 @@ $backup_path = stripslashes( $backup['path'] );
 
 ### MYSQL Base Dir
 $has_error = false;
-$functions_disabled_count = 0;
+$disabled_function = false;
 ?>
 <?php if( ! empty( $text ) ) { echo '<div id="message" class="updated">'.$text.'</div>'; } ?>
 <!-- Checking Backup Status -->
@@ -166,28 +166,28 @@ $functions_disabled_count = 0;
 		<?php
 			if( dbmanager_is_function_disabled( 'passthru' ) ) {
 				echo '<p style="color: red;"><span dir="ltr">passthru()</span> '.__('disabled', 'wp-dbmanager').'.</p>';
-				$functions_disabled_count++;
+				$disabled_function = true;
 			} else if( ! function_exists( 'passthru' ) ) {
 				echo '<p style="color: red;"><span dir="ltr">passthru()</span> '.__('missing', 'wp-dbmanager').'.</p>';
-				$functions_disabled_count++;
+				$disabled_function = true;
 			} else {
 				echo '<p style="color: green;"><span dir="ltr">passthru()</span> '.__('enabled', 'wp-dbmanager').'.</p>';
 			}
 			if( dbmanager_is_function_disabled( 'system' ) ) {
 				echo '<p style="color: red;"><span dir="ltr">system()</span> '.__('disabled', 'wp-dbmanager').'.</p>';
-				$functions_disabled_count++;
+				$disabled_function = true;
 			} else if( ! function_exists( 'system' ) ) {
 				echo '<p style="color: red;"><span dir="ltr">system()</span> '.__('missing', 'wp-dbmanager').'.</p>';
-				$functions_disabled_count++;
+				$disabled_function = true;
 			} else {
 				echo '<p style="color: green;"><span dir="ltr">system()</span> '.__('enabled', 'wp-dbmanager').'.</p>';
 			}
 			if( dbmanager_is_function_disabled( 'exec' ) ) {
 				echo '<p style="color: red;"><span dir="ltr">exec()</span> '.__('disabled', 'wp-dbmanager').'.</p>';
-				$functions_disabled_count++;
+				$disabled_function = true;
 			} else if( ! function_exists( 'exec' ) ) {
 				echo '<p style="color: red;"><span dir="ltr">exec()</span> '.__('missing', 'wp-dbmanager').'.</p>';
-				$functions_disabled_count++;
+				$disabled_function = true;
 			} else {
 				echo '<p style="color: green;"><span dir="ltr">exec()</span> '.__('enabled', 'wp-dbmanager').'.</p>';
 			}
@@ -195,10 +195,10 @@ $functions_disabled_count = 0;
 	</p>
 	<p>
 		<?php
-			if( ! $has_error ) {
+			if( $disabled_function ) {
+				echo '<strong><p style="color: red;">' . __( 'I\'m sorry, your server administrator has disabled passthru(), system() and/or exec(), thus you cannot use this plugin. Please find an alternative plugin.', 'wp-dbmanager' ) . '</p></strong>';
+			} else if( ! $has_error ) {
 				echo '<strong><p style="color: green;">'.__('Excellent. You Are Good To Go.', 'wp-dbmanager').'</p></strong>';
-			} else if( $functions_disabled_count === 3 ) {
-				echo '<strong><p style="color: red;">'.__('I\'m sorry, your server administrator has disabled passthru(), system() and exec(), thus you cannot use this backup script. You may consider using the default WordPress database backup script instead.', 'wp-dbmanager').'</p></strong>';
 			} else {
 				echo '<strong><p style="color: red;">'.__('Please Rectify The Error Highlighted In Red Before Proceeding On.', 'wp-dbmanager').'</p></strong>';
 			}
