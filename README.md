@@ -11,6 +11,15 @@ Manages your WordPress database.
 ## Description
 Allows you to optimize database, repair database, backup database, restore database, delete backup database , drop/empty tables and run selected queries. Supports automatic scheduling of backing up, optimizing and repairing of database.
 
+## General Usage
+1. Activate `WP-DBManager` Plugin
+1. The script will automatically create a folder called `backup-db` in the wp-content folder if that folder is writable. If it is not created, please create the folder and ensure that the folder is writable
+1. Open `Folder: wp-content/backup-db`
+1. If you are on Apache, move the `htaccess.txt` file from `Folder: wp-content/plugins/wp-dbmanager` to `Folder: wp-content/backup-db/.htaccess` if it is not there already
+1. If you are on IIS, move the `Web.config.txt` file from `Folder: wp-content/plugins/wp-dbmanager` to `Folder: wp-content/backup-db/Web.config` if it is not there already
+1. Move `index.php` file from `Folder: wp-content/plugins/wp-dbmanager` to `Folder: wp-content/backup-db/index.php` if it is not there already
+1. Go to `WP-Admin -> Database -> DB Options` to configure the database options
+
 ### Build Status
 [![Build Status](https://travis-ci.org/lesterchan/wp-dbmanager.svg?branch=master)](https://travis-ci.org/lesterchan/wp-dbmanager)
 
@@ -91,117 +100,6 @@ Allows you to optimize database, repair database, backup database, restore datab
 ### Version 2.63 (03-05-2011)
 * NEW: Added Auto Repair Functionality
 * NEW: Added nonce To All Forms For Added Security
-
-### Version 2.61 (30-04-2011)
-* FIXED: Checks File Extension And Sanitise File Name That Is Pass Through The URL When Downloading Database File. Props to [Joakim Jardenberg](http://jardenberg.se "Joakim Jardenberg"), [Jonas Nordstram](http://jonasnordstrom.se "Jonas Nordstram"), [Andreas Viklund](http://andreasviklund.com/ "Andreas Viklund")
-
-### Version 2.60 (01-12-2009)
-* FIXED: Bug In Cron Backup On Windows Server
-
-### Version 2.50 (01-06-2009)
-* NEW: Works For WordPress 2.8 Only
-* NEW: Uses jQuery Framework
-* NEW: Ensure That .htaccess Is In Backup Folder By Informing The User If It Is NOT There
-* NEW: Use _n() Instead Of __ngettext() And _n_noop() Instead Of __ngettext_noop()
-* FIXED: Uses $_SERVER['PHP_SELF'] With plugin_basename(__FILE__) Instead Of Just $_SERVER['REQUEST_URI']
-
-### Version 2.40 (12-12-2008)
-* NEW: Works For WordPress 2.7 Only
-* NEW: Load Admin JS And CSS Only In WP-DBManager Admin Pages
-* NEW: Added database-admin-css.css For WP-DBManager Admin CSS Styles
-* NEW: Uses admin_url(), plugins_url() And site_url()
-* NEW: Better Translation Using __ngetext() by Anna Ozeritskaya
-* NEW: Right To Left Language Support by Kambiz R. Khojasteh
-* FIXED: SSL Support
-* FIXED: Bug In Downloading Backups In Other Languages by Kambiz R. Khojasteh
-* FIXED: Bug In Backup/Restore On Windows Server When Path To mysqldump/mysql Or Backup File Contains Space Kambiz R. Khojasteh
-* FIXED: In database-manage.php, $nice_file_date Was Calculated More Than Once by Kambiz R. Khojasteh
-* FIXED: Returning Only DBManager Cron Schedules
-
-### Version 2.31 (16-07-2008)
-* NEW: Works For WordPress 2.6
-* FIXED: Unable To Optimize Or Repair Tables If Table Name Contains - (dash)
-
-### Version 2.30 (01-06-2008)
-* NEW: Uses /wp-dbmanager/ Folder Instead Of /dbmanager/
-* NEW: Uses wp-dbmanager.php Instead Of dbmanager.php
-* NEW: Added Minute(s) Option To Backup And Optimize Cron Jobs
-* NEW: Uses GiB, MiB, KiB Instead Of GB, MB, KB
-
-### Version 2.20 (01-10-2007)
-* NEW: Added --skip-lock-tables Argument When Backing Up Database
-* NEW: Limit The Maximum Number Of Backup Files In The Backup Folder
-* NEW: Ability To Uninstall WP-DBManager
-
-### Version 2.11 (01-06-2007)
-* NEW: Sort Database Backup Files By Date In Descending Order
-* NEW: Added Repair Database Feature
-* NEW: Automatic Scheduling Of Backing Up And Optimizing Of Database
-
-### Version 2.10 (01-02-2007)
-* NEW: Works For WordPress 2.1 Only
-* NEW: Removed database-config.php
-* NEW: Localize WP-DBManager
-* NEW: Added The Ability To Auto Detect MYSQL And MYSQL Dump Path
-
-### Version 2.05 (01-06-2006)
-* FIXED: Database Table Names Not Appearing Correctly
-* NEW: DBManager Administration Panel Is XHTML 1.0 Transitional
-
-### Version 2.04 (10-05-2006)
-* FIXED: Unable To Download Backup DB Due To Header Sent Error
-* FIXED: Some XHTML Code Fixes
-
-### Version 2.03 (01-04-2006)
-* FIXED: Run Query Box Too Big
-* FIXED: Header Sent Error
-* FIXED: Extra Slashes For Mysql/Mysql Dump Path
-* FIXED: Mismatch Date Due To GMT
-
-### Version 2.02 (01-03-2006)
-* NEW: Improved On 'manage_database' Capabilities
-* NEW: Added GigaBytes To File Size
-* NEW: Added ALTER Statement To Allowed Queries
-* NEW: Able To Empty/Drop Tables
-* NEW: Able To EMail Database Backup File
-* NEW: Splitted database-manager.php Into Individual Files
-* NEW: Merge Restore And Delete Backup Database
-* NEW: Included .htaccess File To Protect Backup Folder
-* NEW: Checking Of Backup Status
-* FIXED: Using Old Method To Add Submenu
-* FIXED: PHP Short Tags
-* FIXED: Redirect Back To The Same Page Instead Of Manage Database Page After Submitting Form
-
-### Version 2.01 (01-02-2006)
-* NEW: Added 'manage_database' Capabilities To Administrator Role
-
-### Version 2.00 (01-01-2006)
-* NEW: Compatible With WordPress 2.0 Only
-* NEW: GPL License Added
-
-## Installation
-
-1. Open `wp-content/plugins` Folder
-2. Put: `Folder: wp-dbmanager`
-3. Activate `WP-DBManager` Plugin
-4. The script will automatically create a folder called `backup-db` in the wp-content folder if that folder is writable. If it is not created, please create the folder and ensure that the folder is writable
-5. Open `Folder: wp-content/backup-db`
-6. If you are on Apache, move the `htaccess.txt` file from `Folder: wp-content/plugins/wp-dbmanager` to `Folder: wp-content/backup-db/.htaccess` if it is not there already
-7. If you are on IIS, move the `Web.config.txt` file from `Folder: wp-content/plugins/wp-dbmanager` to `Folder: wp-content/backup-db/Web.config` if it is not there already
-8. Move `index.php` file from `Folder: wp-content/plugins/wp-dbmanager` to `Folder: wp-content/backup-db/index.php` if it is not there already
-9. Go to `WP-Admin -> Database -> DB Options` to configure the database options
-
-## Upgrading
-
-1. Deactivate `WP-DBManager` Plugin
-2. Open `wp-content/plugins` Folder
-3. Put/Overwrite: `Folder: wp-dbmanager`
-4. Activate `WP-DBManager` Plugin
-5. Go to `WP-Admin -> Database -> DB Options` to re-configure the database options.
-
-## Upgrade Notice
-
-N/A
 
 ## Screenshots
 
