@@ -62,36 +62,37 @@ add_action('dbmanager_cron_repair', 'cron_dbmanager_repair');
 function cron_dbmanager_backup() {
 	$backup_options = get_option('dbmanager_options');
 	$backup_email = stripslashes($backup_options['backup_email']);
-	if(intval($backup_options['backup_period']) > 0) {
+	if ( (int) $backup_options['backup_period'] > 0 ) {
 		$backup = array();
 		$backup['date'] = current_time('timestamp');
 		$backup['mysqldumppath'] = $backup_options['mysqldumppath'];
 		$backup['mysqlpath'] = $backup_options['mysqlpath'];
 		$backup['path'] = $backup_options['path'];
+		$backup['charset'] = ' --default-character-set="utf8"';
 		$backup['host'] = DB_HOST;
 		$backup['port'] = '';
 		$backup['sock'] = '';
-		if(strpos(DB_HOST, ':') !== false) {
+		if ( strpos( DB_HOST, ':' ) !== false ) {
 			$db_host = explode(':', DB_HOST);
 			$backup['host'] = $db_host[0];
-			if(intval($db_host[1]) != 0) {
-				$backup['port'] = ' --port=' . escapeshellarg( intval( $db_host[1] ) );
+			if ( (int) $db_host[1] !== 0 ) {
+				$backup['port'] = ' --port=' . escapeshellarg( (int) $db_host[1] );
 			} else {
 				$backup['sock'] = ' --socket=' . escapeshellarg( $db_host[1] );
 			}
 		}
 		$backup['command'] = '';
-		$brace = (substr(PHP_OS, 0, 3) == 'WIN') ? '"' : '';
-		if(intval($backup_options['backup_gzip']) == 1) {
+		$brace = 0 === strpos( PHP_OS, 'WIN' ) ? '"' : '';
+		if ( (int) $backup_options['backup_gzip'] === 1 ) {
 			$backup['filename'] = $backup['date'].'_-_'.DB_NAME.'.sql.gz';
 			$backup['filepath'] = $backup['path'].'/'.$backup['filename'];
 			do_action( 'wp_dbmanager_before_escapeshellcmd' );
-			$backup['command'] = $brace . escapeshellcmd( $backup['mysqldumppath'] ) . $brace . ' --force --host=' . escapeshellarg( $backup['host'] ).' --user=' . escapeshellarg( DB_USER ) . ' --password=' . escapeshellarg( DB_PASSWORD ) . $backup['port'] . $backup['sock'] . ' --add-drop-table --skip-lock-tables ' . DB_NAME . ' | gzip > '. $brace . escapeshellcmd( $backup['filepath'] ) . $brace;
+			$backup['command'] = $brace . escapeshellcmd( $backup['mysqldumppath'] ) . $brace . ' --force --host=' . escapeshellarg( $backup['host'] ).' --user=' . escapeshellarg( DB_USER ) . ' --password=' . escapeshellarg( DB_PASSWORD ) . $backup['port'] . $backup['sock'] . $backup['charset'] . ' --add-drop-table --skip-lock-tables ' . DB_NAME . ' | gzip > '. $brace . escapeshellcmd( $backup['filepath'] ) . $brace;
 		} else {
 			$backup['filename'] = $backup['date'].'_-_'.DB_NAME.'.sql';
 			$backup['filepath'] = $backup['path'].'/'.$backup['filename'];
 			do_action( 'wp_dbmanager_before_escapeshellcmd' );
-			$backup['command'] = $brace . escapeshellcmd( $backup['mysqldumppath'] ) . $brace . ' --force --host=' . escapeshellarg( $backup['host'] ).' --user=' . escapeshellarg( DB_USER ). ' --password=' . escapeshellarg( DB_PASSWORD ) . $backup['port'] . $backup['sock'] . ' --add-drop-table --skip-lock-tables ' . DB_NAME . ' > ' . $brace . escapeshellcmd( $backup['filepath'] ) . $brace;
+			$backup['command'] = $brace . escapeshellcmd( $backup['mysqldumppath'] ) . $brace . ' --force --host=' . escapeshellarg( $backup['host'] ).' --user=' . escapeshellarg( DB_USER ). ' --password=' . escapeshellarg( DB_PASSWORD ) . $backup['port'] . $backup['sock'] . $backup['charset'] . ' --add-drop-table --skip-lock-tables ' . DB_NAME . ' > ' . $brace . escapeshellcmd( $backup['filepath'] ) . $brace;
 		}
 		execute_backup($backup['command']);
 		if( ! empty( $backup_email ) )

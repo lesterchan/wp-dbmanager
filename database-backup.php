@@ -24,22 +24,22 @@ if(!empty($_POST['do'])) {
 	switch($_POST['do']) {
 		case __('Backup', 'wp-dbmanager'):
 			check_admin_referer('wp-dbmanager_backup');
-			$brace = (substr(PHP_OS, 0, 3) == 'WIN') ? '"' : '';
+			$brace = 0 === strpos( PHP_OS, 'WIN' ) ? '"' : '';
 			$backup['host'] = DB_HOST;
 			$backup['port'] = '';
 			$backup['sock'] = '';
-			if(strpos(DB_HOST, ':') !== false) {
+			if ( strpos( DB_HOST, ':' ) !== false ) {
 				$db_host = explode(':', DB_HOST);
 				$backup['host'] = $db_host[0];
-				if(intval($db_host[1]) != 0) {
-					$backup['port'] = ' --port=' . escapeshellarg( intval( $db_host[1] ) );
+				if ( (int) $db_host[1] !== 0) {
+					$backup['port'] = ' --port=' . escapeshellarg( (int) $db_host[1] );
 				} else {
 					$backup['sock'] = ' --socket=' . escapeshellarg( $db_host[1] );
 				}
 			}
-			$gzip = intval($_POST['gzip']);
+			$gzip = isset( $_POST['gzip'] ) ? (int) $_POST['gzip'] : 0;
 
-			if($gzip == 1) {
+			if ( $gzip === 1 ) {
 				$backup['filename'] = $backup['date'].'_-_'.DB_NAME.'.sql.gz';
 				$backup['filepath'] = $backup['path'].'/'.$backup['filename'];
 				do_action( 'wp_dbmanager_before_escapeshellcmd' );
