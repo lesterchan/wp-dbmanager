@@ -21,7 +21,7 @@ $backup['charset'] = ' --default-character-set="utf8"';
 if( !empty( $_POST['do'] ) ) {
 	check_admin_referer('wp-dbmanager_manage');
 	// Lets Prepare The Variables
-	$database_file = trim($_POST['database_file']);
+	$database_file = ! empty ( $_POST['database_file'] ) ? sanitize_file_name( $_POST['database_file'] ) : '';
 	$nice_file_date = mysql2date(sprintf(__('%s @ %s', 'wp-dbmanager'), get_option('date_format'), get_option('time_format')), gmdate('Y-m-d H:i:s', substr($database_file, 0, 10)));
 	$text = '';
 
@@ -29,20 +29,21 @@ if( !empty( $_POST['do'] ) ) {
 	switch($_POST['do']) {
 		case __('Restore', 'wp-dbmanager'):
 			if(!empty($database_file)) {
-				$brace = (substr(PHP_OS, 0, 3) == 'WIN') ? '"' : '';
+				$brace = substr(PHP_OS, 0, 3) === 'WIN' ? '"' : '';
 				$backup['host'] = DB_HOST;
 				$backup['port'] = '';
 				$backup['sock'] = '';
 				if(strpos(DB_HOST, ':') !== false) {
 					$db_host = explode(':', DB_HOST);
 					$backup['host'] = $db_host[0];
-					if(intval($db_host[1]) != 0) {
-						$backup['port'] = ' --port=' . escapeshellarg( intval( $db_host[1] ) );
+					if ( (int) $db_host[1] !== 0 ) {
+						$backup['port'] = ' --port=' . escapeshellarg( (int) $db_host[1] );
 					} else {
 						$backup['sock'] = ' --socket=' . escapeshellarg( $db_host[1] );
 					}
 				}
-				if(stristr($database_file, '.gz')) {
+
+				if ( false !== stripos( $database_file, '.gz' ) ) {
 					do_action( 'wp_dbmanager_before_escapeshellcmd' );
 					$backup['command'] = 'gunzip < ' . $brace . escapeshellcmd( $backup['path'] . '/' . $database_file ) . $brace . ' | ' . $brace . escapeshellcmd( $backup['mysqlpath'] ) . $brace . ' --host=' . escapeshellarg( $backup['host'] ) . ' --user=' . escapeshellarg( DB_USER ) . ' --password=' . escapeshellarg( DB_PASSWORD ) . $backup['port'] . $backup['sock'] . $backup['charset'] . ' ' . DB_NAME;
 				} else {
@@ -84,9 +85,9 @@ if( !empty( $_POST['do'] ) ) {
 			}
 			break;
 		case __('Delete', 'wp-dbmanager'):
-			if(!empty($database_file)) {
-				if(is_file($backup['path'].'/'.$database_file)) {
-					if(!unlink($backup['path'].'/'.$database_file)) {
+			if ( ! empty( $database_file ) ) {
+				if ( is_file( $backup['path'] . '/' . $database_file ) ) {
+					if ( ! unlink( $backup['path'] . '/' . $database_file ) ) {
 						$text .= '<p style="color: red;">'.sprintf(__('Unable To Delete Database Backup File On \'%s\'', 'wp-dbmanager'), $nice_file_date).'</p>';
 					} else {
 						$text .= '<p style="color: green;">'.sprintf(__('Database Backup File On \'%s\' Deleted Successfully', 'wp-dbmanager'), $nice_file_date).'</p>';
@@ -121,18 +122,18 @@ if( !empty( $_POST['do'] ) ) {
 			<?php
 				$no = 0;
 				$totalsize = 0;
-				if(!is_emtpy_folder($backup['path'])) {
-					if ($handle = opendir($backup['path'])) {
+				if ( ! is_emtpy_folder( $backup['path'] ) && $handle = opendir($backup['path'] ) ) {
 						$database_files = array();
 						while (false !== ($file = readdir($handle))) {
-							if ($file != '.' && $file != '..' && $file != '.htaccess' && (file_ext($file) == 'sql' || file_ext($file) == 'gz')) {
+							if ( $file !== '.' && $file !== '..' && $file !== '.htaccess' && ( file_ext( $file ) === 'sql' || file_ext( $file ) === 'gz' ) ) {
 								$database_files[] = $file;
 							}
 						}
 						closedir($handle);
 						sort($database_files);
-						for($i = (sizeof($database_files)-1); $i > -1; $i--) {
-							if($no%2 == 0) {
+						$database_files_count = count( $database_files ) - 1;
+						for ( $i = $database_files_count; $i > -1; $i-- ) {
+							if ( $no % 2 === 0 ) {
 								$style = '';
 							} else {
 								$style = ' class="alternate"';
@@ -149,9 +150,6 @@ if( !empty( $_POST['do'] ) ) {
 							echo "<td><input type=\"radio\" name=\"database_file\" value=\"$database_files[$i]\" /></td>\n</tr>\n";
 							$totalsize += $size_text;
 						}
-					} else {
-						echo '<tr><td align="center" colspan="5">'.__('There Are No Database Backup Files Available.', 'wp-dbmanager').'</td></tr>';
-					}
 				} else {
 					echo '<tr><td align="center" colspan="5">'.__('There Are No Database Backup Files Available.', 'wp-dbmanager').'</td></tr>';
 				}
@@ -171,7 +169,7 @@ if( !empty( $_POST['do'] ) ) {
 					<input type="submit" name="do" value="<?php _e('Download', 'wp-dbmanager'); ?>" class="button" />&nbsp;&nbsp;
 					<input type="submit" name="do" value="<?php _e('Restore', 'wp-dbmanager'); ?>" onclick="return confirm('<?php _e('You Are About To Restore A Database.\nThis Action Is Not Reversible.\nAny Data Inserted After The Backup Date Will Be Gone.\n\n Choose [Cancel] to stop, [Ok] to restore.', 'wp-dbmanager'); ?>')" class="button" />&nbsp;&nbsp;
 					<input type="submit" class="button" name="do" value="<?php _e('Delete', 'wp-dbmanager'); ?>" onclick="return confirm('<?php _e('You Are About To Delete The Selected Database Backup Files.\nThis Action Is Not Reversible.\n\n Choose [Cancel] to stop, [Ok] to delete.', 'wp-dbmanager'); ?>')" />&nbsp;&nbsp;
-					<input type="button" name="cancel" value="<?php _e('Cancel', 'wp-dbmanager'); ?>" class="button" onclick="javascript:history.go(-1)" /></td>
+					<input type="button" name="cancel" value="<?php _e('Cancel', 'wp-dbmanager'); ?>" class="button" onclick="history.go(-1)" /></td>
 			</tr>
 		</table>
 	</div>

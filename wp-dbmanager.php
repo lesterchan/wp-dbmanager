@@ -3,7 +3,7 @@
 Plugin Name: WP-DBManager
 Plugin URI: https://lesterchan.net/portfolio/programming/php/
 Description: Manages your WordPress database. Allows you to optimize database, repair database, backup database, restore database, delete backup database , drop/empty tables and run selected queries. Supports automatic scheduling of backing up, optimizing and repairing of database.
-Version: 2.79.1
+Version: 2.79.2
 Author: Lester 'GaMerZ' Chan
 Author URI: https://lesterchan.net
 Text Domain: wp-dbmanager
@@ -11,7 +11,7 @@ Text Domain: wp-dbmanager
 
 
 /*
-	Copyright 2017  Lester Chan  (email : lesterchan@gmail.com)
+	Copyright 2018  Lester Chan  (email : lesterchan@gmail.com)
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -54,7 +54,14 @@ function dbmanager_menu() {
 }
 
 
-### Funcion: Database Manager Cron
+### Function: Append get_allowed_mime_types()
+add_filter( 'upload_mimes', 'dbmanager_upload_mimes' );
+function dbmanager_upload_mimes( $mime_types ) {
+	$mime_types['sql'] = 'application/sql';
+	return $mime_types;
+}
+
+### Function: Database Manager Cron
 add_filter('cron_schedules', 'cron_dbmanager_reccurences');
 add_action('dbmanager_cron_backup', 'cron_dbmanager_backup');
 add_action('dbmanager_cron_optimize', 'cron_dbmanager_optimize');
@@ -105,7 +112,7 @@ function cron_dbmanager_backup() {
 function cron_dbmanager_optimize() {
 	global $wpdb;
 	$backup_options = get_option('dbmanager_options');
-	$optimize_period = intval($backup_options['optimize_period']);
+	$optimize_period = (int) $backup_options['optimize_period'];
 	if($optimize_period > 0) {
 		$optimize_tables = array();
 		$tables = $wpdb->get_col("SHOW TABLES");
@@ -119,7 +126,7 @@ function cron_dbmanager_optimize() {
 function cron_dbmanager_repair() {
 	global $wpdb;
 	$backup_options = get_option('dbmanager_options');
-	$repair_period = intval($backup_options['repair_period']);
+	$repair_period = (int) $backup_options['repair_period'];
 	if($repair_period > 0) {
 		$repair_tables = array();
 		$tables = $wpdb->get_col("SHOW TABLES");
@@ -134,17 +141,17 @@ function cron_dbmanager_reccurences($schedules) {
 	$backup_options = get_option( 'dbmanager_options' );
 
 	if( isset( $backup_options['backup'] ) && isset( $backup_options['backup_period'] ) ) {
-		$backup = intval( $backup_options['backup'] ) * intval( $backup_options['backup_period'] );
+		$backup = (int) $backup_options['backup'] * (int) $backup_options['backup_period'];
 	} else {
 		$backup = 0;
 	}
 	if( isset( $backup_options['optimize'] ) && isset( $backup_options['optimize_period'] ) ) {
-		$optimize = intval( $backup_options['optimize'] ) * intval( $backup_options['optimize_period'] );
+		$optimize = (int) $backup_options['optimize'] * (int) $backup_options['optimize_period'];
 	} else {
 		$optimize = 0;
 	}
 	if( isset( $backup_options['repair'] ) && isset( $backup_options['repair_period'] ) ) {
-		$repair = intval( $backup_options['repair'] ) * intval( $backup_options['repair_period'] );
+		$repair = (int) $backup_options['repair'] * (int) $backup_options['repair_period'];
 	} else {
 		$repair = 0;
 	}
@@ -170,11 +177,11 @@ add_action( 'admin_notices', 'dbmanager_admin_notices' );
 function dbmanager_admin_notices() {
 	$backup_options = get_option( 'dbmanager_options' );
 	$backup_folder_writable = ( is_dir( $backup_options['path'] ) && wp_is_writable( $backup_options['path'] ) );
-	$htaccess_exists = ( file_exists( $backup_options['path'] . '/.htaccess' ) );
-	$webconfig_exists =  ( file_exists( $backup_options['path'] . '/Web.config' ) );
-	$index_exists =  ( file_exists( $backup_options['path'] . '/index.php' ) );
+	$htaccess_exists = file_exists( $backup_options['path'] . '/.htaccess' );
+	$webconfig_exists =  file_exists( $backup_options['path'] . '/Web.config' );
+	$index_exists =  file_exists( $backup_options['path'] . '/index.php' );
 
-	if( ! isset( $backup_options['hide_admin_notices'] ) || intval( $backup_options['hide_admin_notices'] ) === 0 )
+	if( ! isset( $backup_options['hide_admin_notices'] ) || (int) $backup_options['hide_admin_notices'] === 0 )
 	{
 		if( ! $backup_folder_writable || ! $index_exists || ( is_iis() && ! $webconfig_exists ) || ( ! is_iis() && ! $htaccess_exists ) ) {
 
@@ -209,7 +216,7 @@ function dbmanager_admin_notices() {
 function detect_mysql() {
 	global $wpdb;
 	$paths = array('mysq' => '', 'mysqldump' => '');
-	if(substr(PHP_OS,0,3) == 'WIN') {
+	if ( substr( PHP_OS,0,3 ) === 'WIN' ) {
 		$mysql_install = $wpdb->get_row("SHOW VARIABLES LIKE 'basedir'");
 		if($mysql_install) {
 			$install_path = trailingslashit( str_replace('\\', '/', $mysql_install->Value) );
@@ -496,11 +503,9 @@ function dbmanager_create_backup_folder() {
 
 add_action( 'init', 'dbmanager_try_fix' );
 function dbmanager_try_fix() {
-	if ( ! empty( $_GET['try_fix'] ) ) {
-		if ( intval( $_GET['try_fix'] ) === 1 ) {
-			check_admin_referer( 'wp-dbmanager_fix' );
-			dbmanager_create_backup_folder();
-		}
+	if ( ! empty( $_GET['try_fix'] ) && (int) $_GET['try_fix'] === 1 ) {
+		check_admin_referer( 'wp-dbmanager_fix' );
+		dbmanager_create_backup_folder();
 	}
 }
 
@@ -533,7 +538,7 @@ function download_database() {
 
 ### Function: Check whether a function is disabled.
 function dbmanager_is_function_disabled( $function_name ) {
-	return in_array( $function_name, array_map( 'trim', explode( ',', ini_get( 'disable_functions' ) ) ) );
+	return in_array( $function_name, array_map( 'trim', explode( ',', ini_get( 'disable_functions' ) ) ), true );
 }
 
 ### Function: Database Options
@@ -543,22 +548,22 @@ function dbmanager_options() {
 	$old_backup_options = $backup_options;
 	if(!empty($_POST['Submit'])) {
 		check_admin_referer('wp-dbmanager_options');
-		$backup_options['mysqldumppath']            = sanitize_text_field( $_POST['db_mysqldumppath'] );
-		$backup_options['mysqlpath']                = sanitize_text_field( $_POST['db_mysqlpath'] );
-		$backup_options['path']                     = sanitize_text_field( $_POST['db_path'] );
-		$backup_options['max_backup']               = intval( $_POST['db_max_backup'] );
-		$backup_options['backup']                   = intval( $_POST['db_backup'] );
-		$backup_options['backup_gzip']              = intval( $_POST['db_backup_gzip'] );
-		$backup_options['backup_period']            = intval( $_POST['db_backup_period'] );
-		$backup_options['backup_email']             = sanitize_email( $_POST['db_backup_email'] );
-		$backup_options['backup_email_from']        = sanitize_email( $_POST['db_backup_email_from'] );
-		$backup_options['backup_email_from_name']   = sanitize_text_field( $_POST['db_backup_email_from_name'] );
-		$backup_options['backup_email_subject']     = sanitize_text_field( $_POST['db_backup_email_subject'] );
-		$backup_options['optimize']                 = intval( $_POST['db_optimize'] );
-		$backup_options['optimize_period']          = intval( $_POST['db_optimize_period'] );
-		$backup_options['repair']                   = intval( $_POST['db_repair'] );
-		$backup_options['repair_period']            = intval( $_POST['db_repair_period'] );
-		$backup_options['hide_admin_notices']       = intval( $_POST['db_hide_admin_notices'] );
+		$backup_options['mysqldumppath']            = ! empty( $_POST['db_mysqldumppath'] ) ? sanitize_text_field( $_POST['db_mysqldumppath'] ) : '';
+		$backup_options['mysqlpath']                = ! empty ( $_POST['db_mysqlpath'] ) ? sanitize_text_field( $_POST['db_mysqlpath'] ) : '';
+		$backup_options['path']                     = ! empty ( $_POST['db_path'] ) ? sanitize_text_field( $_POST['db_path'] ) : '';
+		$backup_options['max_backup']               = ! empty( $_POST['db_max_backup'] ) ? (int) $_POST['db_max_backup'] : 0;
+		$backup_options['backup']                   = ! empty ( $_POST['db_backup'] ) ? (int) $_POST['db_backup'] : 0;
+		$backup_options['backup_gzip']              = ! empty( $_POST['db_backup_gzip'] ) ? (int) $_POST['db_backup_gzip'] : 0;
+		$backup_options['backup_period']            = ! empty( $_POST['db_backup_period'] ) ? (int) $_POST['db_backup_period'] : 0;
+		$backup_options['backup_email']             = ! empty( $_POST['db_backup_email'] ) ? sanitize_email( $_POST['db_backup_email'] ) : '';
+		$backup_options['backup_email_from']        = ! empty( $_POST['db_backup_email_from'] ) ? sanitize_email( $_POST['db_backup_email_from'] ) : '';
+		$backup_options['backup_email_from_name']   = ! empty( $_POST['db_backup_email_from_name']  ) ? sanitize_text_field( $_POST['db_backup_email_from_name'] ) : '';
+		$backup_options['backup_email_subject']     = ! empty( $_POST['db_backup_email_subject'] ) ? sanitize_text_field( $_POST['db_backup_email_subject'] ) : '';
+		$backup_options['optimize']                 = ! empty( $_POST['db_optimize'] ) ? (int) $_POST['db_optimize'] : 0;
+		$backup_options['optimize_period']          = ! empty( $_POST['db_optimize_period'] ) ? (int) $_POST['db_optimize_period'] : 0;
+		$backup_options['repair']                   = ! empty( $_POST['db_repair'] ) ? (int) $_POST['db_repair'] : 0;
+		$backup_options['repair_period']            = ! empty( $_POST['db_repair_period'] ) ? (int) $_POST['db_repair_period'] : 0;
+		$backup_options['hide_admin_notices']       = ! empty( $_POST['db_hide_admin_notices'] ) ? (int) $_POST['db_hide_admin_notices'] : 0;
 
 		if( realpath( $backup_options['path'] ) === false ) {
 			$text = '<div id="message" class="error"><p>' . sprintf( __( '%s is not a valid backup path', 'wp-dbmanager' ), stripslashes( $backup_options['path'] ) ) . '</p></div>';
@@ -704,7 +709,7 @@ function dbmanager_options() {
 						}
 					?>
 					<p>
-						<?php _e('Every', 'wp-dbmanager'); ?>&nbsp;<input type="text" name="db_backup" size="3" maxlength="5" value="<?php echo intval($backup_options['backup']); ?>" />&nbsp;
+						<?php _e('Every', 'wp-dbmanager'); ?>&nbsp;<input type="text" name="db_backup" size="3" maxlength="5" value="<?php echo esc_attr( $backup_options['backup'] ); ?>" />&nbsp;
 						<select name="db_backup_period" size="1">
 							<option value="0"<?php selected('0', $backup_options['backup_period']); ?>><?php _e('Disable', 'wp-dbmanager'); ?></option>
 							<option value="60"<?php selected('60', $backup_options['backup_period']); ?>><?php _e('Minutes(s)', 'wp-dbmanager'); ?></option>
@@ -734,7 +739,7 @@ function dbmanager_options() {
 						}
 					?>
 					<p>
-					<?php _e('Every', 'wp-dbmanager'); ?>&nbsp;<input type="text" name="db_optimize" size="3" maxlength="5" value="<?php echo intval($backup_options['optimize']); ?>" />&nbsp;
+					<?php _e('Every', 'wp-dbmanager'); ?>&nbsp;<input type="text" name="db_optimize" size="3" maxlength="5" value="<?php echo esc_attr( $backup_options['optimize'] ); ?>" />&nbsp;
 					<select name="db_optimize_period" size="1">
 						<option value="0"<?php selected('0', $backup_options['optimize_period']); ?>><?php _e('Disable', 'wp-dbmanager'); ?></option>
 						<option value="60"<?php selected('60', $backup_options['optimize_period']); ?>><?php _e('Minutes(s)', 'wp-dbmanager'); ?></option>
@@ -759,7 +764,7 @@ function dbmanager_options() {
 						}
 					?>
 					<p>
-					<?php _e('Every', 'wp-dbmanager'); ?>&nbsp;<input type="text" name="db_repair" size="3" maxlength="5" value="<?php echo intval($backup_options['repair']); ?>" />&nbsp;
+					<?php _e('Every', 'wp-dbmanager'); ?>&nbsp;<input type="text" name="db_repair" size="3" maxlength="5" value="<?php echo esc_attr( $backup_options['repair'] ); ?>" />&nbsp;
 					<select name="db_repair_period" size="1">
 						<option value="0"<?php selected('0', $backup_options['repair_period']); ?>><?php _e('Disable', 'wp-dbmanager'); ?></option>
 						<option value="60"<?php selected('60', $backup_options['repair_period']); ?>><?php _e('Minutes(s)', 'wp-dbmanager'); ?></option>
@@ -812,8 +817,8 @@ function dbmanager_options() {
 				<td valign="top"><strong><?php _e('Hide Admin Notices', 'wp-dbmanager'); ?></strong></td>
 				<td>
 					<p>
-						<input type="radio" name="db_hide_admin_notices" value="1"<?php echo (intval( $backup_options['hide_admin_notices'] ) === 1 ? ' checked="checked"' : '' ); ?> />&nbsp;<?php _e('Yes', 'wp-dbmanager'); ?>
-						<input type="radio" name="db_hide_admin_notices" value="0"<?php echo (intval( $backup_options['hide_admin_notices'] ) === 0 ? ' checked="checked"' : '' ); ?> />&nbsp;<?php _e('No', 'wp-dbmanager'); ?>
+						<input type="radio" name="db_hide_admin_notices" value="1"<?php echo (int) $backup_options['hide_admin_notices'] === 1 ? ' checked="checked"' : ''; ?> />&nbsp;<?php _e('Yes', 'wp-dbmanager'); ?>
+						<input type="radio" name="db_hide_admin_notices" value="0"<?php echo (int) $backup_options['hide_admin_notices'] === 0 ? ' checked="checked"' : ''; ?> />&nbsp;<?php _e('No', 'wp-dbmanager'); ?>
 					</p>
 				</td>
 			</tr>
