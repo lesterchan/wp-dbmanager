@@ -3,7 +3,7 @@
 Plugin Name: WP-DBManager
 Plugin URI: https://lesterchan.net/portfolio/programming/php/
 Description: Manages your WordPress database. Allows you to optimize database, repair database, backup database, restore database, delete backup database , drop/empty tables and run selected queries. Supports automatic scheduling of backing up, optimizing and repairing of database.
-Version: 2.79.2
+Version: 2.80.0
 Author: Lester 'GaMerZ' Chan
 Author URI: https://lesterchan.net
 Text Domain: wp-dbmanager
@@ -11,7 +11,7 @@ Text Domain: wp-dbmanager
 
 
 /*
-	Copyright 2018  Lester Chan  (email : lesterchan@gmail.com)
+	Copyright 2019  Lester Chan  (email : lesterchan@gmail.com)
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -101,13 +101,13 @@ function cron_dbmanager_backup() {
 			do_action( 'wp_dbmanager_before_escapeshellcmd' );
 			$backup['command'] = $brace . escapeshellcmd( $backup['mysqldumppath'] ) . $brace . ' --force --host=' . escapeshellarg( $backup['host'] ).' --user=' . escapeshellarg( DB_USER ). ' --password=' . escapeshellarg( DB_PASSWORD ) . $backup['port'] . $backup['sock'] . $backup['charset'] . ' --add-drop-table --skip-lock-tables ' . DB_NAME . ' > ' . $brace . escapeshellcmd( $backup['filepath'] ) . $brace;
 		}
-		execute_backup($backup['command']);
-		if( ! empty( $backup_email ) )
-		{
-			dbmanager_email_backup( $backup_email, $backup['filepath'] );
+		execute_backup( $backup['command'] );
+		$new_filepath = $backup['path'] . '/' . md5_file( $backup['filepath'] ) . '_-_' . $backup['filename'];
+		rename( $backup['filepath'], $new_filepath );
+		if ( ! empty( $backup_email ) ) {
+			dbmanager_email_backup( $backup_email, $new_filepath );
 		}
 	}
-	return;
 }
 function cron_dbmanager_optimize() {
 	global $wpdb;
@@ -121,7 +121,6 @@ function cron_dbmanager_optimize() {
 		}
 		$wpdb->query('OPTIMIZE TABLE '.implode(',', $optimize_tables));
 	}
-	return;
 }
 function cron_dbmanager_repair() {
 	global $wpdb;
@@ -135,7 +134,6 @@ function cron_dbmanager_repair() {
 		}
 		$wpdb->query('REPAIR TABLE '.implode(',', $repair_tables));
 	}
-	return;
 }
 function cron_dbmanager_reccurences($schedules) {
 	$backup_options = get_option( 'dbmanager_options' );

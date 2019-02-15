@@ -113,6 +113,7 @@ if( !empty( $_POST['do'] ) ) {
 			<thead>
 				<tr>
 					<th><?php _e('No.', 'wp-dbmanager'); ?></th>
+					<th><?php _e('MD5 Checksum', 'wp-dbmanager'); ?></th>
 					<th><?php _e('Database File', 'wp-dbmanager'); ?></th>
 					<th><?php _e('Date/Time', 'wp-dbmanager'); ?></th>
 					<th><?php _e('Size', 'wp-dbmanager'); ?></th>
@@ -139,23 +140,30 @@ if( !empty( $_POST['do'] ) ) {
 								$style = ' class="alternate"';
 							}
 							$no++;
-							$database_text = substr($database_files[$i], 13);
-							$date_text = mysql2date(sprintf(__('%s @ %s', 'wp-dbmanager'), get_option('date_format'), get_option('time_format')), gmdate('Y-m-d H:i:s', substr($database_files[$i], 0, 10)));
+							$file_parts = explode( '_-_', $database_files[$i] );
+							if ( count( $file_parts ) > 2 ) {
+								list( $checksum_text, $date, $database_text ) = $file_parts;
+							} else {
+								$checksum_text = '-';
+								list( $date, $database_text ) = $file_parts;
+							}
+							$date_text = mysql2date( sprintf( __( '%s @ %s', 'wp-dbmanager' ), get_option( 'date_format' ), get_option( 'time_format' ) ), gmdate( 'Y-m-d H:i:s', $date));
 							$size_text = filesize($backup['path'].'/'.$database_files[$i]);
-							echo "<tr$style>\n";
-							echo '<td>'.number_format_i18n($no).'</td>';
-							echo "<td>$database_text</td>";
-							echo "<td>$date_text</td>";
-							echo '<td>'.format_size($size_text).'</td>';
-							echo "<td><input type=\"radio\" name=\"database_file\" value=\"$database_files[$i]\" /></td>\n</tr>\n";
+							echo '<tr'. $style .'>';
+							echo '<td>' . number_format_i18n( $no ) . '</td>';
+							echo '<td>' . $checksum_text . '</td>';
+							echo '<td>' . $database_text .'</td>';
+							echo '<td>' . $date_text . '</td>';
+							echo '<td>' . format_size( $size_text ) . '</td>';
+							echo '<td><input type="radio" name="database_file" value="'. esc_attr( $database_files[$i] ) .'" /></td></tr>';
 							$totalsize += $size_text;
 						}
 				} else {
-					echo '<tr><td align="center" colspan="5">'.__('There Are No Database Backup Files Available.', 'wp-dbmanager').'</td></tr>';
+					echo '<tr><td align="center" colspan="6">'.__('There Are No Database Backup Files Available.', 'wp-dbmanager').'</td></tr>';
 				}
 			?>
 			<tr class="thead">
-				<th colspan="3"><?php printf(_n('%s Backup File', '%s Backup Files', $no, 'wp-dbmanager'), number_format_i18n($no)); ?></th>
+				<th colspan="4"><?php printf(_n('%s Backup File', '%s Backup Files', $no, 'wp-dbmanager'), number_format_i18n($no)); ?></th>
 				<th><?php echo format_size($totalsize); ?></th>
 				<th>&nbsp;</th>
 			</tr>
