@@ -3,7 +3,7 @@
 Plugin Name: WP-DBManager
 Plugin URI: https://lesterchan.net/portfolio/programming/php/
 Description: Manages your WordPress database. Allows you to optimize database, repair database, backup database, restore database, delete backup database , drop/empty tables and run selected queries. Supports automatic scheduling of backing up, optimizing and repairing of database.
-Version: 2.80
+Version: 2.80.1
 Author: Lester 'GaMerZ' Chan
 Author URI: https://lesterchan.net
 Text Domain: wp-dbmanager
@@ -11,7 +11,7 @@ Text Domain: wp-dbmanager
 
 
 /*
-	Copyright 2019  Lester Chan  (email : lesterchan@gmail.com)
+    Copyright 2019  Lester Chan  (email : lesterchan@gmail.com)
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -89,15 +89,15 @@ function cron_dbmanager_backup() {
 			}
 		}
 		$backup['command'] = '';
+		$backup['filename'] = $backup['date'] . '_-_' . DB_NAME . '.sql';
 		$brace = 0 === strpos( PHP_OS, 'WIN' ) ? '"' : '';
 		if ( (int) $backup_options['backup_gzip'] === 1 ) {
-			$backup['filename'] = $backup['date'].'_-_'.DB_NAME.'.sql.gz';
-			$backup['filepath'] = $backup['path'].'/'.$backup['filename'];
+			$backup['filename'] .= '.gz';
+			$backup['filepath'] = $backup['path'] . '/'. $backup['filename'];
 			do_action( 'wp_dbmanager_before_escapeshellcmd' );
 			$backup['command'] = $brace . escapeshellcmd( $backup['mysqldumppath'] ) . $brace . ' --force --host=' . escapeshellarg( $backup['host'] ).' --user=' . escapeshellarg( DB_USER ) . ' --password=' . escapeshellarg( DB_PASSWORD ) . $backup['port'] . $backup['sock'] . $backup['charset'] . ' --add-drop-table --skip-lock-tables ' . DB_NAME . ' | gzip > '. $brace . escapeshellcmd( $backup['filepath'] ) . $brace;
 		} else {
-			$backup['filename'] = $backup['date'].'_-_'.DB_NAME.'.sql';
-			$backup['filepath'] = $backup['path'].'/'.$backup['filename'];
+			$backup['filepath'] = $backup['path'] . '/'. $backup['filename'];
 			do_action( 'wp_dbmanager_before_escapeshellcmd' );
 			$backup['command'] = $brace . escapeshellcmd( $backup['mysqldumppath'] ) . $brace . ' --force --host=' . escapeshellarg( $backup['host'] ).' --user=' . escapeshellarg( DB_USER ). ' --password=' . escapeshellarg( DB_PASSWORD ) . $backup['port'] . $backup['sock'] . $backup['charset'] . ' --add-drop-table --skip-lock-tables ' . DB_NAME . ' > ' . $brace . escapeshellcmd( $backup['filepath'] ) . $brace;
 		}
@@ -109,6 +109,7 @@ function cron_dbmanager_backup() {
 		}
 	}
 }
+
 function cron_dbmanager_optimize() {
 	global $wpdb;
 	$backup_options = get_option('dbmanager_options');
@@ -122,6 +123,7 @@ function cron_dbmanager_optimize() {
 		$wpdb->query('OPTIMIZE TABLE '.implode(',', $optimize_tables));
 	}
 }
+
 function cron_dbmanager_repair() {
 	global $wpdb;
 	$backup_options = get_option('dbmanager_options');
@@ -135,6 +137,7 @@ function cron_dbmanager_repair() {
 		$wpdb->query('REPAIR TABLE '.implode(',', $repair_tables));
 	}
 }
+
 function cron_dbmanager_reccurences($schedules) {
 	$backup_options = get_option( 'dbmanager_options' );
 
@@ -278,46 +281,75 @@ function dbmanager_is_valid_path( $path ) {
 	return preg_match( '/^[^*?"<>|;]*$/', $path );
 }
 
+### Functionn : Breakdown the file name into array
+function dbmanager_parse_filename( $filename ) {
+	$file_parts = explode( '_-_', $filename );
+	if ( count( $file_parts ) > 2 ) {
+		return array(
+			'name'      => $filename,
+			'checksum'  => $file_parts[0],
+			'timestamp' => $file_parts[1],
+			'database'  => $file_parts[2],
+		);
+	}
+
+	return array(
+		'name'      => $filename,
+		'checksum'  => '-',
+		'timestamp' => $file_parts[0],
+		'database'  => $file_parts[1],
+	);
+}
+
+### Functionn : Return extra information like file size and nice date of the file
+function dbmanager_parse_file( $filepath ) {
+	$filename = basename( $filepath );
+	$file_parts = dbmanager_parse_filename( $filename );
+	$file_parts['path'] = dirname( $filepath );
+	$file_parts['formatted_date'] = mysql2date( sprintf( __( '%s @ %s', 'wp-dbmanager' ), get_option( 'date_format' ), get_option( 'time_format' ) ), gmdate( 'Y-m-d H:i:s', $file_parts['timestamp'] ) );
+	$file_parts['size'] = filesize( $filepath );
+	$file_parts['formatted_size'] = format_size( $file_parts['size'] );
+
+	return $file_parts;
+}
+
 ### Function: Email database backup
-function dbmanager_email_backup($to = '', $backup_file_path)
-{
-	if( is_email( $to ) && file_exists( $backup_file_path ) )
-	{
+function dbmanager_email_backup( $to, $backup_file_path ) {
+	$to = ( !empty( $to ) ? $to : get_option( 'admin_email' ) );
+
+	if( is_email( $to ) && file_exists( $backup_file_path ) ) {
 		$backup_options = get_option( 'dbmanager_options' );
 
-		$file_name = basename( $backup_file_path );
-		$file_gmt_date = gmdate( 'Y-m-d H:i:s', substr( $file_name, 0, 10 ) );
-		$file_size = format_size( filesize( $backup_file_path) );
-		$file_date = mysql2date( sprintf( __( '%s @ %s', 'wp-dbmanager' ), get_option( 'date_format' ), get_option( 'time_format' ) ), $file_gmt_date );
+		$file = dbmanager_parse_file( $backup_file_path );
+		$file_gmt_date = gmdate( 'Y-m-d H:i:s', $file['timestamp'] );
 
-		$to = ( !empty( $to ) ? $to : get_option( 'admin_email' ) );
-
-		$subject = ( !empty( $backup_options['backup_email_subject'] ) ? $backup_options['backup_email_subject'] : dbmanager_default_options( 'backup_email_subject' ) );
+		$subject = ( ! empty( $backup_options['backup_email_subject'] ) ? $backup_options['backup_email_subject'] : dbmanager_default_options( 'backup_email_subject' ) );
 		$subject = str_replace(
-			  array(
-				  '%SITE_NAME%'
-			    , '%POST_DATE%'
-			    , '%POST_TIME%'
-			  )
-			, array(
-				  wp_specialchars_decode( get_bloginfo( 'name' ), ENT_QUOTES )
-				, mysql2date( get_option( 'date_format' ), $file_gmt_date )
-				, mysql2date( get_option( 'time_format' ), $file_gmt_date )
+			array(
+				'%SITE_NAME%',
+				'%POST_DATE%',
+				'%POST_TIME%'
+			),
+			array(
+				wp_specialchars_decode( get_bloginfo( 'name' ), ENT_QUOTES ),
+				mysql2date( get_option( 'date_format' ), $file_gmt_date ),
+				mysql2date( get_option( 'time_format' ), $file_gmt_date )
 			)
 			, $subject
 		);
-		$message = __( 'Website Name:', 'wp-dbmanager').' '. wp_specialchars_decode( get_bloginfo( 'name' ), ENT_QUOTES ) . "\n".
-			__( 'Website URL:', 'wp-dbmanager' ).' '.get_bloginfo( 'url' )."\n".
-			__( 'Backup File Name:', 'wp-dbmanager' ).' '.$file_name."\n".
-			__( 'Backup File Date:', 'wp-dbmanager' ).' '.$file_date."\n".
-			__( 'Backup File Size:', 'wp-dbmanager' ).' '.$file_size."\n\n".
+		$message = __( 'Website Name:', 'wp-dbmanager' ) . ' ' . wp_specialchars_decode( get_bloginfo( 'name' ), ENT_QUOTES ) . "\n" .
+			__( 'Website URL:', 'wp-dbmanager' ) . ' '. get_bloginfo( 'url' ) . "\n\n" .
+			__( 'Backup File Name:', 'wp-dbmanager' ) . ' ' . $file['name'] . "\n" .
+			__( 'Backup File MD5 Checksum:', 'wp-dbmanager' ) . ' ' . $file['checksum'] . "\n" .
+			__( 'Backup File Date:', 'wp-dbmanager' ) . ' ' . $file['formatted_date'] . "\n" .
+			__( 'Backup File Size:', 'wp-dbmanager' ) . ' ' . $file['size'] . "\n\n" .
 			__( 'With Regards,', 'wp-dbmanager' )."\n".
-			wp_specialchars_decode( get_bloginfo( 'name' ),  ENT_QUOTES ). ' ' . __('Administrator', 'wp-dbmanager' )."\n".
-			get_bloginfo('url');
+			wp_specialchars_decode( get_bloginfo( 'name' ),  ENT_QUOTES ) . ' ' . __('Administrator', 'wp-dbmanager' ) . "\n" .
+			get_bloginfo( 'url' );
 
-		$from = ( !empty( $backup_options['backup_email_from'] ) ? $backup_options['backup_email_from'] : dbmanager_default_options( 'backup_email_from' ) );
-		$from_name = ( !empty( $backup_options['backup_email_from_name'] ) ? $backup_options['backup_email_from_name'] : dbmanager_default_options( 'backup_email_from_name' ) );
-		$headers[] = 'From: "' . wp_specialchars_decode( stripslashes_deep( $from_name ), ENT_QUOTES ) . '" <'.$from.'>';
+		$from = ( ! empty( $backup_options['backup_email_from'] ) ? $backup_options['backup_email_from'] : dbmanager_default_options( 'backup_email_from' ) );
+		$from_name = ( ! empty( $backup_options['backup_email_from_name'] ) ? $backup_options['backup_email_from_name'] : dbmanager_default_options( 'backup_email_from_name' ) );
+		$headers[] = 'From: "' . wp_specialchars_decode( stripslashes_deep( $from_name ), ENT_QUOTES ) . '" <' . $from . '>';
 
 		return wp_mail( $to, $subject, $message, $headers, $backup_file_path );
 	}
@@ -518,7 +550,7 @@ function download_database() {
 			$backup_options = get_option( 'dbmanager_options' );
 			$clean_file_name = sanitize_file_name( $database_file );
 			$clean_file_name = str_replace( 'sql_.gz', 'sql.gz', $clean_file_name );
-			$file_path = $backup_options['path'].'/'.$clean_file_name;
+			$file_path = $backup_options['path'] . '/' . $clean_file_name;
 			header( 'Pragma: public' );
 			header( 'Expires: 0' );
 			header( 'Cache-Control: must-revalidate, post-check=0, pre-check=0' );
@@ -527,7 +559,7 @@ function download_database() {
 			header( 'Content-Type: application/download' );
 			header( 'Content-Disposition: attachment; filename=' . basename( $file_path ) . ';' );
 			header( 'Content-Transfer-Encoding: binary' );
-			header( 'Content-Length: '.filesize( $file_path ) );
+			header( 'Content-Length: ' . filesize( $file_path ) );
 			@readfile( $file_path );
 		}
 		exit();

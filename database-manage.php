@@ -22,7 +22,8 @@ if( !empty( $_POST['do'] ) ) {
 	check_admin_referer('wp-dbmanager_manage');
 	// Lets Prepare The Variables
 	$database_file = ! empty ( $_POST['database_file'] ) ? sanitize_file_name( $_POST['database_file'] ) : '';
-	$nice_file_date = mysql2date(sprintf(__('%s @ %s', 'wp-dbmanager'), get_option('date_format'), get_option('time_format')), gmdate('Y-m-d H:i:s', substr($database_file, 0, 10)));
+	$file = dbmanager_parse_filename( $database_file );
+	$nice_file_date = mysql2date( sprintf( __( '%s @ %s', 'wp-dbmanager' ), get_option( 'date_format' ), get_option( 'time_format' ) ), gmdate( 'Y-m-d H:i:s', substr( $file['timestamp'], 0, 10 ) ) );
 	$text = '';
 
 	// Decide What To Do
@@ -123,9 +124,9 @@ if( !empty( $_POST['do'] ) ) {
 			<?php
 				$no = 0;
 				$totalsize = 0;
-				if ( ! is_emtpy_folder( $backup['path'] ) && $handle = opendir($backup['path'] ) ) {
+				if ( ! is_emtpy_folder( $backup['path'] ) && $handle = opendir( $backup['path'] ) ) {
 						$database_files = array();
-						while (false !== ($file = readdir($handle))) {
+						while ( false !== ( $file = readdir( $handle ) ) ) {
 							if ( $file !== '.' && $file !== '..' && $file !== '.htaccess' && ( file_ext( $file ) === 'sql' || file_ext( $file ) === 'gz' ) ) {
 								$database_files[] = $file;
 							}
@@ -140,23 +141,15 @@ if( !empty( $_POST['do'] ) ) {
 								$style = ' class="alternate"';
 							}
 							$no++;
-							$file_parts = explode( '_-_', $database_files[$i] );
-							if ( count( $file_parts ) > 2 ) {
-								list( $checksum_text, $date, $database_text ) = $file_parts;
-							} else {
-								$checksum_text = '-';
-								list( $date, $database_text ) = $file_parts;
-							}
-							$date_text = mysql2date( sprintf( __( '%s @ %s', 'wp-dbmanager' ), get_option( 'date_format' ), get_option( 'time_format' ) ), gmdate( 'Y-m-d H:i:s', $date));
-							$size_text = filesize($backup['path'].'/'.$database_files[$i]);
+							$file = dbmanager_parse_file( $backup['path'] . '/'. $database_files[$i] );
 							echo '<tr'. $style .'>';
 							echo '<td>' . number_format_i18n( $no ) . '</td>';
-							echo '<td>' . $checksum_text . '</td>';
-							echo '<td>' . $database_text .'</td>';
-							echo '<td>' . $date_text . '</td>';
-							echo '<td>' . format_size( $size_text ) . '</td>';
+							echo '<td>' . $file['checksum'] . '</td>';
+							echo '<td>' . $file['database'] . '</td>';
+							echo '<td>' . $file['formatted_date'] . '</td>';
+							echo '<td>' . $file['formatted_size'] . '</td>';
 							echo '<td><input type="radio" name="database_file" value="'. esc_attr( $database_files[$i] ) .'" /></td></tr>';
-							$totalsize += $size_text;
+							$totalsize += $file['size'];
 						}
 				} else {
 					echo '<tr><td align="center" colspan="6">'.__('There Are No Database Backup Files Available.', 'wp-dbmanager').'</td></tr>';
