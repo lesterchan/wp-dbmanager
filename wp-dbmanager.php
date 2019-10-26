@@ -344,7 +344,7 @@ function dbmanager_email_backup( $to, $backup_file_path ) {
 			__( 'Backup File Name:', 'wp-dbmanager' ) . ' ' . $file['name'] . "\n" .
 			__( 'Backup File MD5 Checksum:', 'wp-dbmanager' ) . ' ' . $file['checksum'] . "\n" .
 			__( 'Backup File Date:', 'wp-dbmanager' ) . ' ' . $file['formatted_date'] . "\n" .
-			__( 'Backup File Size:', 'wp-dbmanager' ) . ' ' . $file['size'] . "\n\n" .
+			__( 'Backup File Size:', 'wp-dbmanager' ) . ' ' . $file['formatted_size'] . "\n\n" .
 			__( 'With Regards,', 'wp-dbmanager' )."\n".
 			wp_specialchars_decode( get_bloginfo( 'name' ),  ENT_QUOTES ) . ' ' . __('Administrator', 'wp-dbmanager' ) . "\n" .
 			get_bloginfo( 'url' );
