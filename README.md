@@ -42,7 +42,7 @@ Allows you to optimize database, repair database, backup database, restore datab
 * To know about the difference between WP-DBManager and WP-DB-backup, checkout __What is the difference between WP-DBManager and WP-DB-Backup?__ in the [FAQ section](https://wordpress.org/plugins/wp-dbmanager/faq/).
 
 ## Changelog
-* NEW: Fixed 1970 date issue on backup received via email.
+* NEW: Fixed 1970 date issues.
 
 ### Version 2.80
 * NEW: Prefix MD5 checksum to the database backup file to prevent user from guessing the filename.
