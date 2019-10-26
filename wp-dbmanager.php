@@ -285,20 +285,23 @@ function dbmanager_is_valid_path( $path ) {
 function dbmanager_parse_filename( $filename ) {
 	$file_parts = explode( '_-_', $filename );
 	if ( count( $file_parts ) > 2 ) {
-		return array(
-			'name'      => $filename,
-			'checksum'  => $file_parts[0],
-			'timestamp' => $file_parts[1],
-			'database'  => $file_parts[2],
+		$file = array(
+			'checksum'       => $file_parts[0],
+			'timestamp'      => $file_parts[1],
+			'database'       => $file_parts[2],
+		);
+	} else {
+		$file = array(
+			'checksum'  => '-',
+			'timestamp' => $file_parts[0],
+			'database'  => $file_parts[1],
 		);
 	}
 
-	return array(
-		'name'      => $filename,
-		'checksum'  => '-',
-		'timestamp' => $file_parts[0],
-		'database'  => $file_parts[1],
-	);
+	$file['name'] = $filename;
+	$file['formatted_date'] = mysql2date( sprintf( __( '%s @ %s', 'wp-dbmanager' ), get_option( 'date_format' ), get_option( 'time_format' ) ), gmdate( 'Y-m-d H:i:s', $file['timestamp'] ) );
+
+	return $file;
 }
 
 ### Functionn : Return extra information like file size and nice date of the file
@@ -306,7 +309,6 @@ function dbmanager_parse_file( $filepath ) {
 	$filename = basename( $filepath );
 	$file_parts = dbmanager_parse_filename( $filename );
 	$file_parts['path'] = dirname( $filepath );
-	$file_parts['formatted_date'] = mysql2date( sprintf( __( '%s @ %s', 'wp-dbmanager' ), get_option( 'date_format' ), get_option( 'time_format' ) ), gmdate( 'Y-m-d H:i:s', $file_parts['timestamp'] ) );
 	$file_parts['size'] = filesize( $filepath );
 	$file_parts['formatted_size'] = format_size( $file_parts['size'] );
 
