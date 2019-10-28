@@ -127,27 +127,26 @@ if( !empty( $_POST['do'] ) ) {
 						$database_files = array();
 						while ( false !== ( $file = readdir( $handle ) ) ) {
 							if ( $file !== '.' && $file !== '..' && $file !== '.htaccess' && ( file_ext( $file ) === 'sql' || file_ext( $file ) === 'gz' ) ) {
-								$database_files[] = $file;
+								$database_files[filemtime( $backup['path'] . '/' . $file )] = $file;
 							}
 						}
-						closedir($handle);
-						sort($database_files);
-						$database_files_count = count( $database_files ) - 1;
-						for ( $i = $database_files_count; $i > -1; $i-- ) {
+						closedir( $handle );
+						krsort( $database_files );
+						foreach( $database_files as $database_file_mtime => $database_file ) {
 							if ( $no % 2 === 0 ) {
 								$style = '';
 							} else {
 								$style = ' class="alternate"';
 							}
 							$no++;
-							$file = dbmanager_parse_file( $backup['path'] . '/'. $database_files[$i] );
+							$file = dbmanager_parse_file( $backup['path'] . '/'. $database_file );
 							echo '<tr'. $style .'>';
 							echo '<td>' . number_format_i18n( $no ) . '</td>';
 							echo '<td>' . $file['checksum'] . '</td>';
 							echo '<td>' . $file['database'] . '</td>';
 							echo '<td>' . $file['formatted_date'] . '</td>';
 							echo '<td>' . $file['formatted_size'] . '</td>';
-							echo '<td><input type="radio" name="database_file" value="'. esc_attr( $database_files[$i] ) .'" /></td></tr>';
+							echo '<td><input type="radio" name="database_file" value="'. esc_attr( $database_file ) .'" /></td></tr>';
 							$totalsize += $file['size'];
 						}
 				} else {
