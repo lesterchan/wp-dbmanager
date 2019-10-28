@@ -42,6 +42,8 @@ Allows you to optimize database, repair database, backup database, restore datab
 * To know about the difference between WP-DBManager and WP-DB-backup, checkout __What is the difference between WP-DBManager and WP-DB-Backup?__ in the [FAQ section](https://wordpress.org/plugins/wp-dbmanager/faq/).
 
 ## Changelog
+
+### Version 2.80.1
 * FIXED: 1970 date issues.
 * FIXED: Sorting order of backup files. 
 
