@@ -3,7 +3,7 @@
 Plugin Name: WP-DBManager
 Plugin URI: https://lesterchan.net/portfolio/programming/php/
 Description: Manages your WordPress database. Allows you to optimize database, repair database, backup database, restore database, delete backup database , drop/empty tables and run selected queries. Supports automatic scheduling of backing up, optimizing and repairing of database.
-Version: 2.80.1
+Version: 2.80.2
 Author: Lester 'GaMerZ' Chan
 Author URI: https://lesterchan.net
 Text Domain: wp-dbmanager
@@ -11,7 +11,7 @@ Text Domain: wp-dbmanager
 
 
 /*
-    Copyright 2019  Lester Chan  (email : lesterchan@gmail.com)
+    Copyright 2020  Lester Chan  (email : lesterchan@gmail.com)
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -411,21 +411,21 @@ if(!function_exists('is_emtpy_folder')) {
 
 ### Function: Make Sure Maximum Number Of Database Backup Files Does Not Exceed
 function check_backup_files() {
-	$backup_options = get_option('dbmanager_options');
+	$backup_options = get_option( 'dbmanager_options' );
 	$database_files = array();
-	if(!is_emtpy_folder($backup_options['path'])) {
-		if ($handle = opendir($backup_options['path'])) {
-			while (false !== ($file = readdir($handle))) {
-				if ($file != '.' && $file != '..' && (file_ext($file) == 'sql' || file_ext($file) == 'gz')) {
-					$database_files[] = $file;
+	if ( ! is_emtpy_folder( $backup_options['path'] ) ) {
+		if ( $handle = opendir($backup_options['path'] ) ) {
+			while ( false !== ( $file = readdir( $handle ) ) ) {
+				if ( $file !== '.' && $file !== '..' && ( file_ext( $file ) === 'sql' || file_ext( $file ) === 'gz' ) ) {
+					$database_files[ filemtime( $backup_options['path'] . '/' . $file ) ] = $file;
 				}
 			}
-			closedir($handle);
-			sort($database_files);
+			closedir( $handle );
+			ksort( $database_files );
 		}
 	}
-	if(sizeof($database_files) >= $backup_options['max_backup']) {
-		@unlink($backup_options['path'].'/'.$database_files[0]);
+	if ( sizeof( $database_files ) >= $backup_options['max_backup'] ) {
+		@unlink( $backup_options['path'] . '/' . $database_files[ array_key_first( $database_files ) ] );
 	}
 }
 
@@ -433,8 +433,7 @@ function check_backup_files() {
 ### Function: DBManager Default Options
 function dbmanager_default_options( $option_name )
 {
-	switch( $option_name )
-	{
+	switch( $option_name ) {
 		case 'backup_email_from':
 			return get_option( 'admin_email' );
 			break;
