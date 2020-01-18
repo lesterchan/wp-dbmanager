@@ -3,7 +3,7 @@
 Plugin Name: WP-DBManager
 Plugin URI: https://lesterchan.net/portfolio/programming/php/
 Description: Manages your WordPress database. Allows you to optimize database, repair database, backup database, restore database, delete backup database , drop/empty tables and run selected queries. Supports automatic scheduling of backing up, optimizing and repairing of database.
-Version: 2.80.2
+Version: 2.80.3
 Author: Lester 'GaMerZ' Chan
 Author URI: https://lesterchan.net
 Text Domain: wp-dbmanager
@@ -570,6 +570,16 @@ function download_database() {
 ### Function: Check whether a function is disabled.
 function dbmanager_is_function_disabled( $function_name ) {
 	return in_array( $function_name, array_map( 'trim', explode( ',', ini_get( 'disable_functions' ) ) ), true );
+}
+
+### Function: Polyfill array_key_first() for PHP < 7.3
+if ( ! function_exists( 'array_key_first' ) ) {
+	function array_key_first( $arr ) {
+		foreach( $arr as $key => $unused ) {
+			return $key;
+		}
+		return null;
+	}
 }
 
 ### Function: Database Options
