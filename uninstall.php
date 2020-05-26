@@ -33,4 +33,8 @@ function plugin_uninstalled() {
 	$option_name = 'dbmanager_options';
 
 	delete_option( $option_name );
+
+	wp_clear_scheduled_hook( 'dbmanager_cron_backup' );
+	wp_clear_scheduled_hook( 'dbmanager_cron_optimize' );
+	wp_clear_scheduled_hook( 'dbmanager_cron_repair' );
 }
