@@ -3,7 +3,7 @@
 Plugin Name: WP-DBManager
 Plugin URI: https://lesterchan.net/portfolio/programming/php/
 Description: Manages your WordPress database. Allows you to optimize database, repair database, backup database, restore database, delete backup database , drop/empty tables and run selected queries. Supports automatic scheduling of backing up, optimizing and repairing of database.
-Version: 2.80.4
+Version: 2.80.5
 Author: Lester 'GaMerZ' Chan
 Author URI: https://lesterchan.net
 Text Domain: wp-dbmanager
@@ -11,7 +11,7 @@ Text Domain: wp-dbmanager
 
 
 /*
-    Copyright 2020  Lester Chan  (email : lesterchan@gmail.com)
+    Copyright 2021  Lester Chan  (email : lesterchan@gmail.com)
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -75,7 +75,7 @@ function cron_dbmanager_backup() {
 		$backup['mysqldumppath'] = $backup_options['mysqldumppath'];
 		$backup['mysqlpath'] = $backup_options['mysqlpath'];
 		$backup['path'] = $backup_options['path'];
-		$backup['charset'] = ' --default-character-set="utf8"';
+		$backup['charset'] = ' --default-character-set="utf8mb4"';
 		$backup['host'] = DB_HOST;
 		$backup['port'] = '';
 		$backup['sock'] = '';

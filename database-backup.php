@@ -15,7 +15,7 @@ $backup['date'] = current_time('timestamp');
 $backup['mysqldumppath'] = $backup_options['mysqldumppath'];
 $backup['mysqlpath'] = $backup_options['mysqlpath'];
 $backup['path'] = $backup_options['path'];
-$backup['charset'] = ' --default-character-set="utf8"';
+$backup['charset'] = ' --default-character-set="utf8mb4"';
 
 ### Form Processing
 if(!empty($_POST['do'])) {
