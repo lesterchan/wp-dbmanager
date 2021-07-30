@@ -84,19 +84,19 @@ if(!empty($_POST['do'])) {
 		</div>
 		<table class="form-table">
 			<tr>
-				<label for="quickQueries">Helpful Queries: </label>
+				<label for="quickQueries"><?php _e('Helpful Queries', 'wp-dbmanager'); ?>: </label>
 				<select id="quickQueries"  onChange="quickQuery(this)">
 					<option value="0"></option>
-					<option value="1">Close Trackbacks On All Posts</option>
-					<option value="2">Delete All Spam Comments</option>
-					<option value="3">Delete All Revisions and Metadata</option>
-					<option value="4">Remove User Agent from Comments</option>
-					<option value="5">Empty Trash for ALL POST TYPES</option>
-					<option value="6">Delete ALL Revisions</option>
-					<option value="7">Delete All Revisions older than 90 days</option>
-					<option value="8">Delete All Unapproved Comments</option>
-					<option value="9">Find and Replace Post Content *REQUIRES EDITING*</option>
-					<option value="10">Delete all Pingbacks</option>
+					<option value="1"><?php _e('Close Trackbacks On All Posts', 'wp-dbmanager'); ?></option>
+					<option value="2"><?php _e('Delete All Spam Comments', 'wp-dbmanager'); ?></option>
+					<option value="3"><?php _e('Delete All Revisions and Metadata', 'wp-dbmanager'); ?></option>
+					<option value="4"><?php _e('Remove User Agent from Comments', 'wp-dbmanager'); ?></option>
+					<option value="5"><?php _e('Empty Trash for ALL POST TYPES', 'wp-dbmanager'); ?></option>
+					<option value="6"><?php _e('Delete ALL Revisions', 'wp-dbmanager'); ?></option>
+					<option value="7"><?php _e('Delete All Revisions older than 90 days', 'wp-dbmanager'); ?></option>
+					<option value="8"><?php _e('Delete All Unapproved Comments', 'wp-dbmanager'); ?></option>
+					<option value="9"><?php _e('Find and Replace Post Content', 'wp-dbmanager'); ?> <?php _e('*REQUIRES EDITING*', 'wp-dbmanager'); ?></option>
+					<option value="10"><?php _e('Delete all Pingbacks', 'wp-dbmanager'); ?></option>
 
 				</select>
 				<script type="text/javascript">
