@@ -16,6 +16,11 @@ $backup['mysqlpath'] = $backup_options['mysqlpath'];
 $backup['path'] = $backup_options['path'];
 
 
+global $wpdb;
+$table_prefix = $wpdb->prefix;
+
+
+
 ### Form Processing
 if(!empty($_POST['do'])) {
 	$text = '';
@@ -79,7 +84,44 @@ if(!empty($_POST['do'])) {
 		</div>
 		<table class="form-table">
 			<tr>
-				<td align="center"><textarea cols="120" rows="30" name="sql_query" style="width: 99%;" dir="ltr" ></textarea></td>
+				<label for="quickQueries">Helpful Queries: </label>
+				<select id="quickQueries"  onChange="quickQuery(this)">
+					<option value="0"></option>
+					<option value="1">Close Trackbacks On All Posts</option>
+					<option value="2">Delete All Spam Comments</option>
+					<option value="3">Delete All Revisions and Metadata</option>
+					<option value="4">Remove User Agent from Comments</option>
+					<option value="5">Empty Trash for ALL POST TYPES</option>
+					<option value="6">Delete ALL Revisions</option>
+					<option value="7">Delete All Revisions older than 90 days</option>
+					<option value="8">Delete All Unapproved Comments</option>
+					<option value="9">Find and Replace Post Content *REQUIRES EDITING*</option>
+					<option value="10">Delete all Pingbacks</option>
+
+				</select>
+				<script type="text/javascript">
+					const queries = [];
+					queries[0] = ``;
+					queries[1] = `UPDATE <?=$table_prefix?>posts SET ping_status = 'closed';`;
+					queries[2] = `DELETE FROM <?=$table_prefix?>comments WHERE comment_approved = 'spam';`;
+					queries[3] = `DELETE a,b,c FROM <?=$table_prefix?>posts a WHERE a.post_type = 'revision' LEFT JOIN <?=$table_prefix?>term_relationships b ON (a.ID = b.object_id) LEFT JOIN <?=$table_prefix?>postmeta c ON (a.ID = c.post_id);`;
+					queries[4] = `update <?=$table_prefix?>comments set comment_agent ='' ;`;
+					queries[5] = `DELETE FROM <?=$table_prefix?>posts WHERE post_status = 'trash';`;
+					queries[6] = `DELETE FROM <?=$table_prefix?>posts WHERE post_type = "revision";`;
+					queries[7] = `DELETE FROM <?=$table_prefix?>posts WHERE post_type = "revision" AND DATEDIFF(NOW(), 'post_date') > 90;`;
+					queries[8] = `DELETE FROM <?=$table_prefix?>_comments WHERE comment_approved = 0;`;
+					queries[9] = `UPDATE wp_posts SET 'post_content' = REPLACE ('post_content', 'OLDTEXT', 'NEWTEXT');`;
+					queries[10] = `DELETE FROM wp_comments WHERE comment_type = 'pingback';`;
+
+
+					function quickQuery(selectObject) {
+					  var value = selectObject.value;
+					  document.getElementById('sql_query').value = queries[value];
+					}
+				</script>
+			</tr>
+			<tr>
+				<td align="center"><textarea cols="120" rows="30" id="sql_query" name="sql_query" style="width: 99%;" dir="ltr" ></textarea></td>
 			</tr>
 			<tr>
 				<td align="center"><input type="submit" name="do" value="<?php _e('Run', 'wp-dbmanager'); ?>" class="button" />&nbsp;&nbsp;<input type="button" name="cancel" value="<?php _e('Cancel', 'wp-dbmanager'); ?>" class="button" onclick="javascript:history.go(-1)" /></td>
