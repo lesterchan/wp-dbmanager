@@ -1,6 +1,6 @@
 <?php
 ### Check Whether User Can Manage Database
-if(!current_user_can('manage_database')) {
+if( ! current_user_can('edit_files') ) {
 	die('Access Denied');
 }
 

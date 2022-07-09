@@ -3,7 +3,7 @@
 Plugin Name: WP-DBManager
 Plugin URI: https://lesterchan.net/portfolio/programming/php/
 Description: Manages your WordPress database. Allows you to optimize database, repair database, backup database, restore database, delete backup database , drop/empty tables and run selected queries. Supports automatic scheduling of backing up, optimizing and repairing of database.
-Version: 2.80.5
+Version: 2.80.6
 Author: Lester 'GaMerZ' Chan
 Author URI: https://lesterchan.net
 Text Domain: wp-dbmanager
@@ -11,7 +11,7 @@ Text Domain: wp-dbmanager
 
 
 /*
-    Copyright 2021  Lester Chan  (email : lesterchan@gmail.com)
+    Copyright 2022  Lester Chan  (email : lesterchan@gmail.com)
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -40,16 +40,16 @@ function dbmanager_textdomain() {
 add_action('admin_menu', 'dbmanager_menu');
 function dbmanager_menu() {
 	if (function_exists('add_menu_page')) {
-		add_menu_page(__('Database', 'wp-dbmanager'), __('Database', 'wp-dbmanager'), 'manage_database', 'wp-dbmanager/database-manager.php', '', 'dashicons-archive');
+		add_menu_page(__('Database', 'wp-dbmanager'), __('Database', 'wp-dbmanager'), 'edit_files', 'wp-dbmanager/database-manager.php', '', 'dashicons-archive');
 	}
 	if (function_exists('add_submenu_page')) {
-		add_submenu_page('wp-dbmanager/database-manager.php', __('Backup DB', 'wp-dbmanager'), __('Backup DB', 'wp-dbmanager'), 'manage_database', 'wp-dbmanager/database-backup.php');
-		add_submenu_page('wp-dbmanager/database-manager.php', __('Manage Backup DB', 'wp-dbmanager'), __('Manage Backup DB', 'wp-dbmanager'), 'manage_database', 'wp-dbmanager/database-manage.php');
-		add_submenu_page('wp-dbmanager/database-manager.php', __('Optimize DB', 'wp-dbmanager'), __('Optimize DB', 'wp-dbmanager'), 'manage_database', 'wp-dbmanager/database-optimize.php');
-		add_submenu_page('wp-dbmanager/database-manager.php', __('Repair DB', 'wp-dbmanager'), __('Repair DB', 'wp-dbmanager'), 'manage_database', 'wp-dbmanager/database-repair.php');
-		add_submenu_page('wp-dbmanager/database-manager.php', __('Empty/Drop Tables', 'wp-dbmanager'), __('Empty/Drop Tables', 'wp-dbmanager'), 'manage_database', 'wp-dbmanager/database-empty.php');
-		add_submenu_page('wp-dbmanager/database-manager.php', __('Run SQL Query', 'wp-dbmanager'), __('Run SQL Query', 'wp-dbmanager'), 'manage_database', 'wp-dbmanager/database-run.php');
-		add_submenu_page('wp-dbmanager/database-manager.php', __('DB Options', 'wp-dbmanager'),  __('DB Options', 'wp-dbmanager'), 'manage_database', 'wp-dbmanager/wp-dbmanager.php', 'dbmanager_options');
+		add_submenu_page('wp-dbmanager/database-manager.php', __('Backup DB', 'wp-dbmanager'), __('Backup DB', 'wp-dbmanager'), 'edit_files', 'wp-dbmanager/database-backup.php');
+		add_submenu_page('wp-dbmanager/database-manager.php', __('Manage Backup DB', 'wp-dbmanager'), __('Manage Backup DB', 'wp-dbmanager'), 'edit_files', 'wp-dbmanager/database-manage.php');
+		add_submenu_page('wp-dbmanager/database-manager.php', __('Optimize DB', 'wp-dbmanager'), __('Optimize DB', 'wp-dbmanager'), 'edit_files', 'wp-dbmanager/database-optimize.php');
+		add_submenu_page('wp-dbmanager/database-manager.php', __('Repair DB', 'wp-dbmanager'), __('Repair DB', 'wp-dbmanager'), 'edit_files', 'wp-dbmanager/database-repair.php');
+		add_submenu_page('wp-dbmanager/database-manager.php', __('Empty/Drop Tables', 'wp-dbmanager'), __('Empty/Drop Tables', 'wp-dbmanager'), 'edit_files', 'wp-dbmanager/database-empty.php');
+		add_submenu_page('wp-dbmanager/database-manager.php', __('Run SQL Query', 'wp-dbmanager'), __('Run SQL Query', 'wp-dbmanager'), 'edit_files', 'wp-dbmanager/database-run.php');
+		add_submenu_page('wp-dbmanager/database-manager.php', __('DB Options', 'wp-dbmanager'),  __('DB Options', 'wp-dbmanager'), 'edit_files', 'wp-dbmanager/wp-dbmanager.php', 'dbmanager_options');
 	}
 }
 
@@ -496,11 +496,10 @@ function dbmanager_activation( $network_wide ) {
 function dbmanager_activate() {
 	dbmanager_create_backup_folder();
 
-	// Set 'manage_database' Capabilities To Administrator
+	// Remove 'manage_database', we use 'edit_files' from 2.80.6
 	$role = get_role( 'administrator' );
-	if( ! $role->has_cap( 'manage_database') )
-	{
-		$role->add_cap( 'manage_database' );
+	if( $role->has_cap( 'manage_database') ) {
+		$role->remove_cap( 'manage_database' );
 	}
 }
 
