@@ -1,7 +1,7 @@
 <?php
 ### Check Whether User Can Manage Database
-if( ! current_user_can('edit_files') ) {
-	die('Access Denied');
+if ( ! current_user_can( 'install_plugins' ) ) {
+	die( 'Access Denied' );
 }
 
 
