@@ -3,7 +3,7 @@
 Plugin Name: WP-DBManager
 Plugin URI: https://lesterchan.net/portfolio/programming/php/
 Description: Manages your WordPress database. Allows you to optimize database, repair database, backup database, restore database, delete backup database , drop/empty tables and run selected queries. Supports automatic scheduling of backing up, optimizing and repairing of database.
-Version: 2.80.8
+Version: 2.80.9
 Author: Lester 'GaMerZ' Chan
 Author URI: https://lesterchan.net
 Text Domain: wp-dbmanager
@@ -383,29 +383,24 @@ if(!function_exists('file_ext')) {
 }
 
 
-### Function: Check Folder Whether There Is Any File Inside
-if(!function_exists('is_emtpy_folder')) {
-	function is_emtpy_folder($folder){
-	   if(is_dir($folder) ){
-		   $folder_content = '';
-		   $handle = opendir($folder);
-		   while( (gettype( $name = readdir($handle)) != 'boolean')){
-				if($name != '.htaccess') {
-					$name_array[] = $name;
-				}
-		   }
-		   foreach($name_array as $temp)
-			   $folder_content .= $temp;
-
-		   if($folder_content == '...')
-			   return true;
-		   else
-			   return false;
-		   closedir($handle);
-	   }
-	   else
-		   return true;
+### Function: Check Folder Whether There Are Any Files Inside
+function dbmanager_is_folder_valid( $folder ){
+	// Check folder whether it is readable
+	if ( ! is_readable( $folder ) ) {
+		return false;
 	}
+
+	// Ensure folder is a directory
+	if ( ! is_dir( $folder ) ) {
+		return false;
+	}
+
+	// Ensure folder is not empty. 2 because it includes '.' and '..'
+	if ( scandir( $folder ) <= 2 ) {
+		return false;
+	}
+	
+	return true;
 }
 
 
@@ -413,7 +408,7 @@ if(!function_exists('is_emtpy_folder')) {
 function check_backup_files() {
 	$backup_options = get_option( 'dbmanager_options' );
 	$database_files = array();
-	if ( ! is_emtpy_folder( $backup_options['path'] ) ) {
+	if ( dbmanager_is_folder_valid( $backup_options['path'] ) ) {
 		if ( $handle = opendir($backup_options['path'] ) ) {
 			while ( false !== ( $file = readdir( $handle ) ) ) {
 				if ( $file !== '.' && $file !== '..' && ( file_ext( $file ) === 'sql' || file_ext( $file ) === 'gz' ) ) {

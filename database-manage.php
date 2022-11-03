@@ -123,7 +123,7 @@ if( !empty( $_POST['do'] ) ) {
 			<?php
 				$no = 0;
 				$totalsize = 0;
-				if ( ! is_emtpy_folder( $backup['path'] ) && $handle = opendir( $backup['path'] ) ) {
+				if ( dbmanager_is_folder_valid( $backup['path'] ) && $handle = opendir( $backup['path'] ) ) {
 						$database_files = array();
 						while ( false !== ( $file = readdir( $handle ) ) ) {
 							if ( $file !== '.' && $file !== '..' && $file !== '.htaccess' && ( file_ext( $file ) === 'sql' || file_ext( $file ) === 'gz' ) ) {
