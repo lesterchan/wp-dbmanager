@@ -68,7 +68,12 @@ add_action('dbmanager_cron_optimize', 'cron_dbmanager_optimize');
 add_action('dbmanager_cron_repair', 'cron_dbmanager_repair');
 function cron_dbmanager_backup() {
 	$backup_options = get_option('dbmanager_options');
-	$backup_email = stripslashes($backup_options['backup_email']);
+
+	// Enesure that backup path is valid before proceeding
+	if ( empty( $backup_options['path'] ) || ! dbmanager_is_folder_valid( $backup_options['path'] ) ) {
+		return;
+	}
+
 	if ( (int) $backup_options['backup_period'] > 0 ) {
 		$backup = array();
 		$backup['date'] = current_time('timestamp');
@@ -104,6 +109,7 @@ function cron_dbmanager_backup() {
 		execute_backup( $backup['command'] );
 		$new_filepath = $backup['path'] . '/' . md5_file( $backup['filepath'] ) . '_-_' . $backup['filename'];
 		rename( $backup['filepath'], $new_filepath );
+		$backup_email = stripslashes( $backup_options['backup_email'] );
 		if ( ! empty( $backup_email ) ) {
 			dbmanager_email_backup( $backup_email, $new_filepath );
 		}
