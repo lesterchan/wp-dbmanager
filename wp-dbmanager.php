@@ -699,7 +699,7 @@ function dbmanager_options() {
 			<tr>
 				<td valign="top"><strong><?php _e('Path To Backup:', 'wp-dbmanager'); ?></strong></td>
 				<td>
-					<input type="text" name="db_path" size="60" maxlength="105" value="<?php echo stripslashes($backup_options['path']); ?>" dir="ltr" />
+					<input type="text" name="db_path" size="60" maxlength="200" value="<?php echo stripslashes($backup_options['path']); ?>" dir="ltr" />
 					<p><?php _e('The absolute path to your database backup folder without trailing slash. Make sure the folder is writable.', 'wp-dbmanager'); ?></p>
 				</td>
 			</tr>
