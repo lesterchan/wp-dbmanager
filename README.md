@@ -3,8 +3,8 @@ Contributors: GamerZ
 Donate link: http://lesterchan.net/site/donation/  
 Tags: database, manage, wp-dbmanager, manager, table, optimize, backup, queries, query, drop, empty, tables, table, run, repair, cron, schedule, scheduling, automatic  
 Requires at least: 4.0  
-Tested up to: 6.3  
-Stable tag: 2.80.9  
+Tested up to: 6.7  
+Stable tag: 2.80.10  
 
 Manages your WordPress database.
 
@@ -42,6 +42,9 @@ Allows you to optimize database, repair database, backup database, restore datab
 * To know about the difference between WP-DBManager and WP-DB-backup, checkout __What is the difference between WP-DBManager and WP-DB-Backup?__ in the [FAQ section](https://wordpress.org/plugins/wp-dbmanager/faq/).
 
 ## Changelog
+### Version 2.80.10
+* FIXED: Don't throw fatal error if unknown .sql files are inside the database backup folder.
+
 ### Version 2.80.9
 * FIXED: Handle folder permissions properly
 

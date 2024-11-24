@@ -3,7 +3,7 @@
 Plugin Name: WP-DBManager
 Plugin URI: https://lesterchan.net/portfolio/programming/php/
 Description: Manages your WordPress database. Allows you to optimize database, repair database, backup database, restore database, delete backup database , drop/empty tables and run selected queries. Supports automatic scheduling of backing up, optimizing and repairing of database.
-Version: 2.80.9
+Version: 2.80.10
 Author: Lester 'GaMerZ' Chan
 Author URI: https://lesterchan.net
 Text Domain: wp-dbmanager
@@ -11,7 +11,7 @@ Text Domain: wp-dbmanager
 
 
 /*
-    Copyright 2022  Lester Chan  (email : lesterchan@gmail.com)
+    Copyright 2024  Lester Chan  (email : lesterchan@gmail.com)
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -300,12 +300,17 @@ function dbmanager_parse_filename( $filename ) {
 		$file = array(
 			'checksum'  => '-',
 			'timestamp' => $file_parts[0],
-			'database'  => $file_parts[1],
+			'database'  => ! empty( $file_parts[1] ) ? $file_parts[1] : $filename,
 		);
 	}
 
 	$file['name'] = $filename;
-	$file['formatted_date'] = mysql2date( sprintf( __( '%s @ %s', 'wp-dbmanager' ), get_option( 'date_format' ), get_option( 'time_format' ) ), gmdate( 'Y-m-d H:i:s', $file['timestamp'] ) );
+
+	if ( is_numeric( $file['timestamp'] ) ) {
+		$file['formatted_date'] = mysql2date( sprintf( __( '%s @ %s', 'wp-dbmanager' ), get_option( 'date_format' ), get_option( 'time_format' ) ), gmdate( 'Y-m-d H:i:s', $file['timestamp'] ) );
+	} else {
+		$file['formatted_date'] = '-';
+	}
 
 	return $file;
 }
