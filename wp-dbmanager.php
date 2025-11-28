@@ -35,6 +35,20 @@ function dbmanager_textdomain() {
 	load_plugin_textdomain( 'wp-dbmanager', false, dirname( plugin_basename( __FILE__ ) ) );
 }
 
+### Check for and activate optional stylesheet for the admin panel
+function wp_dbmanager_admin_style($hook) {
+	// Only load on wp-dbmanager admin pages
+	if (strpos($hook, 'wp-dbmanager') === false) {
+		return;
+	}
+
+	// Load optional custom stylesheet if available
+	$css_file = plugin_dir_path(__FILE__) . 'database-admin-css.css';
+	if (file_exists($css_file)) {
+		wp_enqueue_style('wp_dbmanager_admin_css', plugins_url('database-admin-css.css', __FILE__) );
+	}
+}
+add_action( 'admin_enqueue_scripts', 'wp_dbmanager_admin_style' );
 
 ### Function: Database Manager Menu
 add_action('admin_menu', 'dbmanager_menu');
@@ -43,6 +57,7 @@ function dbmanager_menu() {
 		add_menu_page(__('Database', 'wp-dbmanager'), __('Database', 'wp-dbmanager'), 'install_plugins', 'wp-dbmanager/database-manager.php', '', 'dashicons-archive');
 	}
 	if (function_exists('add_submenu_page')) {
+    add_submenu_page('wp-dbmanager/database-manager.php', __('Database Info', 'wp-dbmanager'), __('Database Info', 'wp-dbmanager'), 'install_plugins', 'wp-dbmanager/database-manager.php');
 		add_submenu_page('wp-dbmanager/database-manager.php', __('Backup DB', 'wp-dbmanager'), __('Backup DB', 'wp-dbmanager'), 'install_plugins', 'wp-dbmanager/database-backup.php');
 		add_submenu_page('wp-dbmanager/database-manager.php', __('Manage Backup DB', 'wp-dbmanager'), __('Manage Backup DB', 'wp-dbmanager'), 'install_plugins', 'wp-dbmanager/database-manage.php');
 		add_submenu_page('wp-dbmanager/database-manager.php', __('Optimize DB', 'wp-dbmanager'), __('Optimize DB', 'wp-dbmanager'), 'install_plugins', 'wp-dbmanager/database-optimize.php');
@@ -109,6 +124,8 @@ function cron_dbmanager_backup() {
 		execute_backup( $backup['command'] );
 		$new_filepath = $backup['path'] . '/' . md5_file( $backup['filepath'] ) . '_-_' . $backup['filename'];
 		rename( $backup['filepath'], $new_filepath );
+		$comment = "Cron backup at " . gmdate('Y-m-d H:i:s', $backup['date']);
+		file_put_contents("{$new_filepath}.txt",$comment);
 		$backup_email = stripslashes( $backup_options['backup_email'] );
 		if ( ! empty( $backup_email ) ) {
 			dbmanager_email_backup( $backup_email, $new_filepath );
@@ -350,8 +367,14 @@ function dbmanager_email_backup( $to, $backup_file_path ) {
 			)
 			, $subject
 		);
+
+    $comment = file_exists("{$backup_file_path}.txt") ?
+			__( 'Backup Comment:', 'wp-dbmanager' ) . ' ' .
+			file_get_contents("{$backup_file_path}.txt") . "\n" : "";
+
 		$message = __( 'Website Name:', 'wp-dbmanager' ) . ' ' . wp_specialchars_decode( get_bloginfo( 'name' ), ENT_QUOTES ) . "\n" .
-			__( 'Website URL:', 'wp-dbmanager' ) . ' '. get_bloginfo( 'url' ) . "\n\n" .
+			__( 'Website URL:', 'wp-dbmanager' ) . ' '. get_bloginfo( 'url' ) . "\n" .
+			$comment . "\n" .
 			__( 'Backup File Name:', 'wp-dbmanager' ) . ' ' . $file['name'] . "\n" .
 			__( 'Backup File MD5 Checksum:', 'wp-dbmanager' ) . ' ' . $file['checksum'] . "\n" .
 			__( 'Backup File Date:', 'wp-dbmanager' ) . ' ' . $file['formatted_date'] . "\n" .

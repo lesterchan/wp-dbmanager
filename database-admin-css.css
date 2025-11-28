@@ -1,0 +1,55 @@
+.text-ok {
+  color: green;
+}
+
+/* -------------------------------------------------------------
+   DBManager Check Groups
+   ------------------------------------------------------------- */
+.dbmanager-check-group {
+	margin: 1em 0;
+}
+
+.dbmanager-check-group h3 {
+	margin: 0 0 .3em;
+	font-size: 1.2em;
+}
+
+/* Toggle button - Override WordPress defaults */
+.dbmanager-check-group .dbmanager-toggle {
+	background: none;
+	border: none;
+	text-decoration: none;
+	outline: none;
+	padding: 0;
+	margin: 0;
+	cursor: pointer;
+	color: inherit;
+	font-size: inherit;
+	font-weight: normal;
+	line-height: 1.4;
+	width: auto;
+	display: inline;
+}
+
+/* Status colors */
+.dbmanager-check-group .dbmanager-toggle.dbmanager-ok { color: green; }
+.dbmanager-check-group .dbmanager-toggle.dbmanager-err { color: red; }
+
+/* Content area */
+.dbmanager-check-group .dbmanager-content {
+	margin-left: 0;
+	padding: 0;
+	display: none; /* Initially hidden */
+}
+
+.dbmanager-check-group .dbmanager-content p {
+	margin: .2em 0;
+	line-height: 1.4;
+}
+
+/* Details styling */
+.dbmanager-details {
+	color: #666;
+	font-size: 0.9em;
+	margin-left: .4em;
+}

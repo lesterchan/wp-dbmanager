@@ -15,7 +15,7 @@ $backup['mysqldumppath'] = $backup_options['mysqldumppath'];
 $backup['mysqlpath'] = $backup_options['mysqlpath'];
 $backup['path'] = $backup_options['path'];
 $backup['charset'] = ' --default-character-set="utf8mb4"';
-
+$text = !empty($_GET['info']) ? stripslashes(base64_decode($_GET['info'])) : "";
 
 ### Form Processing
 if( !empty( $_POST['do'] ) ) {
@@ -91,6 +91,7 @@ if( !empty( $_POST['do'] ) ) {
 						$text .= '<p style="color: red;">' . sprintf( __( 'Unable To Delete Database Backup File On \'%s\'', 'wp-dbmanager' ), $file['formatted_date'] ) . '</p>';
 					} else {
 						$text .= '<p style="color: green;">' . sprintf( __( 'Database Backup File On \'%s\' Deleted Successfully', 'wp-dbmanager' ), $file['formatted_date'] ) . '</p>';
+						if (file_exists($backup['path'].'/'.$database_file . ".txt")) unlink($backup['path'].'/'.$database_file . ".txt");
 					}
 				} else {
 					$text = '<p style="color: red;">' . sprintf( __( 'Invalid Database Backup File On \'%s\'', 'wp-dbmanager' ), $file['formatted_date'] ) . '</p>';
@@ -109,6 +110,7 @@ if( !empty( $_POST['do'] ) ) {
 	<div class="wrap">
 		<h2><?php _e('Manage Backup Database', 'wp-dbmanager'); ?></h2>
 		<p><?php _e('Choose A Backup Date To E-Mail, Restore, Download Or Delete', 'wp-dbmanager'); ?></p>
+<?php backup_form_action(0); ?>
 		<table class="widefat">
 			<thead>
 				<tr>
@@ -139,6 +141,8 @@ if( !empty( $_POST['do'] ) ) {
 								$style = ' class="alternate"';
 							}
 							$no++;
+							$checked = ($no==1) ? 'checked="checked" ' : '';
+							$comment = file_exists($backup['path'].'/'. $database_file . ".txt") ? file_get_contents($backup['path'].'/'. $database_file . ".txt") : "";
 							$file = dbmanager_parse_file( $backup['path'] . '/'. $database_file );
 							echo '<tr'. $style .'>';
 							echo '<td>' . number_format_i18n( $no ) . '</td>';
@@ -146,8 +150,13 @@ if( !empty( $_POST['do'] ) ) {
 							echo '<td>' . $file['database'] . '</td>';
 							echo '<td>' . $file['formatted_date'] . '</td>';
 							echo '<td>' . $file['formatted_size'] . '</td>';
-							echo '<td><input type="radio" name="database_file" value="'. esc_attr( $database_file ) .'" /></td></tr>';
+							echo '<td><input type="radio" ' . $checked . 'name="database_file" value="'. esc_attr( $database_file ) .'" /></td></tr>';
 							$totalsize += $file['size'];
+							if (!empty($comment)) {
+								echo '<tr' . $style . '><td>&nbsp;</td><td colspan="4">';
+								echo '<b>' . __("Comment", 'wp-dbmanager') . ':</b> ' . $comment . '</td>';
+								echo '<td>&nbsp;</td></tr>';
+							}
 						}
 				} else {
 					echo '<tr><td align="center" colspan="6">'.__('There Are No Database Backup Files Available.', 'wp-dbmanager').'</td></tr>';
@@ -159,10 +168,17 @@ if( !empty( $_POST['do'] ) ) {
 				<th>&nbsp;</th>
 			</tr>
 		</table>
-		<table class="form-table">
+<?php backup_form_action(1); ?>
+	</div>
+</form>
+<?php
+function backup_form_action($email=1) { ?>
+    <table class="form-table">
+<?php if ($email == 1) { ?>
 			<tr>
 				<td colspan="5" align="center"><label for="email_to"><?php _e('E-mail database backup file to:', 'wp-dbmanager'); ?></label> <input type="text" id="email_to" name="email_to" size="30" maxlength="50" value="<?php echo get_option('admin_email'); ?>" dir="ltr" />&nbsp;&nbsp;<input type="submit" name="do" value="<?php _e('E-Mail', 'wp-dbmanager'); ?>" class="button" /></td>
 			</tr>
+<?php } ?>
 			<tr>
 				<td colspan="5" align="center">
 					<input type="submit" name="do" value="<?php _e('Download', 'wp-dbmanager'); ?>" class="button" />&nbsp;&nbsp;
@@ -171,5 +187,4 @@ if( !empty( $_POST['do'] ) ) {
 					<input type="button" name="cancel" value="<?php _e('Cancel', 'wp-dbmanager'); ?>" class="button" onclick="history.go(-1)" /></td>
 			</tr>
 		</table>
-	</div>
-</form>
+<?php } ?>
