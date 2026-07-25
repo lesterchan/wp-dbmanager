@@ -42,6 +42,7 @@ Allows you to optimize database, repair database, backup database, restore datab
 ### Version 2.81.0
 * NOTE: The mysqldump and mysql paths are now passed as a single argument. If you added extra flags to either path under DB Options, move them out or your backups will fail.
 * NOTE: Requires WordPress 4.6 or later, up from 4.0.
+* NOTE: Backup file names now carry a real Unix timestamp. Backups taken before this release will show a date shifted by your timezone offset. The files themselves are fine.
 * NEW: WordPress 7.0
 * NEW: New backups are gzipped by default.
 * NEW: 'Attach Backup File' option to control whether the scheduled backup e-mail carries the database file. Existing sites keep attaching it.

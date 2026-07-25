@@ -65,12 +65,6 @@
 		<!-- $wpdb and MySQL result columns are not ours to rename. -->
 		<exclude name="WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase"/>
 
-		<!--
-			The backup file name carries the site's local timestamp, and the dates
-			shown next to each backup are read back from it. Switching to time()
-			would change every new file name and stop matching the old ones.
-		-->
-		<exclude name="WordPress.DateTime.CurrentTimeTimestamp.Requested"/>
 
 	</rule>
 
