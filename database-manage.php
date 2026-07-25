@@ -49,18 +49,26 @@ if( !empty( $_POST['do'] ) ) {
 				} else {
 					$backup['command'] = escapeshellarg( $backup['mysqlpath'] ) . dbmanager_credential_args( $defaults_file ) . ' --host=' . escapeshellarg( $backup['host'] ) . ' --user=' . escapeshellarg( DB_USER ) . $backup['port'] . $backup['sock'] . $backup['charset'] . ' ' . escapeshellarg( DB_NAME ) . ' < ' . escapeshellarg( $backup['path'] . '/' . $database_file );
 				}
+				$error = 0;
+				$restore_ran = false;
 				if( realpath( $backup['path'] ) === false ) {
-					$text = '<p style="color: red;">' . sprintf(__('%s is not a valid backup path', 'wp-dbmanager'), stripslashes( $backup['path'] ) ) . '</p>';
+					$text = '<p style="color: red;">' . sprintf(__('%s is not a valid backup path', 'wp-dbmanager'), esc_html( stripslashes( $backup['path'] ) ) ) . '</p>';
 				} else if( dbmanager_is_valid_path( $backup['mysqlpath'] ) === 0 ) {
-					$text = '<p style="color: red;">' . sprintf(__('%s is not a valid mysql path', 'wp-dbmanager'), stripslashes( $backup['mysqlpath'] ) ) . '</p>';
+					$text = '<p style="color: red;">' . sprintf(__('%s is not a valid mysql path', 'wp-dbmanager'), esc_html( stripslashes( $backup['mysqlpath'] ) ) ) . '</p>';
 				} else {
 					passthru( $backup['command'], $error );
+					$restore_ran = true;
 				}
 				dbmanager_delete_defaults_file( $defaults_file );
-				if($error) {
-					$text = '<p style="color: red;">' . sprintf( __( 'Database On \'%s\' Failed To Restore', 'wp-dbmanager' ), esc_html( $file['formatted_date'] ) ) . '</p>';
-				} else {
-					$text = '<p style="color: green;">' . sprintf( __( 'Database On \'%s\' Restored Successfully', 'wp-dbmanager' ), esc_html( $file['formatted_date'] ) ) . '</p>';
+
+				// Only report on the restore when it actually ran, the path errors above
+				// already explain why it did not.
+				if( $restore_ran ) {
+					if($error) {
+						$text = '<p style="color: red;">' . sprintf( __( 'Database On \'%s\' Failed To Restore', 'wp-dbmanager' ), esc_html( $file['formatted_date'] ) ) . '</p>';
+					} else {
+						$text = '<p style="color: green;">' . sprintf( __( 'Database On \'%s\' Restored Successfully', 'wp-dbmanager' ), esc_html( $file['formatted_date'] ) ) . '</p>';
+					}
 				}
 			} else {
 				$text = '<p style="color: red;">' . __('No Backup Database File Selected', 'wp-dbmanager' ) . '</p>';
@@ -123,16 +131,10 @@ if( !empty( $_POST['do'] ) ) {
 			<?php
 				$no = 0;
 				$totalsize = 0;
-				if ( dbmanager_is_folder_valid( $backup['path'] ) && $handle = opendir( $backup['path'] ) ) {
-						$database_files = array();
-						while ( false !== ( $file = readdir( $handle ) ) ) {
-							if ( $file !== '.' && $file !== '..' && $file !== '.htaccess' && ( file_ext( $file ) === 'sql' || file_ext( $file ) === 'gz' ) ) {
-								$database_files[filemtime( $backup['path'] . '/' . $file )] = $file;
-							}
-						}
-						closedir( $handle );
-						krsort( $database_files );
-						foreach( $database_files as $database_file_mtime => $database_file ) {
+				$database_files = array_reverse( dbmanager_list_backup_files( $backup['path'] ) );
+				if ( ! empty( $database_files ) ) {
+						foreach( $database_files as $database_file_entry ) {
+							$database_file = $database_file_entry['name'];
 							if ( $no % 2 === 0 ) {
 								$style = '';
 							} else {

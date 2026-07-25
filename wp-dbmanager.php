@@ -106,8 +106,18 @@ function cron_dbmanager_backup() {
 			do_action( 'wp_dbmanager_before_escapeshellcmd' );
 			$backup['command'] = escapeshellarg( $backup['mysqldumppath'] ) . dbmanager_credential_args( $defaults_file ) . ' --force --host=' . escapeshellarg( $backup['host'] ).' --user=' . escapeshellarg( DB_USER ). $backup['port'] . $backup['sock'] . $backup['charset'] . ' --add-drop-table --skip-lock-tables ' . escapeshellarg( DB_NAME ) . ' > ' . escapeshellarg( $backup['filepath'] );
 		}
-		execute_backup( $backup['command'] );
+		$error = execute_backup( $backup['command'] );
 		dbmanager_delete_defaults_file( $defaults_file );
+
+		// Never rename or e-mail a dump that did not happen. An empty file is worse
+		// than no file, because it looks like a backup until it is needed.
+		if ( ! empty( $error ) || ! is_file( $backup['filepath'] ) || filesize( $backup['filepath'] ) === 0 ) {
+			if ( is_file( $backup['filepath'] ) ) {
+				@unlink( $backup['filepath'] );
+			}
+			return;
+		}
+
 		$new_filepath = $backup['path'] . '/' . md5_file( $backup['filepath'] ) . '_-_' . $backup['filename'];
 		rename( $backup['filepath'], $new_filepath );
 		$backup_email = stripslashes( $backup_options['backup_email'] );
@@ -224,7 +234,7 @@ function dbmanager_admin_notices() {
 			if( ! $index_exists ) {
 				echo '<p>'.sprintf( __( 'To correct this issue, move the file from <strong>%s</strong> to <strong>%s</strong>', 'wp-dbmanager'), esc_html( plugin_dir_path( __FILE__ ) . 'index.php' ), esc_html( $backup_options['path'] .'/index.php' ) ).'</p>';
 			}
-			echo '<p>' . sprintf( __( '<a href="%s">Click here</a> to let WP-DBManager try to fix it', 'wp-dbmanager' ), wp_nonce_url( admin_url( 'admin.php?page=wp-dbmanager/database-backup.php&try_fix=1' ), 'wp-dbmanager_fix' ) ) . '</a></p>';
+			echo '<p>' . sprintf( __( '<a href="%s">Click here</a> to let WP-DBManager try to fix it', 'wp-dbmanager' ), wp_nonce_url( admin_url( 'admin.php?page=wp-dbmanager/database-backup.php&try_fix=1' ), 'wp-dbmanager_fix' ) ) . '</p>';
 			echo '</div>';
 		}
 	}
@@ -234,7 +244,7 @@ function dbmanager_admin_notices() {
 ### Function: Auto Detect MYSQL and MYSQL Dump Paths
 function detect_mysql() {
 	global $wpdb;
-	$paths = array('mysq' => '', 'mysqldump' => '');
+	$paths = array('mysql' => '', 'mysqldump' => '');
 	if ( substr( PHP_OS,0,3 ) === 'WIN' ) {
 		$mysql_install = $wpdb->get_row("SHOW VARIABLES LIKE 'basedir'");
 		if($mysql_install) {
@@ -499,25 +509,51 @@ function check_backup_files() {
 		return;
 	}
 
-	$database_files = array();
-	if ( dbmanager_is_folder_valid( $backup_options['path'] ) ) {
-		if ( $handle = opendir($backup_options['path'] ) ) {
-			while ( false !== ( $file = readdir( $handle ) ) ) {
-				if ( $file !== '.' && $file !== '..' && ( file_ext( $file ) === 'sql' || file_ext( $file ) === 'gz' ) ) {
-					$database_files[ filemtime( $backup_options['path'] . '/' . $file ) ] = $file;
-				}
-			}
-			closedir( $handle );
-			ksort( $database_files );
-		}
-	}
+	$database_files = dbmanager_list_backup_files( $backup_options['path'] );
 
 	// Prune down to the limit, leaving room for the backup about to be written.
 	while ( sizeof( $database_files ) >= $max_backup ) {
-		$oldest = array_key_first( $database_files );
-		@unlink( $backup_options['path'] . '/' . $database_files[ $oldest ] );
-		unset( $database_files[ $oldest ] );
+		$oldest = array_shift( $database_files );
+		@unlink( $backup_options['path'] . '/' . $oldest['name'] );
 	}
+}
+
+
+### Function: List The Backup Files In A Folder, Oldest First
+### Returned as a list rather than keyed by mtime, two files written in the same
+### second would otherwise collide and one would never be seen.
+function dbmanager_list_backup_files( $path ) {
+	$database_files = array();
+
+	if ( ! dbmanager_is_folder_valid( $path ) ) {
+		return $database_files;
+	}
+
+	if ( $handle = opendir( $path ) ) {
+		while ( false !== ( $file = readdir( $handle ) ) ) {
+			if ( $file !== '.' && $file !== '..' && $file !== '.htaccess' && ( file_ext( $file ) === 'sql' || file_ext( $file ) === 'gz' ) ) {
+				$database_files[] = array(
+					'name'  => $file,
+					'mtime' => filemtime( $path . '/' . $file ),
+				);
+			}
+		}
+		closedir( $handle );
+	}
+
+	usort( $database_files, 'dbmanager_sort_backup_files' );
+
+	return $database_files;
+}
+
+
+### Function: Sort Backup Files By Modification Time, Oldest First
+function dbmanager_sort_backup_files( $a, $b ) {
+	if ( $a['mtime'] === $b['mtime'] ) {
+		return strcmp( $a['name'], $b['name'] );
+	}
+
+	return ( $a['mtime'] < $b['mtime'] ) ? -1 : 1;
 }
 
 
@@ -581,10 +617,10 @@ function dbmanager_activation( $network_wide ) {
 				switch_to_blog( $blog_id );
 				add_option( $option_name, $option );
 				dbmanager_activate();
+				// Paired inside the loop, switch_to_blog() stacks.
+				restore_current_blog();
 			}
 		}
-
-		restore_current_blog();
 	} else {
 		add_option( $option_name, $option );
 		dbmanager_activate();

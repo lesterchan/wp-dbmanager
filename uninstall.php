@@ -15,10 +15,10 @@ if ( is_multisite() ) {
 			$blog_id = class_exists( 'WP_Site' ) ? $ms_site->blog_id : $ms_site['blog_id'];
 			switch_to_blog( $blog_id );
 			dbmanager_uninstalled();
+			// Paired inside the loop, switch_to_blog() stacks.
+			restore_current_blog();
 		}
 	}
-
-	restore_current_blog();
 } else {
 	dbmanager_uninstalled();
 }

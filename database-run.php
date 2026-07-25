@@ -23,7 +23,7 @@ if(!empty($_POST['do'])) {
 	switch($_POST['do']) {
 		case __('Run', 'wp-dbmanager'):
 			check_admin_referer('wp-dbmanager_run');
-			$sql_queries2 = trim($_POST['sql_query']);
+			$sql_queries2 = isset($_POST['sql_query']) ? trim($_POST['sql_query']) : '';
 			$totalquerycount = 0;
 			$successquery = 0;
 			if($sql_queries2) {
