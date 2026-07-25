@@ -1,7 +1,7 @@
 # WP-DBManager
 Contributors: GamerZ  
 Donate link: https://lesterchan.net/site/donation/  
-Tags: database, manage, wp-dbmanager, manager, table, optimize, backup, queries, query, drop, empty, tables, table, run, repair, cron, schedule, scheduling, automatic  
+Tags: database, backup, restore, optimize, repair  
 Requires at least: 4.6  
 Tested up to: 7.0  
 Stable tag: 3.0.0  
