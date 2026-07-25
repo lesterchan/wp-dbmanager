@@ -34,15 +34,15 @@ $sqlversion = $wpdb->get_var("SELECT VERSION() AS version");
 		</thead>
 		<tr>
 			<td><?php _e('Database Host', 'wp-dbmanager'); ?></td>
-			<td><?php echo DB_HOST; ?></td>
+			<td><?php echo esc_html( DB_HOST ); ?></td>
 		</tr>
 		<tr class="alternate">
 			<td><?php _e('Database Name', 'wp-dbmanager'); ?></td>
-			<td><?php echo DB_NAME; ?></td>
+			<td><?php echo esc_html( DB_NAME ); ?></td>
 		</tr>
 		<tr>
 			<td><?php _e('Database User', 'wp-dbmanager'); ?></td>
-			<td><?php echo DB_USER; ?></td>
+			<td><?php echo esc_html( DB_USER ); ?></td>
 		</tr>
 		<tr class="alternate">
 			<td><?php _e('Database Type', 'wp-dbmanager'); ?></td>
@@ -50,7 +50,7 @@ $sqlversion = $wpdb->get_var("SELECT VERSION() AS version");
 		</tr>
 		<tr>
 			<td><?php _e('Database Version', 'wp-dbmanager'); ?></td>
-			<td>v<?php echo $sqlversion; ?></td>
+			<td>v<?php echo esc_html( $sqlversion ); ?></td>
 		</tr>
 	</table>
 </div>
@@ -86,7 +86,7 @@ $sqlversion = $wpdb->get_var("SELECT VERSION() AS version");
 				$no++;
 				echo "<tr$style>\n";
 				echo '<td>'.number_format_i18n($no).'</td>'."\n";
-				echo "<td>$tablestatus->Name</td>\n";
+				echo '<td>'.esc_html($tablestatus->Name).'</td>'."\n";
 				echo '<td>'.number_format_i18n($tablestatus->Rows).'</td>'."\n";
 				echo '<td>'.format_size($tablestatus->Data_length).'</td>'."\n";
 				echo '<td>'.format_size($tablestatus->Index_length).'</td>'."\n";;

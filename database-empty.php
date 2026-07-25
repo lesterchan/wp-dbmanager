@@ -43,12 +43,12 @@ if(!empty($_POST['do'])) {
 			if(!empty($empty_tables)) {
 				foreach($empty_tables as $empty_table) {
 					$empty_query = $wpdb->query("TRUNCATE $empty_table");
-					$text .= '<p style="color: green;">'.sprintf(__('Table \'%s\' Emptied', 'wp-dbmanager'), $empty_table).'</p>';
+					$text .= '<p style="color: green;">'.sprintf(__('Table \'%s\' Emptied', 'wp-dbmanager'), esc_html($empty_table)).'</p>';
 				}
 			}
 			if(!empty($drop_tables)) {
 				$drop_query = $wpdb->query("DROP TABLE $drop_tables");
-				$text = '<p style="color: green;">'.sprintf(__('Table(s) \'%s\' Dropped', 'wp-dbmanager'), $drop_tables).'</p>';
+				$text = '<p style="color: green;">'.sprintf(__('Table(s) \'%s\' Dropped', 'wp-dbmanager'), esc_html($drop_tables)).'</p>';
 			}
 			break;
 	}
@@ -82,9 +82,10 @@ $tables = $wpdb->get_col("SHOW TABLES");
 							$style = ' class="alternate"';
 						}
 						$no++;
-						echo "<tr $style><th align=\"left\" scope=\"row\">$table_name</th>\n";
-						echo "<td><input type=\"radio\" id=\"$table_name-empty\" name=\"emptydrop[$table_name]\" value=\"empty\" />&nbsp;<label for=\"$table_name-empty\">".__('Empty', 'wp-dbmanager').'</label></td>';
-						echo "<td><input type=\"radio\" id=\"$table_name-drop\" name=\"emptydrop[$table_name]\" value=\"drop\" />&nbsp;<label for=\"$table_name-drop\">".__('Drop', 'wp-dbmanager').'</label></td></tr>';
+						$table_attr = esc_attr($table_name);
+						echo "<tr $style><th align=\"left\" scope=\"row\">".esc_html($table_name)."</th>\n";
+						echo "<td><input type=\"radio\" id=\"$table_attr-empty\" name=\"emptydrop[$table_attr]\" value=\"empty\" />&nbsp;<label for=\"$table_attr-empty\">".__('Empty', 'wp-dbmanager').'</label></td>';
+						echo "<td><input type=\"radio\" id=\"$table_attr-drop\" name=\"emptydrop[$table_attr]\" value=\"drop\" />&nbsp;<label for=\"$table_attr-drop\">".__('Drop', 'wp-dbmanager').'</label></td></tr>';
 					}
 				?>
 			<tr>

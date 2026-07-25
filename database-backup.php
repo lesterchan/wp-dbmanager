@@ -83,39 +83,39 @@ $disabled_function = false;
 		<?php
 			if( is_iis() ) {
 				if ( ! is_file( $backup_path . '/Web.config' ) ) {
-					echo '<p style="color: red;">' . sprintf( __( 'Web.config is missing from %s', 'wp-dbmanager' ), $backup_path ) . '</p>';
+					echo '<p style="color: red;">' . sprintf( __( 'Web.config is missing from %s', 'wp-dbmanager' ), esc_html( $backup_path ) ) . '</p>';
 					$has_error = true;
 				} else {
-					echo '<p style="color: green;">' . sprintf( __( 'Web.config is present in %s', 'wp-dbmanager' ), $backup_path ) . '</p>';
+					echo '<p style="color: green;">' . sprintf( __( 'Web.config is present in %s', 'wp-dbmanager' ), esc_html( $backup_path ) ) . '</p>';
 				}
 			} else {
 				if( ! is_file( $backup_path . '/.htaccess' ) ) {
-					echo '<p style="color: red;">' . sprintf( __( '.htaccess is missing from %s', 'wp-dbmanager' ), $backup_path ) . '</p>';
+					echo '<p style="color: red;">' . sprintf( __( '.htaccess is missing from %s', 'wp-dbmanager' ), esc_html( $backup_path ) ) . '</p>';
 					$has_error = true;
 				} else {
-					echo '<p style="color: green;">' . sprintf( __( '.htaccess is present in %s', 'wp-dbmanager' ), $backup_path ) . '</p>';
+					echo '<p style="color: green;">' . sprintf( __( '.htaccess is present in %s', 'wp-dbmanager' ), esc_html( $backup_path ) ) . '</p>';
 				}
 			}
 			if( ! is_file( $backup_path . '/index.php' ) ) {
-				echo '<p style="color: red;">' . sprintf( __( 'index.php is missing from %s', 'wp-dbmanager' ), $backup_path ) . '</p>';
+				echo '<p style="color: red;">' . sprintf( __( 'index.php is missing from %s', 'wp-dbmanager' ), esc_html( $backup_path ) ) . '</p>';
 				$has_error = true;
 			} else {
-				echo '<p style="color: green;">' . sprintf( __( 'index.php is present in %s', 'wp-dbmanager' ), $backup_path ) . '</p>';
+				echo '<p style="color: green;">' . sprintf( __( 'index.php is present in %s', 'wp-dbmanager' ), esc_html( $backup_path ) ) . '</p>';
 			}
 		?>
 	</p>
 	<h3><?php _e('Checking Backup Status', 'wp-dbmanager'); ?></h3>
 	<p>
-		<?php _e('Checking Backup Folder', 'wp-dbmanager'); ?> <span dir="ltr">(<strong><?php echo $backup_path; ?></strong>)</span> ...<br />
+		<?php _e('Checking Backup Folder', 'wp-dbmanager'); ?> <span dir="ltr">(<strong><?php echo esc_html( $backup_path ); ?></strong>)</span> ...<br />
 		<?php
 			if( realpath( $backup_path ) === false ) {
-				echo '<p style="color: red;">' . sprintf( __( '%s is not a valid backup path', 'wp-dbmanager' ), $backup_path ) . '</p>';
+				echo '<p style="color: red;">' . sprintf( __( '%s is not a valid backup path', 'wp-dbmanager' ), esc_html( $backup_path ) ) . '</p>';
 				$has_error = true;
 			} else {
 				if ( @is_dir( $backup_path ) ) {
 					echo '<p style="color: green;">' . __('Backup folder exists', 'wp-dbmanager') . '</p>';
 				} else {
-					echo '<p style="color: red;">' . sprintf(__('Backup folder does NOT exist. Please create \'backup-db\' folder in \'%s\' folder and CHMOD it to \'777\' or change the location of the backup folder under DB Option.', 'wp-dbmanager'), WP_CONTENT_DIR) . '</p>';
+					echo '<p style="color: red;">' . sprintf(__('Backup folder does NOT exist. Please create \'backup-db\' folder in \'%s\' folder and CHMOD it to \'777\' or change the location of the backup folder under DB Option.', 'wp-dbmanager'), esc_html( WP_CONTENT_DIR )) . '</p>';
 					$has_error = true;
 				}
 				if ( @is_writable( $backup_path ) ) {
@@ -130,11 +130,11 @@ $disabled_function = false;
 	<p>
 		<?php
 			if( dbmanager_is_valid_path( $backup['mysqldumppath'] ) === 0 ) {
-				echo '<p style="color: red;">' . sprintf( __( '%s is not a valid backup mysqldump path', 'wp-dbmanager' ), stripslashes( $backup['mysqldumppath'] ) ) . '</p>';
+				echo '<p style="color: red;">' . sprintf( __( '%s is not a valid backup mysqldump path', 'wp-dbmanager' ), esc_html( stripslashes( $backup['mysqldumppath'] ) ) ) . '</p>';
 				$has_error = true;
 			} else {
 				if ( @file_exists( stripslashes( $backup['mysqldumppath'] ) ) ) {
-					echo __('Checking MYSQL Dump Path', 'wp-dbmanager') . ' <span dir="ltr">(<strong>' . stripslashes( $backup['mysqldumppath'] ) . '</strong>)</span> ...<br />';
+					echo __('Checking MYSQL Dump Path', 'wp-dbmanager') . ' <span dir="ltr">(<strong>' . esc_html( stripslashes( $backup['mysqldumppath'] ) ) . '</strong>)</span> ...<br />';
 					echo '<p style="color: green;">' . __('MYSQL dump path exists.', 'wp-dbmanager') . '</p>';
 				} else {
 					echo __('Checking MYSQL Dump Path', 'wp-dbmanager') . ' ...<br />';
@@ -147,11 +147,11 @@ $disabled_function = false;
 	<p>
 		<?php
 			if( dbmanager_is_valid_path( $backup['mysqlpath'] ) === 0 ) {
-				echo '<p style="color: red;">' . sprintf( __( '%s is not a valid backup mysql path', 'wp-dbmanager' ), stripslashes( $backup['mysqlpath'] ) ) . '</p>';
+				echo '<p style="color: red;">' . sprintf( __( '%s is not a valid backup mysql path', 'wp-dbmanager' ), esc_html( stripslashes( $backup['mysqlpath'] ) ) ) . '</p>';
 				$has_error = true;
 			} else {
 				if ( @file_exists( stripslashes($backup['mysqlpath'] ) ) ) {
-					echo __('Checking MYSQL Path', 'wp-dbmanager') . ' <span dir="ltr">(<strong>' . stripslashes($backup['mysqlpath']) . '</strong>)</span> ...<br />';
+					echo __('Checking MYSQL Path', 'wp-dbmanager') . ' <span dir="ltr">(<strong>' . esc_html( stripslashes($backup['mysqlpath']) ) . '</strong>)</span> ...<br />';
 					echo '<p style="color: green;">' . __('MYSQL path exists.', 'wp-dbmanager') . '</p>';
 				} else {
 					echo __('Checking MYSQL Path', 'wp-dbmanager') . ' ...<br />';
@@ -221,11 +221,11 @@ $disabled_function = false;
 			</thead>
 			<tr>
 				<th><?php _e('Database Name:', 'wp-dbmanager'); ?></th>
-				<td><?php echo DB_NAME; ?></td>
+				<td><?php echo esc_html( DB_NAME ); ?></td>
 			</tr>
 			<tr style="background-color: #eee;">
 				<th><?php _e('Database Backup To:', 'wp-dbmanager'); ?></th>
-				<td><span dir="ltr"><?php echo $backup_path; ?></span></td>
+				<td><span dir="ltr"><?php echo esc_html( $backup_path ); ?></span></td>
 			</tr>
 			<tr>
 				<th><?php _e('Database Backup Date:', 'wp-dbmanager'); ?></th>
@@ -233,7 +233,7 @@ $disabled_function = false;
 			</tr>
 			<tr style="background-color: #eee;">
 				<th><?php _e('Database Backup File Name:', 'wp-dbmanager'); ?></th>
-				<td><span dir="ltr"><?php echo $backup['filename']; ?></span></td>
+				<td><span dir="ltr"><?php echo esc_html( $backup['filename'] ); ?></span></td>
 			</tr>
 			<tr>
 				<th><?php _e('Database Backup Type:', 'wp-dbmanager'); ?></th>
@@ -241,7 +241,7 @@ $disabled_function = false;
 			</tr>
 			<tr style="background-color: #eee;">
 				<th><?php _e('MYSQL Dump Location:', 'wp-dbmanager'); ?></th>
-				<td><span dir="ltr"><?php echo stripslashes($backup['mysqldumppath']); ?></span></td>
+				<td><span dir="ltr"><?php echo esc_html( stripslashes($backup['mysqldumppath']) ); ?></span></td>
 			</tr>
 			<tr>
 				<th><?php _e('GZIP Database Backup File?', 'wp-dbmanager'); ?></th>

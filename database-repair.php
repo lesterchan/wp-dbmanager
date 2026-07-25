@@ -34,9 +34,9 @@ if(!empty($_POST['do'])) {
 			if(!empty($selected_tables)) {
 				$repair2 = $wpdb->query("REPAIR TABLE $selected_tables");
 				if(!$repair2) {
-					$text = '<p style="color: red;">'.sprintf(__('Table(s) \'%s\' NOT Repaired', 'wp-dbmanager'), str_replace('`', '', $selected_tables)).'</p>';
+					$text = '<p style="color: red;">'.sprintf(__('Table(s) \'%s\' NOT Repaired', 'wp-dbmanager'), esc_html(str_replace('`', '', $selected_tables))).'</p>';
 				} else {
-					$text = '<p style="color: green;">'.sprintf(__('Table(s) \'%s\' Repaired', 'wp-dbmanager'), str_replace('`', '', $selected_tables)).'</p>';
+					$text = '<p style="color: green;">'.sprintf(__('Table(s) \'%s\' Repaired', 'wp-dbmanager'), esc_html(str_replace('`', '', $selected_tables))).'</p>';
 				}
 			}
 			break;
@@ -70,8 +70,9 @@ $tables = $wpdb->get_col("SHOW TABLES");
 							$style = ' class="alternate"';
 						}
 						$no++;
-						echo "<tr $style><th align=\"left\" scope=\"row\">$table_name</th>\n";
-						echo "<td><input type=\"radio\" id=\"$table_name-no\" name=\"repair[$table_name]\" value=\"no\" />&nbsp;<label for=\"$table_name-no\">".__('No', 'wp-dbmanager')."</label>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<input type=\"radio\" id=\"$table_name-yes\" name=\"repair[$table_name]\" value=\"yes\" checked=\"checked\" />&nbsp;<label for=\"$table_name-yes\">".__('Yes', 'wp-dbmanager').'</label></td></tr>';
+						$table_attr = esc_attr($table_name);
+						echo "<tr $style><th align=\"left\" scope=\"row\">".esc_html($table_name)."</th>\n";
+						echo "<td><input type=\"radio\" id=\"$table_attr-no\" name=\"repair[$table_attr]\" value=\"no\" />&nbsp;<label for=\"$table_attr-no\">".__('No', 'wp-dbmanager')."</label>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<input type=\"radio\" id=\"$table_attr-yes\" name=\"repair[$table_attr]\" value=\"yes\" checked=\"checked\" />&nbsp;<label for=\"$table_attr-yes\">".__('Yes', 'wp-dbmanager').'</label></td></tr>';
 					}
 				?>
 			<tr>

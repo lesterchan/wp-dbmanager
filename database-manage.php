@@ -58,9 +58,9 @@ if( !empty( $_POST['do'] ) ) {
 					passthru( $backup['command'], $error );
 				}
 				if($error) {
-					$text = '<p style="color: red;">' . sprintf( __( 'Database On \'%s\' Failed To Restore', 'wp-dbmanager' ), $file['formatted_date'] ) . '</p>';
+					$text = '<p style="color: red;">' . sprintf( __( 'Database On \'%s\' Failed To Restore', 'wp-dbmanager' ), esc_html( $file['formatted_date'] ) ) . '</p>';
 				} else {
-					$text = '<p style="color: green;">' . sprintf( __( 'Database On \'%s\' Restored Successfully', 'wp-dbmanager' ), $file['formatted_date'] ) . '</p>';
+					$text = '<p style="color: green;">' . sprintf( __( 'Database On \'%s\' Restored Successfully', 'wp-dbmanager' ), esc_html( $file['formatted_date'] ) ) . '</p>';
 				}
 			} else {
 				$text = '<p style="color: red;">' . __('No Backup Database File Selected', 'wp-dbmanager' ) . '</p>';
@@ -71,9 +71,9 @@ if( !empty( $_POST['do'] ) ) {
 				$to = ( !empty( $_POST['email_to'] ) ? sanitize_email( $_POST['email_to'] ) : get_option( 'admin_email' ) );
 
 				if( dbmanager_email_backup( $to, $backup['path'] . '/' . $database_file ) ) {
-					$text .= '<p style="color: green;">' . sprintf( __( 'Database Backup File For \'%s\' Successfully E-Mailed To \'%s\'', 'wp-dbmanager' ), $file['formatted_date'], $to) . '</p>';
+					$text .= '<p style="color: green;">' . sprintf( __( 'Database Backup File For \'%s\' Successfully E-Mailed To \'%s\'', 'wp-dbmanager' ), esc_html( $file['formatted_date'] ), esc_html( $to ) ) . '</p>';
 				} else {
-					$text = '<p style="color: red;">' . sprintf( __( 'Unable To E-Mail Database Backup File For \'%s\' To \'%s\'', 'wp-dbmanager' ), $file['formatted_date'], $to ) . '</p>';
+					$text = '<p style="color: red;">' . sprintf( __( 'Unable To E-Mail Database Backup File For \'%s\' To \'%s\'', 'wp-dbmanager' ), esc_html( $file['formatted_date'] ), esc_html( $to ) ) . '</p>';
 				}
 			} else {
 				$text = '<p style="color: red;">' . __('No Backup Database File Selected', 'wp-dbmanager' ) . '</p>';
@@ -88,12 +88,12 @@ if( !empty( $_POST['do'] ) ) {
 			if ( ! empty( $database_file ) ) {
 				if ( is_file( $backup['path'] . '/' . $database_file ) ) {
 					if ( ! unlink( $backup['path'] . '/' . $database_file ) ) {
-						$text .= '<p style="color: red;">' . sprintf( __( 'Unable To Delete Database Backup File On \'%s\'', 'wp-dbmanager' ), $file['formatted_date'] ) . '</p>';
+						$text .= '<p style="color: red;">' . sprintf( __( 'Unable To Delete Database Backup File On \'%s\'', 'wp-dbmanager' ), esc_html( $file['formatted_date'] ) ) . '</p>';
 					} else {
-						$text .= '<p style="color: green;">' . sprintf( __( 'Database Backup File On \'%s\' Deleted Successfully', 'wp-dbmanager' ), $file['formatted_date'] ) . '</p>';
+						$text .= '<p style="color: green;">' . sprintf( __( 'Database Backup File On \'%s\' Deleted Successfully', 'wp-dbmanager' ), esc_html( $file['formatted_date'] ) ) . '</p>';
 					}
 				} else {
-					$text = '<p style="color: red;">' . sprintf( __( 'Invalid Database Backup File On \'%s\'', 'wp-dbmanager' ), $file['formatted_date'] ) . '</p>';
+					$text = '<p style="color: red;">' . sprintf( __( 'Invalid Database Backup File On \'%s\'', 'wp-dbmanager' ), esc_html( $file['formatted_date'] ) ) . '</p>';
 				}
 			} else {
 				$text = '<p style="color: red;">' . __( 'No Backup Database File Selected', 'wp-dbmanager' ) . '</p>';
@@ -142,10 +142,10 @@ if( !empty( $_POST['do'] ) ) {
 							$file = dbmanager_parse_file( $backup['path'] . '/'. $database_file );
 							echo '<tr'. $style .'>';
 							echo '<td>' . number_format_i18n( $no ) . '</td>';
-							echo '<td>' . $file['checksum'] . '</td>';
-							echo '<td>' . $file['database'] . '</td>';
-							echo '<td>' . $file['formatted_date'] . '</td>';
-							echo '<td>' . $file['formatted_size'] . '</td>';
+							echo '<td>' . esc_html( $file['checksum'] ) . '</td>';
+							echo '<td>' . esc_html( $file['database'] ) . '</td>';
+							echo '<td>' . esc_html( $file['formatted_date'] ) . '</td>';
+							echo '<td>' . esc_html( $file['formatted_size'] ) . '</td>';
 							echo '<td><input type="radio" name="database_file" value="'. esc_attr( $database_file ) .'" /></td></tr>';
 							$totalsize += $file['size'];
 						}
@@ -161,7 +161,7 @@ if( !empty( $_POST['do'] ) ) {
 		</table>
 		<table class="form-table">
 			<tr>
-				<td colspan="5" align="center"><label for="email_to"><?php _e('E-mail database backup file to:', 'wp-dbmanager'); ?></label> <input type="text" id="email_to" name="email_to" size="30" maxlength="50" value="<?php echo get_option('admin_email'); ?>" dir="ltr" />&nbsp;&nbsp;<input type="submit" name="do" value="<?php _e('E-Mail', 'wp-dbmanager'); ?>" class="button" /></td>
+				<td colspan="5" align="center"><label for="email_to"><?php _e('E-mail database backup file to:', 'wp-dbmanager'); ?></label> <input type="text" id="email_to" name="email_to" size="30" maxlength="50" value="<?php echo esc_attr( get_option('admin_email') ); ?>" dir="ltr" />&nbsp;&nbsp;<input type="submit" name="do" value="<?php _e('E-Mail', 'wp-dbmanager'); ?>" class="button" /></td>
 			</tr>
 			<tr>
 				<td colspan="5" align="center">
