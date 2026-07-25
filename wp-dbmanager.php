@@ -29,6 +29,9 @@ Text Domain: wp-dbmanager
 */
 
 
+defined( 'ABSPATH' ) || exit;
+
+
 ### Create Text Domain For Translations
 add_action( 'plugins_loaded', 'dbmanager_textdomain' );
 function dbmanager_textdomain() {

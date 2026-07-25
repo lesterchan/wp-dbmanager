@@ -1,4 +1,6 @@
 <?php
+defined( 'ABSPATH' ) || exit;
+
 ### Check Whether User Can Manage Database
 if ( ! current_user_can( 'install_plugins' ) ) {
 	die( 'Access Denied' );
