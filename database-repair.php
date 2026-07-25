@@ -6,6 +6,18 @@ if ( ! current_user_can( 'install_plugins' ) ) {
 	die( 'Access Denied' );
 }
 
+dbmanager_page_repair();
+
+/**
+ * Renders the page.
+ *
+ * Wrapped in a function because admin.php includes this file at global scope,
+ * which would otherwise leak every variable below into the global namespace.
+ */
+function dbmanager_page_repair() {
+	global $wpdb;
+
+
 
 // Variables Variables Variables
 $base_name = plugin_basename( 'wp-dbmanager/database-manager.php' );
@@ -13,6 +25,9 @@ $base_page = 'admin.php?page=' . $base_name;
 
 // Form Processing
 if ( ! empty( $_POST['do'] ) ) {
+	// Verified before any request data is read, not part way down the switch.
+	check_admin_referer( 'wp-dbmanager_repair' );
+
 	// Lets Prepare The Variables
 	$repair = ( ! empty( $_POST['repair'] ) ? $_POST['repair'] : array() );
 	$text   = '';
@@ -20,7 +35,6 @@ if ( ! empty( $_POST['do'] ) ) {
 	// Decide What To Do
 	switch ( $_POST['do'] ) {
 		case __( 'Repair', 'wp-dbmanager' ):
-			check_admin_referer( 'wp-dbmanager_repair' );
 			// The table names arrive as request keys, only act on ones that really exist.
 			$valid_tables    = $wpdb->get_col( 'SHOW TABLES' );
 			$selected_tables = array();
@@ -84,3 +98,5 @@ if ( ! empty( $text ) ) {
 		</table>
 	</div>
 </form>
+<?php
+}

@@ -6,6 +6,18 @@ if ( ! current_user_can( 'install_plugins' ) ) {
 	die( 'Access Denied' );
 }
 
+dbmanager_page_empty();
+
+/**
+ * Renders the page.
+ *
+ * Wrapped in a function because admin.php includes this file at global scope,
+ * which would otherwise leak every variable below into the global namespace.
+ */
+function dbmanager_page_empty() {
+	global $wpdb;
+
+
 
 // Variables Variables Variables
 $base_name               = plugin_basename( 'wp-dbmanager/database-manager.php' );
@@ -20,6 +32,9 @@ $backup['path']          = $backup_options['path'];
 
 // Form Processing
 if ( ! empty( $_POST['do'] ) ) {
+	// Verified before any request data is read, not part way down the switch.
+	check_admin_referer( 'wp-dbmanager_empty' );
+
 	// Lets Prepare The Variables
 	$emptydrop = ( ! empty( $_POST['emptydrop'] ) ? $_POST['emptydrop'] : array() );
 	$text      = '';
@@ -27,7 +42,6 @@ if ( ! empty( $_POST['do'] ) ) {
 	// Decide What To Do
 	switch ( $_POST['do'] ) {
 		case __( 'Empty/Drop', 'wp-dbmanager' ):
-			check_admin_referer( 'wp-dbmanager_empty' );
 			// The table names arrive as request keys, only act on ones that really exist.
 			$valid_tables = $wpdb->get_col( 'SHOW TABLES' );
 			$empty_tables = array();
@@ -109,3 +123,5 @@ if ( ! empty( $text ) ) {
 		</table>
 	</div>
 </form>
+<?php
+}

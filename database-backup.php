@@ -6,6 +6,16 @@ if ( ! current_user_can( 'install_plugins' ) ) {
 	die( 'Access Denied' );
 }
 
+dbmanager_page_backup();
+
+/**
+ * Renders the page.
+ *
+ * Wrapped in a function because admin.php includes this file at global scope,
+ * which would otherwise leak every variable below into the global namespace.
+ */
+function dbmanager_page_backup() {
+
 
 // Variables Variables Variables
 $base_name               = plugin_basename( 'wp-dbmanager/database-manager.php' );
@@ -21,11 +31,13 @@ $backup['charset']       = ' --default-character-set="utf8mb4"';
 
 // Form Processing
 if ( ! empty( $_POST['do'] ) ) {
+	// Verified before any request data is read, not part way down the switch.
+	check_admin_referer( 'wp-dbmanager_backup' );
+
 	$text = '';
 	// Decide What To Do
 	switch ( $_POST['do'] ) {
 		case __( 'Backup', 'wp-dbmanager' ):
-			check_admin_referer( 'wp-dbmanager_backup' );
 			$backup['host'] = DB_HOST;
 			$backup['port'] = '';
 			$backup['sock'] = '';
@@ -287,3 +299,6 @@ if ( ! empty( $text ) ) {
 		</table>
 	</div>
 </form>
+
+<?php
+}

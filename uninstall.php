@@ -12,8 +12,9 @@ if ( is_multisite() ) {
 
 	if ( 0 < sizeof( $ms_sites ) ) {
 		foreach ( $ms_sites as $ms_site ) {
-			$blog_id = class_exists( 'WP_Site' ) ? $ms_site->blog_id : $ms_site['blog_id'];
-			switch_to_blog( $blog_id );
+			// Not $blog_id, that is a WordPress global and this file runs at global scope.
+			$dbmanager_blog_id = class_exists( 'WP_Site' ) ? $ms_site->blog_id : $ms_site['blog_id'];
+			switch_to_blog( $dbmanager_blog_id );
 			dbmanager_uninstalled();
 			// Paired inside the loop, switch_to_blog() stacks.
 			restore_current_blog();

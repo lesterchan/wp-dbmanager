@@ -6,6 +6,18 @@ if ( ! current_user_can( 'install_plugins' ) ) {
 	die( 'Access Denied' );
 }
 
+dbmanager_page_run();
+
+/**
+ * Renders the page.
+ *
+ * Wrapped in a function because admin.php includes this file at global scope,
+ * which would otherwise leak every variable below into the global namespace.
+ */
+function dbmanager_page_run() {
+	global $wpdb;
+
+
 
 // Variables Variables Variables
 $base_name               = plugin_basename( 'wp-dbmanager/database-manager.php' );
@@ -20,11 +32,13 @@ $backup['path']          = $backup_options['path'];
 
 // Form Processing
 if ( ! empty( $_POST['do'] ) ) {
+	// Verified before any request data is read, not part way down the switch.
+	check_admin_referer( 'wp-dbmanager_run' );
+
 	$text = '';
 	// Decide What To Do
 	switch ( $_POST['do'] ) {
 		case __( 'Run', 'wp-dbmanager' ):
-			check_admin_referer( 'wp-dbmanager_run' );
 			$sql_queries2    = isset( $_POST['sql_query'] ) ? trim( $_POST['sql_query'] ) : '';
 			$totalquerycount = 0;
 			$successquery    = 0;
@@ -98,3 +112,6 @@ if ( ! empty( $text ) ) {
 		</p>
 	</div>
 </form>
+
+<?php
+}

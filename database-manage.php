@@ -6,6 +6,16 @@ if ( ! current_user_can( 'install_plugins' ) ) {
 	die( 'Access Denied' );
 }
 
+dbmanager_page_manage();
+
+/**
+ * Renders the page.
+ *
+ * Wrapped in a function because admin.php includes this file at global scope,
+ * which would otherwise leak every variable below into the global namespace.
+ */
+function dbmanager_page_manage() {
+
 
 // Variables Variables Variables
 $base_name               = plugin_basename( 'wp-dbmanager/database-manager.php' );
@@ -180,3 +190,6 @@ if ( ! empty( $text ) ) {
 		</table>
 	</div>
 </form>
+
+<?php
+}
