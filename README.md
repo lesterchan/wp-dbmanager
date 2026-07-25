@@ -43,6 +43,8 @@ Allows you to optimize database, repair database, backup database, restore datab
 * NOTE: The mysqldump and mysql paths are now passed as a single argument. If you added extra flags to either path under DB Options, move them out or your backups will fail.
 * NEW: WordPress 7.0
 * NEW: New backups are gzipped by default.
+* NEW: 'Attach Backup File' option to control whether the scheduled backup e-mail carries the database file. Existing sites keep attaching it.
+* CHANGED: New installs no longer prefill the backup e-mail address, so scheduled backup e-mails are opt-in.
 * FIXED: Escape all output on the admin screens to prevent XSS.
 * FIXED: Validate the mysqldump, mysql and backup paths independently.
 * FIXED: Validate table names against the database before emptying, dropping, optimizing or repairing.

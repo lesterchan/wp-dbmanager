@@ -112,7 +112,8 @@ function cron_dbmanager_backup() {
 		rename( $backup['filepath'], $new_filepath );
 		$backup_email = stripslashes( $backup_options['backup_email'] );
 		if ( ! empty( $backup_email ) ) {
-			dbmanager_email_backup( $backup_email, $new_filepath );
+			$attach = isset( $backup_options['backup_email_attach'] ) ? (int) $backup_options['backup_email_attach'] === 1 : (bool) dbmanager_default_options( 'backup_email_attach' );
+			dbmanager_email_backup( $backup_email, $new_filepath, $attach );
 		}
 	}
 }
@@ -396,7 +397,9 @@ function dbmanager_parse_file( $filepath ) {
 }
 
 ### Function: Email database backup
-function dbmanager_email_backup( $to, $backup_file_path ) {
+### $attach controls whether the dump itself is attached. The details in the
+### message body are useful on their own when it is not.
+function dbmanager_email_backup( $to, $backup_file_path, $attach = true ) {
 	$to = ( !empty( $to ) ? $to : get_option( 'admin_email' ) );
 
 	if( is_email( $to ) && file_exists( $backup_file_path ) ) {
@@ -433,7 +436,9 @@ function dbmanager_email_backup( $to, $backup_file_path ) {
 		$from_name = ( ! empty( $backup_options['backup_email_from_name'] ) ? $backup_options['backup_email_from_name'] : dbmanager_default_options( 'backup_email_from_name' ) );
 		$headers[] = 'From: "' . wp_specialchars_decode( stripslashes_deep( $from_name ), ENT_QUOTES ) . '" <' . $from . '>';
 
-		return wp_mail( $to, $subject, $message, $headers, $backup_file_path );
+		$attachments = $attach ? $backup_file_path : array();
+
+		return wp_mail( $to, $subject, $message, $headers, $attachments );
 	}
 
 	return false;
@@ -535,6 +540,9 @@ function dbmanager_default_options( $option_name )
 		case 'backup_gzip':
 			return 1;
 			break;
+		case 'backup_email_attach':
+			return 1;
+			break;
 	}
 }
 
@@ -552,7 +560,8 @@ function dbmanager_activation( $network_wide ) {
 		, 'backup'                  => 1
 		, 'backup_gzip'             => dbmanager_default_options( 'backup_gzip' )
 		, 'backup_period'           => 604800
-		, 'backup_email'            => get_option( 'admin_email' )
+		, 'backup_email'            => ''
+		, 'backup_email_attach'     => dbmanager_default_options( 'backup_email_attach' )
 		, 'backup_email_from'       => dbmanager_default_options( 'backup_email_from' )
 		, 'backup_email_from_name'  => dbmanager_default_options( 'backup_email_from_name' )
 		, 'backup_email_subject'    => dbmanager_default_options( 'backup_email_subject' )
@@ -698,6 +707,7 @@ function dbmanager_options() {
 		$backup_options['backup_gzip']              = ! empty( $_POST['db_backup_gzip'] ) ? (int) $_POST['db_backup_gzip'] : 0;
 		$backup_options['backup_period']            = ! empty( $_POST['db_backup_period'] ) ? (int) $_POST['db_backup_period'] : 0;
 		$backup_options['backup_email']             = ! empty( $_POST['db_backup_email'] ) ? sanitize_email( $_POST['db_backup_email'] ) : '';
+		$backup_options['backup_email_attach']      = ! empty( $_POST['db_backup_email_attach'] ) ? (int) $_POST['db_backup_email_attach'] : 0;
 		$backup_options['backup_email_from']        = ! empty( $_POST['db_backup_email_from'] ) ? sanitize_email( $_POST['db_backup_email_from'] ) : '';
 		$backup_options['backup_email_from_name']   = ! empty( $_POST['db_backup_email_from_name']  ) ? sanitize_text_field( $_POST['db_backup_email_from_name'] ) : '';
 		$backup_options['backup_email_subject']     = ! empty( $_POST['db_backup_email_subject'] ) ? sanitize_text_field( $_POST['db_backup_email_subject'] ) : '';
@@ -774,6 +784,10 @@ function dbmanager_options() {
 	if( !isset( $backup_options['backup_gzip'] ) )
 	{
 		$backup_options['backup_gzip'] = dbmanager_default_options( 'backup_gzip' );
+	}
+	if( !isset( $backup_options['backup_email_attach'] ) )
+	{
+		$backup_options['backup_email_attach'] = dbmanager_default_options( 'backup_email_attach' );
 	}
 
 ?>
@@ -942,6 +956,15 @@ function dbmanager_options() {
 						<input type="text" name="db_backup_email" size="30" maxlength="250" placeholder="<?php _e ( 'To E-mail', 'wp-dbmanager' ); ?>"  value="<?php echo esc_attr( stripslashes( $backup_options['backup_email'] ) ) ?>" dir="ltr" />
 					</p>
 					<p><?php _e('(Leave blank to disable this feature)', 'wp-dbmanager'); ?></p>
+				</td>
+			</tr>
+			<tr>
+				<td valign="top"><strong><?php _e('Attach Backup File', 'wp-dbmanager'); ?></strong></td>
+				<td>
+					<p>
+						<input type="radio" id="db_backup_email_attach-yes" name="db_backup_email_attach" value="1"<?php checked( 1, (int) $backup_options['backup_email_attach'] ); ?> />&nbsp;<label for="db_backup_email_attach-yes"><?php _e('Yes', 'wp-dbmanager'); ?></label>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<input type="radio" id="db_backup_email_attach-no" name="db_backup_email_attach" value="0"<?php checked( 0, (int) $backup_options['backup_email_attach'] ); ?> />&nbsp;<label for="db_backup_email_attach-no"><?php _e('No', 'wp-dbmanager'); ?></label>
+					</p>
+					<p><?php _e('Attaches the database backup file to the scheduled backup e-mail. The e-mail always includes the file name, checksum, date and size. Choose \'No\' to keep a copy of your database out of your mailbox.', 'wp-dbmanager'); ?></p>
 				</td>
 			</tr>
 			<tr>
