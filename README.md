@@ -14,11 +14,28 @@ Allows you to optimize database, repair database, backup database, restore datab
 ## General Usage
 1. Activate `WP-DBManager` Plugin
 1. The script will automatically create a folder called `backup-db` in the wp-content folder if that folder is writable. If it is not created, please create the folder and ensure that the folder is writable
-1. Open `Folder: wp-content/backup-db`
-1. If you are on Apache, move the `htaccess.txt` file from `Folder: wp-content/plugins/wp-dbmanager` to `Folder: wp-content/backup-db/.htaccess` if it is not there already
-1. If you are on IIS, move the `Web.config.txt` file from `Folder: wp-content/plugins/wp-dbmanager` to `Folder: wp-content/backup-db/Web.config` if it is not there already
-1. Move `index.php` file from `Folder: wp-content/plugins/wp-dbmanager` to `Folder: wp-content/backup-db/index.php` if it is not there already
 1. Go to `WP-Admin -> Database -> DB Options` to configure the database options
+1. Secure the backup folder, see below
+1. Go to `WP-Admin -> Database -> Backup DB`, which checks whether the folder is actually reachable over HTTP and tells you if it is
+
+## Securing The Backup Folder
+A database backup contains everything, including your users table. Anyone who can guess a backup file name can download the lot, so the folder must not be served over HTTP.
+
+**The reliable option, on any server:** set `Path To Backup` under `WP-Admin -> Database -> DB Options` to a folder outside your web root, for example `/var/www/example.com/backup-db` when WordPress lives in `/var/www/example.com/public_html`. Nothing served, nothing to configure.
+
+If the folder has to stay inside the web root:
+
+* **Apache** — move `htaccess.txt` from `Folder: wp-content/plugins/wp-dbmanager` to `Folder: wp-content/backup-db/.htaccess`
+* **IIS** — move `Web.config.txt` from `Folder: wp-content/plugins/wp-dbmanager` to `Folder: wp-content/backup-db/Web.config`
+* **nginx** — nginx does not read `.htaccess` files, so the file above does nothing. Add this to your server block and reload nginx:
+
+```nginx
+location ^~ /wp-content/backup-db/ { deny all; }
+```
+
+Move `index.php` from `Folder: wp-content/plugins/wp-dbmanager` to `Folder: wp-content/backup-db/index.php` as well, so the folder cannot be listed.
+
+The `Backup DB` page requests a file from the folder and reports what the server actually returns, so you can confirm the folder is closed rather than assume it.
 
 ### Development
 * [https://github.com/lesterchan/wp-dbmanager](https://github.com/lesterchan/wp-dbmanager "https://github.com/lesterchan/wp-dbmanager")
@@ -35,21 +52,23 @@ Allows you to optimize database, repair database, backup database, restore datab
 * NOTE: Requires WordPress 4.6 or later, up from 4.0.
 * NOTE: Backup file names now carry a real Unix timestamp. Backups taken before this release will show a date shifted by your timezone offset. The files themselves are fine.
 * NEW: WordPress 7.0
-* NEW: New backups are gzipped by default.
-* NEW: 'Attach Backup File' option to control whether the scheduled backup e-mail carries the database file. Existing sites keep attaching it.
-* CHANGED: New installs no longer prefill the backup e-mail address, so scheduled backup e-mails are opt-in.
 * NEW: The Backup Database page now asks the server whether the backup folder is actually reachable over HTTP, instead of assuming a dropped in .htaccess protects it. nginx is detected and given a configuration snippet that works.
-* FIXED: Cron backups no longer rename and e-mail a dump that failed, an empty file is no longer passed off as a backup.
-* FIXED: Restoring no longer reports success when the restore did not run.
-* FIXED: Two backups written in the same second are no longer invisible to pruning and the manage screen.
-* FIXED: Every file now refuses to run when loaded directly.
+* NEW: 'Attach Backup File' option to control whether the scheduled backup e-mail carries the database file. Existing sites keep attaching it.
+* NEW: New backups are gzipped by default.
+* CHANGED: New installs no longer prefill the backup e-mail address, so scheduled backup e-mails are opt-in.
 * FIXED: Escape all output on the admin screens to prevent XSS.
-* FIXED: Validate the mysqldump, mysql and backup paths independently.
 * FIXED: Validate table names against the database before emptying, dropping, optimizing or repairing.
 * FIXED: The database password is no longer passed on the command line.
 * FIXED: Require the `install_plugins` capability for the backup folder notice, the download and the folder fix.
 * FIXED: Only download backup files that resolve inside the backup folder.
+* FIXED: Validate the mysqldump, mysql and backup paths independently.
+* FIXED: Every file now refuses to run when loaded directly.
+* FIXED: Cron backups no longer rename and e-mail a dump that failed, an empty file is no longer passed off as a backup.
+* FIXED: Restoring no longer reports success when the restore did not run.
 * FIXED: Keep pruning old backups until the maximum is met, and treat a maximum below 1 as no limit.
+* FIXED: Two backups written in the same second are no longer invisible to pruning and the manage screen.
+* FIXED: Network activation and uninstall now cover every site, not just the first 100.
+* FIXED: Uninstalling on multisite no longer overwrites the current site ID while it works.
 * FIXED: Removed jQuery dependency.
 
 ### Version 2.80.10
