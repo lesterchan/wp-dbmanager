@@ -10,7 +10,7 @@ if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
 if ( is_multisite() ) {
 	$ms_sites = function_exists( 'get_sites' ) ? get_sites() : wp_get_sites();
 
-	if ( 0 < sizeof( $ms_sites ) ) {
+	if ( 0 < count( $ms_sites ) ) {
 		foreach ( $ms_sites as $ms_site ) {
 			// Not $blog_id, that is a WordPress global and this file runs at global scope.
 			$dbmanager_blog_id = class_exists( 'WP_Site' ) ? $ms_site->blog_id : $ms_site['blog_id'];

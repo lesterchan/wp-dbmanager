@@ -1,0 +1,104 @@
+<?xml version="1.0"?>
+<ruleset name="WP-DBManager">
+	<description>WordPress Coding Standards for WP-DBManager.</description>
+
+	<file>.</file>
+	<exclude-pattern>*/.idea/*</exclude-pattern>
+
+	<arg name="extensions" value="php"/>
+	<arg name="colors"/>
+	<arg value="sp"/>
+
+	<rule ref="WordPress">
+		<!--
+			This plugin manages the database. Direct queries against arbitrary
+			tables are the feature, not an oversight, and there is nothing to
+			cache about OPTIMIZE, REPAIR, TRUNCATE or SHOW TABLE STATUS.
+		-->
+		<exclude name="WordPress.DB.DirectDatabaseQuery.DirectQuery"/>
+		<exclude name="WordPress.DB.DirectDatabaseQuery.NoCaching"/>
+		<exclude name="WordPress.DB.DirectDatabaseQuery.SchemaChange"/>
+
+		<!--
+			Table names are identifiers, which $wpdb->prepare() cannot bind.
+			They are validated against SHOW TABLES before ever reaching a query,
+			see database-empty.php, database-optimize.php and database-repair.php.
+		-->
+		<exclude name="WordPress.DB.PreparedSQL.NotPrepared"/>
+		<exclude name="WordPress.DB.PreparedSQL.InterpolatedNotPrepared"/>
+
+		<!--
+			Backing up shells out to mysqldump and restoring shells out to mysql.
+			There is no WordPress API for either.
+		-->
+		<exclude name="WordPress.PHP.DiscouragedPHPFunctions.system_calls_exec"/>
+		<exclude name="WordPress.PHP.DiscouragedPHPFunctions.system_calls_passthru"/>
+		<exclude name="WordPress.PHP.DiscouragedPHPFunctions.system_calls_system"/>
+
+		<!--
+			WP_Filesystem cannot stream a multi gigabyte dump, read a file for
+			download, or chmod a credentials file to 0600. These operate on the
+			backup folder and the temporary option file only.
+		-->
+		<exclude name="WordPress.WP.AlternativeFunctions.file_system_operations_fopen"/>
+		<exclude name="WordPress.WP.AlternativeFunctions.file_system_operations_fwrite"/>
+		<exclude name="WordPress.WP.AlternativeFunctions.file_system_operations_fclose"/>
+		<exclude name="WordPress.WP.AlternativeFunctions.file_system_operations_readfile"/>
+		<exclude name="WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents"/>
+		<exclude name="WordPress.WP.AlternativeFunctions.file_system_operations_is_writable"/>
+		<exclude name="WordPress.WP.AlternativeFunctions.file_system_operations_chmod"/>
+		<exclude name="WordPress.WP.AlternativeFunctions.rename_rename"/>
+
+		<!--
+			Filesystem calls on a folder the site owner configured are expected to
+			fail sometimes. The return value is checked where it matters and a
+			warning in the middle of a download would corrupt the response.
+		-->
+		<exclude name="WordPress.PHP.NoSilencedErrors.Discouraged"/>
+
+		<!--
+			The plugin registers its own cron schedules from user configured
+			intervals, which is the documented way to do it.
+		-->
+		<exclude name="WordPress.WP.CronInterval.ChangeDetected"/>
+
+		<!-- House style. -->
+		<exclude name="WordPress.PHP.YodaConditions.NotYoda"/>
+		<exclude name="Squiz.Commenting.InlineComment.InvalidEndChar"/>
+		<exclude name="Squiz.Commenting.FunctionComment.Missing"/>
+		<exclude name="Squiz.Commenting.FunctionComment.WrongStyle"/>
+		<exclude name="Squiz.Commenting.FileComment.Missing"/>
+		<exclude name="Squiz.Commenting.FileComment.WrongStyle"/>
+
+		<!-- $wpdb and MySQL result columns are not ours to rename. -->
+		<exclude name="WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase"/>
+
+		<!--
+			The backup file name carries the site's local timestamp, and the dates
+			shown next to each backup are read back from it. Switching to time()
+			would change every new file name and stop matching the old ones.
+		-->
+		<exclude name="WordPress.DateTime.CurrentTimeTimestamp.Requested"/>
+
+		<!--
+			get_sites() only exists from WordPress 4.6 and this plugin still
+			supports 4.0, so the wp_get_sites() fallback stays until the minimum
+			is raised. It is only reached when get_sites() is absent.
+		-->
+		<exclude name="WordPress.WP.DeprecatedFunctions.wp_get_sitesFound"/>
+	</rule>
+
+	<!--
+		The page files assemble their markup into a string and echo it in one go.
+		Every dynamic value is passed through esc_html(), esc_attr() or esc_url()
+		at the point it is interpolated, which this sniff cannot follow across the
+		assignment. The sniff stays enabled for wp-dbmanager.php, where the logic
+		lives, so genuinely unescaped output there is still reported.
+	-->
+	<rule ref="WordPress.Security.EscapeOutput.OutputNotEscaped">
+		<exclude-pattern>*/database-*.php</exclude-pattern>
+	</rule>
+
+	<config name="text_domain" value="wp-dbmanager"/>
+	<config name="minimum_wp_version" value="4.0"/>
+</ruleset>

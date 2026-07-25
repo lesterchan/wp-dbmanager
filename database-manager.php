@@ -17,56 +17,53 @@ dbmanager_page_manager();
 function dbmanager_page_manager() {
 	global $wpdb;
 
+	// Variables Variables Variables
+	$base_name               = plugin_basename( 'wp-dbmanager/database-manager.php' );
+	$base_page               = 'admin.php?page=' . $base_name;
+	$backup                  = array();
+	$backup_options          = get_option( 'dbmanager_options' );
+	$backup['date']          = current_time( 'timestamp' );
+	$backup['mysqldumppath'] = $backup_options['mysqldumppath'];
+	$backup['mysqlpath']     = $backup_options['mysqlpath'];
+	$backup['path']          = $backup_options['path'];
 
-
-// Variables Variables Variables
-$base_name               = plugin_basename( 'wp-dbmanager/database-manager.php' );
-$base_page               = 'admin.php?page=' . $base_name;
-$backup                  = array();
-$backup_options          = get_option( 'dbmanager_options' );
-$backup['date']          = current_time( 'timestamp' );
-$backup['mysqldumppath'] = $backup_options['mysqldumppath'];
-$backup['mysqlpath']     = $backup_options['mysqlpath'];
-$backup['path']          = $backup_options['path'];
-
-
-// Get MYSQL Version
-$sqlversion = $wpdb->get_var( 'SELECT VERSION() AS version' );
-?>
-<?php
-if ( ! empty( $text ) ) {
-	echo '<!-- Last Action --><div id="message" class="updated fade"><p>' . $text . '</p></div>'; }
-?>
+	// Get MYSQL Version
+	$sqlversion = $wpdb->get_var( 'SELECT VERSION() AS version' );
+	?>
+	<?php
+	if ( ! empty( $text ) ) {
+		echo '<!-- Last Action --><div id="message" class="updated fade"><p>' . $text . '</p></div>'; }
+	?>
 <!-- Database Information -->
 <div class="wrap">
-	<h2><?php _e( 'Database', 'wp-dbmanager' ); ?></h2>
-	<h3><?php _e( 'Database Information', 'wp-dbmanager' ); ?></h3>
+	<h2><?php esc_html_e( 'Database', 'wp-dbmanager' ); ?></h2>
+	<h3><?php esc_html_e( 'Database Information', 'wp-dbmanager' ); ?></h3>
 	<br style="clear" />
 	<table class="widefat">
 		<thead>
 			<tr>
-				<th><?php _e( 'Setting', 'wp-dbmanager' ); ?></th>
-				<th><?php _e( 'Value', 'wp-dbmanager' ); ?></th>
+				<th><?php esc_html_e( 'Setting', 'wp-dbmanager' ); ?></th>
+				<th><?php esc_html_e( 'Value', 'wp-dbmanager' ); ?></th>
 			</tr>
 		</thead>
 		<tr>
-			<td><?php _e( 'Database Host', 'wp-dbmanager' ); ?></td>
+			<td><?php esc_html_e( 'Database Host', 'wp-dbmanager' ); ?></td>
 			<td><?php echo esc_html( DB_HOST ); ?></td>
 		</tr>
 		<tr class="alternate">
-			<td><?php _e( 'Database Name', 'wp-dbmanager' ); ?></td>
+			<td><?php esc_html_e( 'Database Name', 'wp-dbmanager' ); ?></td>
 			<td><?php echo esc_html( DB_NAME ); ?></td>
 		</tr>
 		<tr>
-			<td><?php _e( 'Database User', 'wp-dbmanager' ); ?></td>
+			<td><?php esc_html_e( 'Database User', 'wp-dbmanager' ); ?></td>
 			<td><?php echo esc_html( DB_USER ); ?></td>
 		</tr>
 		<tr class="alternate">
-			<td><?php _e( 'Database Type', 'wp-dbmanager' ); ?></td>
+			<td><?php esc_html_e( 'Database Type', 'wp-dbmanager' ); ?></td>
 			<td>MYSQL</td>
 		</tr>
 		<tr>
-			<td><?php _e( 'Database Version', 'wp-dbmanager' ); ?></td>
+			<td><?php esc_html_e( 'Database Version', 'wp-dbmanager' ); ?></td>
 			<td>v<?php echo esc_html( $sqlversion ); ?></td>
 		</tr>
 	</table>
@@ -74,17 +71,17 @@ if ( ! empty( $text ) ) {
 <p>&nbsp;</p>
 
 <div class="wrap">
-	<h3><?php _e( 'Tables Information', 'wp-dbmanager' ); ?></h3>
+	<h3><?php esc_html_e( 'Tables Information', 'wp-dbmanager' ); ?></h3>
 	<br style="clear" />
 	<table class="widefat">
 		<thead>
 			<tr>
-				<th><?php _e( 'No.', 'wp-dbmanager' ); ?></th>
-				<th><?php _e( 'Tables', 'wp-dbmanager' ); ?></th>
-				<th><?php _e( 'Records', 'wp-dbmanager' ); ?></th>
-				<th><?php _e( 'Data Usage', 'wp-dbmanager' ); ?></th>
-				<th><?php _e( 'Index Usage', 'wp-dbmanager' ); ?></th>
-				<th><?php _e( 'Overhead', 'wp-dbmanager' ); ?></th>
+				<th><?php esc_html_e( 'No.', 'wp-dbmanager' ); ?></th>
+				<th><?php esc_html_e( 'Tables', 'wp-dbmanager' ); ?></th>
+				<th><?php esc_html_e( 'Records', 'wp-dbmanager' ); ?></th>
+				<th><?php esc_html_e( 'Data Usage', 'wp-dbmanager' ); ?></th>
+				<th><?php esc_html_e( 'Index Usage', 'wp-dbmanager' ); ?></th>
+				<th><?php esc_html_e( 'Overhead', 'wp-dbmanager' ); ?></th>
 			</tr>
 		</thead>
 		<?php
@@ -95,7 +92,7 @@ if ( ! empty( $text ) ) {
 			$overhead_usage = 0;
 			$tablesstatus   = $wpdb->get_results( 'SHOW TABLE STATUS' );
 		foreach ( $tablesstatus as  $tablestatus ) {
-			if ( $no % 2 == 0 ) {
+			if ( 0 === $no % 2 ) {
 				$style = '';
 			} else {
 				$style = ' class="alternate"';
@@ -117,7 +114,9 @@ if ( ! empty( $text ) ) {
 		}
 			echo '<tr class="thead">' . "\n";
 			echo '<th>' . __( 'Total:', 'wp-dbmanager' ) . '</th>' . "\n";
+			/* translators: %s: number of tables. */
 			echo '<th>' . sprintf( _n( '%s Table', '%s Tables', $no, 'wp-dbmanager' ), number_format_i18n( $no ) ) . '</th>' . "\n";
+			/* translators: %s: number of records. */
 			echo '<th>' . sprintf( _n( '%s Record', '%s Records', $row_usage, 'wp-dbmanager' ), number_format_i18n( $row_usage ) ) . '</th>' . "\n";
 			echo '<th>' . format_size( $data_usage ) . '</th>' . "\n";
 			echo '<th>' . format_size( $index_usage ) . '</th>' . "\n";
@@ -126,5 +125,5 @@ if ( ! empty( $text ) ) {
 		?>
 	</table>
 </div>
-<?php
+	<?php
 }
