@@ -40,6 +40,7 @@ Allows you to optimize database, repair database, backup database, restore datab
 
 ## Changelog
 ### Version 2.81.0
+* NOTE: The mysqldump and mysql paths are now passed as a single argument. If you added extra flags to either path under DB Options, move them out or your backups will fail.
 * NEW: WordPress 7.0
 * NEW: New backups are gzipped by default.
 * FIXED: Escape all output on the admin screens to prevent XSS.
