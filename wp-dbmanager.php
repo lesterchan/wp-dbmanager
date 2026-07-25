@@ -550,6 +550,9 @@ function dbmanager_create_backup_folder() {
 add_action( 'init', 'dbmanager_try_fix' );
 function dbmanager_try_fix() {
 	if ( ! empty( $_GET['try_fix'] ) && (int) $_GET['try_fix'] === 1 ) {
+		if ( ! current_user_can( 'install_plugins' ) ) {
+			wp_die( 'Access Denied' );
+		}
 		check_admin_referer( 'wp-dbmanager_fix' );
 		dbmanager_create_backup_folder();
 	}
@@ -560,6 +563,9 @@ function dbmanager_try_fix() {
 add_action( 'init', 'download_database' );
 function download_database() {
 	if( isset( $_POST['do'] ) && $_POST['do'] === __( 'Download', 'wp-dbmanager' ) && ! empty( $_POST['database_file'] ) ) {
+		if ( ! current_user_can( 'install_plugins' ) ) {
+			wp_die( 'Access Denied' );
+		}
 		check_admin_referer( 'wp-dbmanager_manage' );
 		$database_file = trim( $_POST['database_file'] );
 		if( substr( $database_file, strlen( $database_file ) -4, 4 ) === '.sql' || substr( $database_file, strlen( $database_file ) -7, 7 ) === '.sql.gz' ) {
