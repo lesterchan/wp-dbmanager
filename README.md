@@ -2,10 +2,10 @@
 Contributors: GamerZ  
 Donate link: https://lesterchan.net/site/donation/  
 Tags: database, backup, restore, optimize, repair  
-Requires at least: 4.6  
+Requires at least: 6.0  
 Tested up to: 7.0  
 Stable tag: 3.0.0  
-Requires PHP: 7.2  
+Requires PHP: 7.4  
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -52,7 +52,7 @@ The `Backup DB` page requests a file from the folder and reports what the server
 ## Changelog
 ### Version 3.0.0
 * NOTE: The mysqldump and mysql paths are now passed as a single argument. If you added extra flags to either path under DB Options, move them out or your backups will fail.
-* NOTE: Requires WordPress 4.6 or later, up from 4.0.
+* NOTE: Requires WordPress 6.0 or later, up from 4.0, and PHP 7.4 or later.
 * NOTE: Backup file names now carry a real Unix timestamp. Backups taken before this release will show a date shifted by your timezone offset. The files themselves are fine.
 * NEW: WordPress 7.0
 * NEW: The Backup Database page now asks the server whether the backup folder is actually reachable over HTTP, instead of assuming a dropped in .htaccess protects it. nginx is detected and given a configuration snippet that works.

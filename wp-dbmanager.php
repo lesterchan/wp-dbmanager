@@ -4,8 +4,8 @@
  * Plugin URI: https://lesterchan.net/portfolio/programming/php/
  * Description: Manages your WordPress database. Allows you to optimize database, repair database, backup database, restore database, delete backup database , drop/empty tables and run selected queries. Supports automatic scheduling of backing up, optimizing and repairing of database.
  * Version: 3.0.0
- * Requires at least: 4.6
- * Requires PHP: 7.2
+ * Requires at least: 6.0
+ * Requires PHP: 7.4
  * Author: Lester 'GaMerZ' Chan
  * Author URI: https://lesterchan.net
  * License: GPLv2 or later
@@ -1091,21 +1091,6 @@ function dbmanager_is_function_disabled( $function_name ) {
 	return in_array( $function_name, array_map( 'trim', explode( ',', ini_get( 'disable_functions' ) ) ), true );
 }
 
-// Function: Polyfill array_key_first() for PHP < 7.3.
-if ( ! function_exists( 'array_key_first' ) ) {
-	/**
-	 * Returns the first key of an array.
-	 *
-	 * @param array $arr Array to read.
-	 * @return mixed|null First key, or null when the array is empty.
-	 */
-	function array_key_first( $arr ) {
-		foreach ( $arr as $key => $unused ) {
-			return $key;
-		}
-		return null;
-	}
-}
 
 /**
  * Renders and saves the DB Options page.
