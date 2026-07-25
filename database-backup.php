@@ -35,12 +35,13 @@ function dbmanager_page_backup() {
 	$backup['path']          = $backup_options['path'];
 	$backup['charset']       = ' --default-character-set="utf8mb4"';
 
+	$messages = array();
+
 	// Form Processing.
 	if ( ! empty( $_POST['do'] ) ) {
 		// Verified before any request data is read, not part way down the switch.
 		check_admin_referer( 'wp-dbmanager_backup' );
 
-		$text = '';
 		// Decide What To Do.
 		switch ( $_POST['do'] ) {
 			case __( 'Backup', 'wp-dbmanager' ):
@@ -72,21 +73,36 @@ function dbmanager_page_backup() {
 				$error = execute_backup( $backup['command'] );
 				dbmanager_delete_defaults_file( $defaults_file );
 				if ( ! is_writable( $backup['path'] ) ) {
-					/* translators: %s: date and time of the attempt. */
-					$text = '<p style="color: red;">' . sprintf( __( 'Database Failed To Backup On \'%s\'. Backup Folder Not Writable.', 'wp-dbmanager' ), $current_date ) . '</p>';
+					$messages[] = array(
+						'type' => 'error',
+						/* translators: %s: date and time of the attempt. */
+						'text' => sprintf( __( 'Database Failed To Backup On \'%s\'. Backup Folder Not Writable.', 'wp-dbmanager' ), $current_date ),
+					);
 				} elseif ( is_file( $backup['filepath'] ) && filesize( $backup['filepath'] ) === 0 ) {
-					/* translators: %s: date and time of the attempt. */
-					$text = '<p style="color: red;">' . sprintf( __( 'Database Failed To Backup On \'%s\'. Backup File Size Is 0KB.', 'wp-dbmanager' ), $current_date ) . '</p>';
+					$messages[] = array(
+						'type' => 'error',
+						/* translators: %s: date and time of the attempt. */
+						'text' => sprintf( __( 'Database Failed To Backup On \'%s\'. Backup File Size Is 0KB.', 'wp-dbmanager' ), $current_date ),
+					);
 				} elseif ( ! is_file( $backup['filepath'] ) ) {
-					/* translators: %s: date and time of the attempt. */
-					$text = '<p style="color: red;">' . sprintf( __( 'Database Failed To Backup On \'%s\'. Invalid Backup File Path.', 'wp-dbmanager' ), $current_date ) . '</p>';
+					$messages[] = array(
+						'type' => 'error',
+						/* translators: %s: date and time of the attempt. */
+						'text' => sprintf( __( 'Database Failed To Backup On \'%s\'. Invalid Backup File Path.', 'wp-dbmanager' ), $current_date ),
+					);
 				} elseif ( $error ) {
-					/* translators: %s: date and time of the attempt. */
-					$text = '<p style="color: red;">' . sprintf( __( 'Database Failed To Backup On \'%s\'.', 'wp-dbmanager' ), $current_date ) . '</p>';
+					$messages[] = array(
+						'type' => 'error',
+						/* translators: %s: date and time of the attempt. */
+						'text' => sprintf( __( 'Database Failed To Backup On \'%s\'.', 'wp-dbmanager' ), $current_date ),
+					);
 				} else {
 					rename( $backup['filepath'], $backup['path'] . '/' . md5_file( $backup['filepath'] ) . '_-_' . $backup['filename'] );
-					/* translators: %s: date and time of the backup. */
-					$text = '<p style="color: green;">' . sprintf( __( 'Database Backed Up Successfully On \'%s\'.', 'wp-dbmanager' ), $current_date ) . '</p>';
+					$messages[] = array(
+						'type' => 'success',
+						/* translators: %s: date and time of the backup. */
+						'text' => sprintf( __( 'Database Backed Up Successfully On \'%s\'.', 'wp-dbmanager' ), $current_date ),
+					);
 				}
 				break;
 		}
@@ -102,8 +118,7 @@ function dbmanager_page_backup() {
 	$disabled_function = false;
 	?>
 	<?php
-	if ( ! empty( $text ) ) {
-		echo '<div id="message" class="updated">' . $text . '</div>'; }
+	dbmanager_render_messages( $messages );
 	?>
 <!-- Checking Backup Status -->
 <div class="wrap">
@@ -119,24 +134,31 @@ function dbmanager_page_backup() {
 			$is_public = dbmanager_is_backup_folder_public();
 
 		if ( false === $backup_url ) {
-			echo '<p style="color: green;">' . __( 'Your backup folder is outside the web root, so it cannot be downloaded over HTTP.', 'wp-dbmanager' ) . '</p>';
+			printf( '<p style="color: green;">%s</p>', esc_html__( 'Your backup folder is outside the web root, so it cannot be downloaded over HTTP.', 'wp-dbmanager' ) );
 		} else {
 			/* translators: %s: public URL of the backup folder. */
-			echo '<p>' . sprintf( __( 'Your backup folder is inside the web root, at %s', 'wp-dbmanager' ), '<strong>' . esc_html( $backup_url ) . '</strong>' ) . '</p>';
+			printf(
+				'<p>%s</p>',
+				sprintf(
+						/* translators: %s: public URL of the backup folder. */
+					esc_html__( 'Your backup folder is inside the web root, at %s', 'wp-dbmanager' ),
+					'<strong>' . esc_html( $backup_url ) . '</strong>'
+				)
+			);
 
 			if ( true === $is_public ) {
-				echo '<p style="color: red; font-weight: bold;">' . __( 'The backup folder responds over HTTP. Anyone who guesses a backup file name can download your entire database.', 'wp-dbmanager' ) . '</p>';
+				printf( '<p style="color: red; font-weight: bold;">%s</p>', esc_html__( 'The backup folder responds over HTTP. Anyone who guesses a backup file name can download your entire database.', 'wp-dbmanager' ) );
 				$has_error = true;
 			} elseif ( false === $is_public ) {
-				echo '<p style="color: green;">' . __( 'The backup folder does not respond over HTTP.', 'wp-dbmanager' ) . '</p>';
+				printf( '<p style="color: green;">%s</p>', esc_html__( 'The backup folder does not respond over HTTP.', 'wp-dbmanager' ) );
 			} else {
-				echo '<p style="color: red;">' . __( 'Could not determine whether the backup folder responds over HTTP. Check it yourself, or move the folder outside the web root.', 'wp-dbmanager' ) . '</p>';
+				printf( '<p style="color: red;">%s</p>', esc_html__( 'Could not determine whether the backup folder responds over HTTP. Check it yourself, or move the folder outside the web root.', 'wp-dbmanager' ) );
 				$has_error = true;
 			}
 
 			if ( 'nginx' === $server_type ) {
-				echo '<p style="color: red;">' . __( 'This site runs on nginx, which ignores .htaccess files. No file placed in the backup folder can protect it.', 'wp-dbmanager' ) . '</p>';
-				echo '<p>' . __( 'Move the backup folder outside your web root under DB Options, or add this to your nginx server block:', 'wp-dbmanager' ) . '</p>';
+				printf( '<p style="color: red;">%s</p>', esc_html__( 'This site runs on nginx, which ignores .htaccess files. No file placed in the backup folder can protect it.', 'wp-dbmanager' ) );
+				printf( '<p>%s</p>', esc_html__( 'Move the backup folder outside your web root under DB Options, or add this to your nginx server block:', 'wp-dbmanager' ) );
 				$backup_uri = parse_url( $backup_url, PHP_URL_PATH );
 				echo '<pre style="background: #f6f7f7; border: 1px solid #dcdcde; padding: 8px; display: inline-block;" dir="ltr">location ^~ ' . esc_html( trailingslashit( $backup_uri ) ) . ' { deny all; }</pre>';
 			}
@@ -144,31 +166,31 @@ function dbmanager_page_backup() {
 			if ( 'iis' === $server_type ) {
 				if ( ! is_file( $backup_path . '/Web.config' ) ) {
 					/* translators: %s: backup folder path. */
-					echo '<p style="color: red;">' . sprintf( __( 'Web.config is missing from %s', 'wp-dbmanager' ), esc_html( $backup_path ) ) . '</p>';
+					printf( '<p style="color: red;">%s</p>', esc_html( sprintf( __( 'Web.config is missing from %s', 'wp-dbmanager' ), $backup_path ) ) );
 					$has_error = true;
 				} else {
 					/* translators: %s: backup folder path. */
-					echo '<p style="color: green;">' . sprintf( __( 'Web.config is present in %s', 'wp-dbmanager' ), esc_html( $backup_path ) ) . '</p>';
+					printf( '<p style="color: green;">%s</p>', esc_html( sprintf( __( 'Web.config is present in %s', 'wp-dbmanager' ), $backup_path ) ) );
 				}
 			} elseif ( 'apache' === $server_type ) {
 				if ( ! is_file( $backup_path . '/.htaccess' ) ) {
 					/* translators: %s: backup folder path. */
-					echo '<p style="color: red;">' . sprintf( __( '.htaccess is missing from %s', 'wp-dbmanager' ), esc_html( $backup_path ) ) . '</p>';
+					printf( '<p style="color: red;">%s</p>', esc_html( sprintf( __( '.htaccess is missing from %s', 'wp-dbmanager' ), $backup_path ) ) );
 					$has_error = true;
 				} else {
 					/* translators: %s: backup folder path. */
-					echo '<p style="color: green;">' . sprintf( __( '.htaccess is present in %s', 'wp-dbmanager' ), esc_html( $backup_path ) ) . '</p>';
+					printf( '<p style="color: green;">%s</p>', esc_html( sprintf( __( '.htaccess is present in %s', 'wp-dbmanager' ), $backup_path ) ) );
 				}
 			}
 		}
 
 		if ( ! is_file( $backup_path . '/index.php' ) ) {
 			/* translators: %s: backup folder path. */
-			echo '<p style="color: red;">' . sprintf( __( 'index.php is missing from %s', 'wp-dbmanager' ), esc_html( $backup_path ) ) . '</p>';
+			printf( '<p style="color: red;">%s</p>', esc_html( sprintf( __( 'index.php is missing from %s', 'wp-dbmanager' ), $backup_path ) ) );
 			$has_error = true;
 		} else {
 			/* translators: %s: backup folder path. */
-			echo '<p style="color: green;">' . sprintf( __( 'index.php is present in %s', 'wp-dbmanager' ), esc_html( $backup_path ) ) . '</p>';
+			printf( '<p style="color: green;">%s</p>', esc_html( sprintf( __( 'index.php is present in %s', 'wp-dbmanager' ), $backup_path ) ) );
 		}
 		?>
 	</p>
@@ -178,20 +200,20 @@ function dbmanager_page_backup() {
 		<?php
 		if ( realpath( $backup_path ) === false ) {
 			/* translators: %s: configured backup folder path. */
-			echo '<p style="color: red;">' . sprintf( __( '%s is not a valid backup path', 'wp-dbmanager' ), esc_html( $backup_path ) ) . '</p>';
+			printf( '<p style="color: red;">%s</p>', esc_html( sprintf( __( '%s is not a valid backup path', 'wp-dbmanager' ), $backup_path ) ) );
 			$has_error = true;
 		} else {
 			if ( @is_dir( $backup_path ) ) {
-				echo '<p style="color: green;">' . __( 'Backup folder exists', 'wp-dbmanager' ) . '</p>';
+				printf( '<p style="color: green;">%s</p>', esc_html__( 'Backup folder exists', 'wp-dbmanager' ) );
 			} else {
 				/* translators: %s: wp-content directory path. */
-				echo '<p style="color: red;">' . sprintf( __( 'Backup folder does NOT exist. Please create \'backup-db\' folder in \'%s\' folder and CHMOD it to \'777\' or change the location of the backup folder under DB Option.', 'wp-dbmanager' ), esc_html( WP_CONTENT_DIR ) ) . '</p>';
+				printf( '<p style="color: red;">%s</p>', esc_html( sprintf( __( 'Backup folder does NOT exist. Please create \'backup-db\' folder in \'%s\' folder and CHMOD it to \'777\' or change the location of the backup folder under DB Option.', 'wp-dbmanager' ), WP_CONTENT_DIR ) ) );
 				$has_error = true;
 			}
 			if ( @is_writable( $backup_path ) ) {
-				echo '<p style="color: green;">' . __( 'Backup folder is writable', 'wp-dbmanager' ) . '</p>';
+				printf( '<p style="color: green;">%s</p>', esc_html__( 'Backup folder is writable', 'wp-dbmanager' ) );
 			} else {
-				echo '<p style="color: red;">' . __( 'Backup folder is NOT writable. Please CHMOD it to \'777\'.', 'wp-dbmanager' ) . '</p>';
+				printf( '<p style="color: red;">%s</p>', esc_html__( 'Backup folder is NOT writable. Please CHMOD it to \'777\'.', 'wp-dbmanager' ) );
 				$has_error = true;
 			}
 		}
@@ -201,14 +223,18 @@ function dbmanager_page_backup() {
 		<?php
 		if ( dbmanager_is_valid_path( $backup['mysqldumppath'] ) === 0 ) {
 			/* translators: %s: configured mysqldump path. */
-			echo '<p style="color: red;">' . sprintf( __( '%s is not a valid backup mysqldump path', 'wp-dbmanager' ), esc_html( $backup['mysqldumppath'] ) ) . '</p>';
+			printf( '<p style="color: red;">%s</p>', esc_html( sprintf( __( '%s is not a valid backup mysqldump path', 'wp-dbmanager' ), $backup['mysqldumppath'] ) ) );
 			$has_error = true;
 		} elseif ( @file_exists( $backup['mysqldumppath'] ) ) {
-				echo __( 'Checking MYSQL Dump Path', 'wp-dbmanager' ) . ' <span dir="ltr">(<strong>' . esc_html( $backup['mysqldumppath'] ) . '</strong>)</span> ...<br />';
-				echo '<p style="color: green;">' . __( 'MYSQL dump path exists.', 'wp-dbmanager' ) . '</p>';
+				printf(
+					'%1$s <span dir="ltr">(<strong>%2$s</strong>)</span> ...<br />',
+					esc_html__( 'Checking MYSQL Dump Path', 'wp-dbmanager' ),
+					esc_html( $backup['mysqldumppath'] )
+				);
+				printf( '<p style="color: green;">%s</p>', esc_html__( 'MYSQL dump path exists.', 'wp-dbmanager' ) );
 		} else {
-			echo __( 'Checking MYSQL Dump Path', 'wp-dbmanager' ) . ' ...<br />';
-			echo '<p style="color: red;">' . __( 'MYSQL dump path does NOT exist. Please check your mysqldump path under DB Options. If uncertain, contact your server administrator.', 'wp-dbmanager' ) . '</p>';
+			printf( '%s ...<br />', esc_html__( 'Checking MYSQL Dump Path', 'wp-dbmanager' ) );
+			printf( '<p style="color: red;">%s</p>', esc_html__( 'MYSQL dump path does NOT exist. Please check your mysqldump path under DB Options. If uncertain, contact your server administrator.', 'wp-dbmanager' ) );
 			$has_error = true;
 		}
 		?>
@@ -217,14 +243,18 @@ function dbmanager_page_backup() {
 		<?php
 		if ( dbmanager_is_valid_path( $backup['mysqlpath'] ) === 0 ) {
 			/* translators: %s: configured mysql path. */
-			echo '<p style="color: red;">' . sprintf( __( '%s is not a valid backup mysql path', 'wp-dbmanager' ), esc_html( $backup['mysqlpath'] ) ) . '</p>';
+			printf( '<p style="color: red;">%s</p>', esc_html( sprintf( __( '%s is not a valid backup mysql path', 'wp-dbmanager' ), $backup['mysqlpath'] ) ) );
 			$has_error = true;
 		} elseif ( @file_exists( $backup['mysqlpath'] ) ) {
-				echo __( 'Checking MYSQL Path', 'wp-dbmanager' ) . ' <span dir="ltr">(<strong>' . esc_html( $backup['mysqlpath'] ) . '</strong>)</span> ...<br />';
-				echo '<p style="color: green;">' . __( 'MYSQL path exists.', 'wp-dbmanager' ) . '</p>';
+				printf(
+					'%1$s <span dir="ltr">(<strong>%2$s</strong>)</span> ...<br />',
+					esc_html__( 'Checking MYSQL Path', 'wp-dbmanager' ),
+					esc_html( $backup['mysqlpath'] )
+				);
+				printf( '<p style="color: green;">%s</p>', esc_html__( 'MYSQL path exists.', 'wp-dbmanager' ) );
 		} else {
-			echo __( 'Checking MYSQL Path', 'wp-dbmanager' ) . ' ...<br />';
-			echo '<p style="color: red;">' . __( 'MYSQL path does NOT exist. Please check your mysql path under DB Options. If uncertain, contact your server administrator.', 'wp-dbmanager' ) . '</p>';
+			printf( '%s ...<br />', esc_html__( 'Checking MYSQL Path', 'wp-dbmanager' ) );
+			printf( '<p style="color: red;">%s</p>', esc_html__( 'MYSQL path does NOT exist. Please check your mysql path under DB Options. If uncertain, contact your server administrator.', 'wp-dbmanager' ) );
 			$has_error = true;
 		}
 		?>
@@ -233,42 +263,42 @@ function dbmanager_page_backup() {
 		<?php esc_html_e( 'Checking PHP Functions', 'wp-dbmanager' ); ?> <span dir="ltr">(<strong>passthru()</strong>, <strong>system()</strong> <?php esc_html_e( 'and', 'wp-dbmanager' ); ?> <strong>exec()</strong>)</span> ...<br />
 		<?php
 		if ( dbmanager_is_function_disabled( 'passthru' ) ) {
-			echo '<p style="color: red;"><span dir="ltr">passthru()</span> ' . __( 'disabled', 'wp-dbmanager' ) . '.</p>';
+			printf( '<p style="color: red;"><span dir="ltr">passthru()</span> %s.</p>', esc_html__( 'disabled', 'wp-dbmanager' ) );
 			$disabled_function = true;
 		} elseif ( ! function_exists( 'passthru' ) ) {
-			echo '<p style="color: red;"><span dir="ltr">passthru()</span> ' . __( 'missing', 'wp-dbmanager' ) . '.</p>';
+			printf( '<p style="color: red;"><span dir="ltr">passthru()</span> %s.</p>', esc_html__( 'missing', 'wp-dbmanager' ) );
 			$disabled_function = true;
 		} else {
-			echo '<p style="color: green;"><span dir="ltr">passthru()</span> ' . __( 'enabled', 'wp-dbmanager' ) . '.</p>';
+			printf( '<p style="color: green;"><span dir="ltr">passthru()</span> %s.</p>', esc_html__( 'enabled', 'wp-dbmanager' ) );
 		}
 		if ( dbmanager_is_function_disabled( 'system' ) ) {
-			echo '<p style="color: red;"><span dir="ltr">system()</span> ' . __( 'disabled', 'wp-dbmanager' ) . '.</p>';
+			printf( '<p style="color: red;"><span dir="ltr">system()</span> %s.</p>', esc_html__( 'disabled', 'wp-dbmanager' ) );
 			$disabled_function = true;
 		} elseif ( ! function_exists( 'system' ) ) {
-			echo '<p style="color: red;"><span dir="ltr">system()</span> ' . __( 'missing', 'wp-dbmanager' ) . '.</p>';
+			printf( '<p style="color: red;"><span dir="ltr">system()</span> %s.</p>', esc_html__( 'missing', 'wp-dbmanager' ) );
 			$disabled_function = true;
 		} else {
-			echo '<p style="color: green;"><span dir="ltr">system()</span> ' . __( 'enabled', 'wp-dbmanager' ) . '.</p>';
+			printf( '<p style="color: green;"><span dir="ltr">system()</span> %s.</p>', esc_html__( 'enabled', 'wp-dbmanager' ) );
 		}
 		if ( dbmanager_is_function_disabled( 'exec' ) ) {
-			echo '<p style="color: red;"><span dir="ltr">exec()</span> ' . __( 'disabled', 'wp-dbmanager' ) . '.</p>';
+			printf( '<p style="color: red;"><span dir="ltr">exec()</span> %s.</p>', esc_html__( 'disabled', 'wp-dbmanager' ) );
 			$disabled_function = true;
 		} elseif ( ! function_exists( 'exec' ) ) {
-			echo '<p style="color: red;"><span dir="ltr">exec()</span> ' . __( 'missing', 'wp-dbmanager' ) . '.</p>';
+			printf( '<p style="color: red;"><span dir="ltr">exec()</span> %s.</p>', esc_html__( 'missing', 'wp-dbmanager' ) );
 			$disabled_function = true;
 		} else {
-			echo '<p style="color: green;"><span dir="ltr">exec()</span> ' . __( 'enabled', 'wp-dbmanager' ) . '.</p>';
+			printf( '<p style="color: green;"><span dir="ltr">exec()</span> %s.</p>', esc_html__( 'enabled', 'wp-dbmanager' ) );
 		}
 		?>
 	</p>
 	<p>
 		<?php
 		if ( $disabled_function ) {
-			echo '<strong><p style="color: red;">' . __( 'I\'m sorry, your server administrator has disabled passthru(), system() and/or exec(), thus you cannot use this plugin. Please find an alternative plugin.', 'wp-dbmanager' ) . '</p></strong>';
+			printf( '<strong><p style="color: red;">%s</p></strong>', esc_html__( 'I\'m sorry, your server administrator has disabled passthru(), system() and/or exec(), thus you cannot use this plugin. Please find an alternative plugin.', 'wp-dbmanager' ) );
 		} elseif ( ! $has_error ) {
-			echo '<strong><p style="color: green;">' . __( 'Excellent. You Are Good To Go.', 'wp-dbmanager' ) . '</p></strong>';
+			printf( '<strong><p style="color: green;">%s</p></strong>', esc_html__( 'Excellent. You Are Good To Go.', 'wp-dbmanager' ) );
 		} else {
-			echo '<strong><p style="color: red;">' . __( 'Please Rectify The Error Highlighted In Red Before Proceeding On.', 'wp-dbmanager' ) . '</p></strong>';
+			printf( '<strong><p style="color: red;">%s</p></strong>', esc_html__( 'Please Rectify The Error Highlighted In Red Before Proceeding On.', 'wp-dbmanager' ) );
 		}
 		?>
 	</p>
@@ -297,9 +327,7 @@ function dbmanager_page_backup() {
 			</tr>
 			<tr>
 				<th><?php esc_html_e( 'Database Backup Date:', 'wp-dbmanager' ); ?></th>
-				/* translators: 1: date, 2: time. */
-				<?php /* translators: 1: date, 2: time. */ ?>
-				<td><?php echo dbmanager_format_timestamp( $backup['date'] ); ?></td>
+				<td><?php echo esc_html( dbmanager_format_timestamp( $backup['date'] ) ); ?></td>
 			</tr>
 			<tr style="background-color: #eee;">
 				<th><?php esc_html_e( 'Database Backup File Name:', 'wp-dbmanager' ); ?></th>

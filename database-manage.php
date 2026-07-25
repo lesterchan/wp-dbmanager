@@ -33,13 +33,14 @@ function dbmanager_page_manage() {
 	$backup['path']          = $backup_options['path'];
 	$backup['charset']       = ' --default-character-set="utf8mb4"';
 
+	$messages = array();
+
 	// Form Processing.
 	if ( ! empty( $_POST['do'] ) ) {
 		check_admin_referer( 'wp-dbmanager_manage' );
 		// Lets Prepare The Variables.
 		$database_file = ! empty( $_POST['database_file'] ) ? sanitize_file_name( wp_unslash( $_POST['database_file'] ) ) : '';
 		$file          = dbmanager_parse_filename( $database_file );
-		$text          = '';
 
 		// Decide What To Do.
 		switch ( $_POST['do'] ) {
@@ -68,11 +69,17 @@ function dbmanager_page_manage() {
 					$error       = 0;
 					$restore_ran = false;
 					if ( realpath( $backup['path'] ) === false ) {
-						/* translators: %s: configured backup folder path. */
-						$text = '<p style="color: red;">' . sprintf( __( '%s is not a valid backup path', 'wp-dbmanager' ), esc_html( $backup['path'] ) ) . '</p>';
+						$messages[] = array(
+							'type' => 'error',
+							/* translators: %s: configured backup folder path. */
+							'text' => sprintf( __( '%s is not a valid backup path', 'wp-dbmanager' ), $backup['path'] ),
+						);
 					} elseif ( dbmanager_is_valid_path( $backup['mysqlpath'] ) === 0 ) {
-						/* translators: %s: configured mysql path. */
-						$text = '<p style="color: red;">' . sprintf( __( '%s is not a valid mysql path', 'wp-dbmanager' ), esc_html( $backup['mysqlpath'] ) ) . '</p>';
+						$messages[] = array(
+							'type' => 'error',
+							/* translators: %s: configured mysql path. */
+							'text' => sprintf( __( '%s is not a valid mysql path', 'wp-dbmanager' ), $backup['mysqlpath'] ),
+						);
 					} else {
 						passthru( $backup['command'], $error );
 						$restore_ran = true;
@@ -83,15 +90,24 @@ function dbmanager_page_manage() {
 					// already explain why it did not.
 					if ( $restore_ran ) {
 						if ( $error ) {
-							/* translators: %s: date and time of the backup file. */
-							$text = '<p style="color: red;">' . sprintf( __( 'Database On \'%s\' Failed To Restore', 'wp-dbmanager' ), esc_html( $file['formatted_date'] ) ) . '</p>';
+							$messages[] = array(
+								'type' => 'error',
+								/* translators: %s: date and time of the backup file. */
+								'text' => sprintf( __( 'Database On \'%s\' Failed To Restore', 'wp-dbmanager' ), $file['formatted_date'] ),
+							);
 						} else {
-							/* translators: %s: date and time of the backup file. */
-							$text = '<p style="color: green;">' . sprintf( __( 'Database On \'%s\' Restored Successfully', 'wp-dbmanager' ), esc_html( $file['formatted_date'] ) ) . '</p>';
+							$messages[] = array(
+								'type' => 'success',
+								/* translators: %s: date and time of the backup file. */
+								'text' => sprintf( __( 'Database On \'%s\' Restored Successfully', 'wp-dbmanager' ), $file['formatted_date'] ),
+							);
 						}
 					}
 				} else {
-					$text = '<p style="color: red;">' . __( 'No Backup Database File Selected', 'wp-dbmanager' ) . '</p>';
+					$messages[] = array(
+						'type' => 'error',
+						'text' => __( 'No Backup Database File Selected', 'wp-dbmanager' ),
+					);
 				}
 				break;
 			case __( 'E-Mail', 'wp-dbmanager' ):
@@ -99,19 +115,31 @@ function dbmanager_page_manage() {
 					$to = ( ! empty( $_POST['email_to'] ) ? sanitize_email( wp_unslash( $_POST['email_to'] ) ) : get_option( 'admin_email' ) );
 
 					if ( dbmanager_email_backup( $to, $backup['path'] . '/' . $database_file ) ) {
-						/* translators: 1: date and time of the backup file, 2: e-mail address. */
-						$text .= '<p style="color: green;">' . sprintf( __( 'Database Backup File For \'%1$s\' Successfully E-Mailed To \'%2$s\'', 'wp-dbmanager' ), esc_html( $file['formatted_date'] ), esc_html( $to ) ) . '</p>';
+						$messages[] = array(
+							'type' => 'success',
+							/* translators: 1: date and time of the backup file, 2: e-mail address. */
+							'text' => sprintf( __( 'Database Backup File For \'%1$s\' Successfully E-Mailed To \'%2$s\'', 'wp-dbmanager' ), $file['formatted_date'], $to ),
+						);
 					} else {
-						/* translators: 1: date and time of the backup file, 2: e-mail address. */
-						$text = '<p style="color: red;">' . sprintf( __( 'Unable To E-Mail Database Backup File For \'%1$s\' To \'%2$s\'', 'wp-dbmanager' ), esc_html( $file['formatted_date'] ), esc_html( $to ) ) . '</p>';
+						$messages[] = array(
+							'type' => 'error',
+							/* translators: 1: date and time of the backup file, 2: e-mail address. */
+							'text' => sprintf( __( 'Unable To E-Mail Database Backup File For \'%1$s\' To \'%2$s\'', 'wp-dbmanager' ), $file['formatted_date'], $to ),
+						);
 					}
 				} else {
-					$text = '<p style="color: red;">' . __( 'No Backup Database File Selected', 'wp-dbmanager' ) . '</p>';
+					$messages[] = array(
+						'type' => 'error',
+						'text' => __( 'No Backup Database File Selected', 'wp-dbmanager' ),
+					);
 				}
 				break;
 			case __( 'Download', 'wp-dbmanager' ):
 				if ( empty( $database_file ) ) {
-					$text = '<p style="color: red;">' . __( 'No Backup Database File Selected', 'wp-dbmanager' ) . '</p>';
+					$messages[] = array(
+						'type' => 'error',
+						'text' => __( 'No Backup Database File Selected', 'wp-dbmanager' ),
+					);
 				}
 				break;
 			case __( 'Delete', 'wp-dbmanager' ):
@@ -120,26 +148,37 @@ function dbmanager_page_manage() {
 						// wp_delete_file() returns nothing, so ask the filesystem whether it worked.
 						wp_delete_file( $backup['path'] . '/' . $database_file );
 						if ( file_exists( $backup['path'] . '/' . $database_file ) ) {
-							/* translators: %s: date and time of the backup file. */
-							$text .= '<p style="color: red;">' . sprintf( __( 'Unable To Delete Database Backup File On \'%s\'', 'wp-dbmanager' ), esc_html( $file['formatted_date'] ) ) . '</p>';
+							$messages[] = array(
+								'type' => 'error',
+								/* translators: %s: date and time of the backup file. */
+								'text' => sprintf( __( 'Unable To Delete Database Backup File On \'%s\'', 'wp-dbmanager' ), $file['formatted_date'] ),
+							);
 						} else {
-							/* translators: %s: date and time of the backup file. */
-							$text .= '<p style="color: green;">' . sprintf( __( 'Database Backup File On \'%s\' Deleted Successfully', 'wp-dbmanager' ), esc_html( $file['formatted_date'] ) ) . '</p>';
+							$messages[] = array(
+								'type' => 'success',
+								/* translators: %s: date and time of the backup file. */
+								'text' => sprintf( __( 'Database Backup File On \'%s\' Deleted Successfully', 'wp-dbmanager' ), $file['formatted_date'] ),
+							);
 						}
 					} else {
-						/* translators: %s: date and time of the backup file. */
-						$text = '<p style="color: red;">' . sprintf( __( 'Invalid Database Backup File On \'%s\'', 'wp-dbmanager' ), esc_html( $file['formatted_date'] ) ) . '</p>';
+						$messages[] = array(
+							'type' => 'error',
+							/* translators: %s: date and time of the backup file. */
+							'text' => sprintf( __( 'Invalid Database Backup File On \'%s\'', 'wp-dbmanager' ), $file['formatted_date'] ),
+						);
 					}
 				} else {
-					$text = '<p style="color: red;">' . __( 'No Backup Database File Selected', 'wp-dbmanager' ) . '</p>';
+					$messages[] = array(
+						'type' => 'error',
+						'text' => __( 'No Backup Database File Selected', 'wp-dbmanager' ),
+					);
 				}
 				break;
 		}
 	}
 	?>
 	<?php
-	if ( ! empty( $text ) ) {
-		echo '<!-- Last Action --><div id="message" class="updated">' . $text . '</div>'; }
+	dbmanager_render_messages( $messages );
 	?>
 <!-- Manage Backup Database -->
 <form method="post" action="<?php echo esc_url( admin_url( 'admin.php?page=' . plugin_basename( __FILE__ ) ) ); ?>">
@@ -168,28 +207,36 @@ function dbmanager_page_manage() {
 					if ( 0 === $no % 2 ) {
 						$style = '';
 					} else {
-						$style = ' class="alternate"';
+						$style = 'alternate';
 					}
 					++$no;
 					$file = dbmanager_parse_file( $backup['path'] . '/' . $database_file );
-					echo '<tr' . $style . '>';
-					echo '<td>' . number_format_i18n( $no ) . '</td>';
-					echo '<td>' . esc_html( $file['checksum'] ) . '</td>';
-					echo '<td>' . esc_html( $file['database'] ) . '</td>';
-					echo '<td>' . esc_html( $file['formatted_date'] ) . '</td>';
-					echo '<td>' . esc_html( $file['formatted_size'] ) . '</td>';
-					echo '<td><input type="radio" name="database_file" value="' . esc_attr( $database_file ) . '" /></td></tr>';
+					printf(
+						'<tr class="%1$s"><td>%2$s</td><td>%3$s</td><td>%4$s</td><td>%5$s</td><td>%6$s</td>',
+						esc_attr( $style ),
+						esc_html( number_format_i18n( $no ) ),
+						esc_html( $file['checksum'] ),
+						esc_html( $file['database'] ),
+						esc_html( $file['formatted_date'] ),
+						esc_html( $file['formatted_size'] )
+					);
+					printf(
+						'<td><input type="radio" name="database_file" value="%s" /></td></tr>',
+						esc_attr( $database_file )
+					);
 					$totalsize += $file['size'];
 				}
 			} else {
-				echo '<tr><td align="center" colspan="6">' . __( 'There Are No Database Backup Files Available.', 'wp-dbmanager' ) . '</td></tr>';
+				printf(
+					'<tr><td align="center" colspan="6">%s</td></tr>',
+					esc_html__( 'There Are No Database Backup Files Available.', 'wp-dbmanager' )
+				);
 			}
 			?>
 			<tr class="thead">
-				/* translators: %s: number of backup files. */
 				<?php /* translators: %s: number of backup files. */ ?>
-				<th colspan="4"><?php printf( _n( '%s Backup File', '%s Backup Files', $no, 'wp-dbmanager' ), number_format_i18n( $no ) ); ?></th>
-				<th><?php echo format_size( $totalsize ); ?></th>
+				<th colspan="4"><?php printf( esc_html( _n( '%s Backup File', '%s Backup Files', $no, 'wp-dbmanager' ) ), esc_html( number_format_i18n( $no ) ) ); ?></th>
+				<th><?php echo esc_html( format_size( $totalsize ) ); ?></th>
 				<th>&nbsp;</th>
 			</tr>
 		</table>

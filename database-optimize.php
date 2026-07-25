@@ -27,6 +27,8 @@ function dbmanager_page_optimize() {
 	$base_name = plugin_basename( 'wp-dbmanager/database-manager.php' );
 	$base_page = 'admin.php?page=' . $base_name;
 
+	$messages = array();
+
 	// Form Processing.
 	if ( ! empty( $_POST['do'] ) ) {
 		// Verified before any request data is read, not part way down the switch.
@@ -35,7 +37,6 @@ function dbmanager_page_optimize() {
 		// Lets Prepare The Variables.
 		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Keys are validated against SHOW TABLES before use.
 		$optimize = ( ! empty( $_POST['optimize'] ) ? wp_unslash( $_POST['optimize'] ) : array() );
-		$text     = '';
 
 		// Decide What To Do.
 		switch ( $_POST['do'] ) {
@@ -49,15 +50,24 @@ function dbmanager_page_optimize() {
 					}
 				}
 				if ( empty( $selected_tables ) ) {
-					$text = '<p style="color: red;">' . __( 'No Tables Selected', 'wp-dbmanager' ) . '</p>';
+					$messages[] = array(
+						'type' => 'error',
+						'text' => __( 'No Tables Selected', 'wp-dbmanager' ),
+					);
 				} else {
 					$optimize2 = $wpdb->query( 'OPTIMIZE TABLE `' . implode( '`, `', $selected_tables ) . '`' );
 					if ( ! $optimize2 ) {
-						/* translators: %s: comma separated table names. */
-						$text = '<p style="color: red;">' . sprintf( __( 'Table(s) \'%s\' NOT Optimized', 'wp-dbmanager' ), esc_html( implode( ', ', $selected_tables ) ) ) . '</p>';
+						$messages[] = array(
+							'type' => 'error',
+							/* translators: %s: comma separated table names. */
+							'text' => sprintf( __( 'Table(s) \'%s\' NOT Optimized', 'wp-dbmanager' ), implode( ', ', $selected_tables ) ),
+						);
 					} else {
-						/* translators: %s: comma separated table names. */
-						$text = '<p style="color: green;">' . sprintf( __( 'Table(s) \'%s\' Optimized', 'wp-dbmanager' ), esc_html( implode( ', ', $selected_tables ) ) ) . '</p>';
+						$messages[] = array(
+							'type' => 'success',
+							/* translators: %s: comma separated table names. */
+							'text' => sprintf( __( 'Table(s) \'%s\' Optimized', 'wp-dbmanager' ), implode( ', ', $selected_tables ) ),
+						);
 					}
 				}
 				break;
@@ -68,8 +78,7 @@ function dbmanager_page_optimize() {
 	$tables = $wpdb->get_col( 'SHOW TABLES' );
 	?>
 	<?php
-	if ( ! empty( $text ) ) {
-		echo '<!-- Last Action --><div id="message" class="updated fade"><p>' . $text . '</p></div>'; }
+	dbmanager_render_messages( $messages );
 	?>
 <!-- Optimize Database -->
 <form method="post" action="<?php echo esc_url( admin_url( 'admin.php?page=' . plugin_basename( __FILE__ ) ) ); ?>">
@@ -90,12 +99,20 @@ function dbmanager_page_optimize() {
 					if ( 0 === $no % 2 ) {
 						$style = '';
 					} else {
-						$style = ' class="alternate"';
+						$style = 'alternate';
 					}
 					++$no;
-					$table_attr = esc_attr( $table_name );
-					echo "<tr$style><th align=\"left\" scope=\"row\">" . esc_html( $table_name ) . "</th>\n";
-					echo "<td><input type=\"radio\" id=\"$table_attr-no\" name=\"optimize[$table_attr]\" value=\"no\" />&nbsp;<label for=\"$table_attr-no\">" . __( 'No', 'wp-dbmanager' ) . "</label>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<input type=\"radio\" id=\"$table_attr-yes\" name=\"optimize[$table_attr]\" value=\"yes\" checked=\"checked\" />&nbsp;<label for=\"$table_attr-yes\">" . __( 'Yes', 'wp-dbmanager' ) . '</label></td></tr>';
+					printf(
+						'<tr class="%1$s"><th align="left" scope="row">%2$s</th>',
+						esc_attr( $style ),
+						esc_html( $table_name )
+					);
+					printf(
+						'<td><input type="radio" id="%1$s-no" name="optimize[%1$s]" value="no" />&nbsp;<label for="%1$s-no">%2$s</label>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<input type="radio" id="%1$s-yes" name="optimize[%1$s]" value="yes" checked="checked" />&nbsp;<label for="%1$s-yes">%3$s</label></td></tr>',
+						esc_attr( $table_name ),
+						esc_html__( 'No', 'wp-dbmanager' ),
+						esc_html__( 'Yes', 'wp-dbmanager' )
+					);
 				}
 				?>
 			<tr>

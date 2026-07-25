@@ -33,12 +33,13 @@ function dbmanager_page_run() {
 	$backup['mysqlpath']     = $backup_options['mysqlpath'];
 	$backup['path']          = $backup_options['path'];
 
+	$messages = array();
+
 	// Form Processing.
 	if ( ! empty( $_POST['do'] ) ) {
 		// Verified before any request data is read, not part way down the switch.
 		check_admin_referer( 'wp-dbmanager_run' );
 
-		$text = '';
 		// Decide What To Do.
 		switch ( $_POST['do'] ) {
 			case __( 'Run', 'wp-dbmanager' ):
@@ -58,38 +59,57 @@ function dbmanager_page_run() {
 					}
 					if ( $sql_queries ) {
 						foreach ( $sql_queries as $sql_query ) {
-							$escaped_query = esc_html( $sql_query );
 							if ( preg_match( '/LOAD_FILE/i', $sql_query ) ) {
-								$text .= "<p style=\"color: red;\">$escaped_query</p>";
+								$messages[] = array(
+									'type' => 'error',
+									'text' => $sql_query,
+								);
 								++$totalquerycount;
 							} elseif ( preg_match( '/^\\s*(select|drop|show|grant) /i', $sql_query ) ) {
-								$text .= "<p style=\"color: red;\">$escaped_query</p>";
+								$messages[] = array(
+									'type' => 'error',
+									'text' => $sql_query,
+								);
 								++$totalquerycount;
 							} elseif ( preg_match( '/^\\s*(insert|update|replace|delete|create|alter) /i', $sql_query ) ) {
 								$run_query = $wpdb->query( $sql_query );
 								if ( ! $run_query ) {
-									$text .= "<p style=\"color: red;\">$escaped_query</p>";
+									$messages[] = array(
+										'type' => 'error',
+										'text' => $sql_query,
+									);
 								} else {
 									++$successquery;
-									$text .= "<p style=\"color: green;\">$escaped_query</p>";
+									$messages[] = array(
+										'type' => 'success',
+										'text' => $sql_query,
+									);
 								}
 								++$totalquerycount;
 							}
 						}
-						$text .= '<p style="color: blue;">' . number_format_i18n( $successquery ) . '/' . number_format_i18n( $totalquerycount ) . ' ' . __( 'Query(s) Executed Successfully', 'wp-dbmanager' ) . '</p>';
+						$messages[] = array(
+							'type' => 'info',
+							'text' => number_format_i18n( $successquery ) . '/' . number_format_i18n( $totalquerycount ) . ' ' . __( 'Query(s) Executed Successfully', 'wp-dbmanager' ),
+						);
 					} else {
-						$text = '<p style="color: red;">' . __( 'Empty Query', 'wp-dbmanager' ) . '</p>';
+						$messages[] = array(
+							'type' => 'error',
+							'text' => __( 'Empty Query', 'wp-dbmanager' ),
+						);
 					}
 				} else {
-					$text = '<p style="color: red;">' . __( 'Empty Query', 'wp-dbmanager' ) . '</p>';
+					$messages[] = array(
+						'type' => 'error',
+						'text' => __( 'Empty Query', 'wp-dbmanager' ),
+					);
 				}
 				break;
 		}
 	}
 	?>
 	<?php
-	if ( ! empty( $text ) ) {
-		echo '<!-- Last Action --><div id="message" class="updated fade"><p>' . $text . '</p></div>'; }
+	dbmanager_render_messages( $messages );
 	?>
 <!-- Run SQL Query -->
 <form method="post" action="<?php echo esc_url( admin_url( 'admin.php?page=' . plugin_basename( __FILE__ ) ) ); ?>">

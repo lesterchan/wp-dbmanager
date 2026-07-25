@@ -33,6 +33,8 @@ function dbmanager_page_empty() {
 	$backup['mysqlpath']     = $backup_options['mysqlpath'];
 	$backup['path']          = $backup_options['path'];
 
+	$messages = array();
+
 	// Form Processing.
 	if ( ! empty( $_POST['do'] ) ) {
 		// Verified before any request data is read, not part way down the switch.
@@ -41,7 +43,6 @@ function dbmanager_page_empty() {
 		// Lets Prepare The Variables.
 		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Keys are validated against SHOW TABLES before use.
 		$emptydrop = ( ! empty( $_POST['emptydrop'] ) ? wp_unslash( $_POST['emptydrop'] ) : array() );
-		$text      = '';
 
 		// Decide What To Do.
 		switch ( $_POST['do'] ) {
@@ -61,19 +62,28 @@ function dbmanager_page_empty() {
 					}
 				}
 				if ( empty( $empty_tables ) && empty( $drop_tables ) ) {
-					$text = '<p style="color: red;">' . __( 'No Tables Selected.', 'wp-dbmanager' ) . '</p>';
+					$messages[] = array(
+						'type' => 'error',
+						'text' => __( 'No Tables Selected.', 'wp-dbmanager' ),
+					);
 				}
 				if ( ! empty( $empty_tables ) ) {
 					foreach ( $empty_tables as $empty_table ) {
 						$empty_query = $wpdb->query( "TRUNCATE `$empty_table`" );
-						/* translators: %s: table name. */
-						$text .= '<p style="color: green;">' . sprintf( __( 'Table \'%s\' Emptied', 'wp-dbmanager' ), esc_html( $empty_table ) ) . '</p>';
+						$messages[]  = array(
+							'type' => 'success',
+							/* translators: %s: table name. */
+							'text' => sprintf( __( 'Table \'%s\' Emptied', 'wp-dbmanager' ), $empty_table ),
+						);
 					}
 				}
 				if ( ! empty( $drop_tables ) ) {
 					$drop_query = $wpdb->query( 'DROP TABLE `' . implode( '`, `', $drop_tables ) . '`' );
-					/* translators: %s: comma separated table names. */
-					$text = '<p style="color: green;">' . sprintf( __( 'Table(s) \'%s\' Dropped', 'wp-dbmanager' ), esc_html( implode( ', ', $drop_tables ) ) ) . '</p>';
+					$messages[] = array(
+						'type' => 'success',
+						/* translators: %s: comma separated table names. */
+						'text' => sprintf( __( 'Table(s) \'%s\' Dropped', 'wp-dbmanager' ), implode( ', ', $drop_tables ) ),
+					);
 				}
 				break;
 		}
@@ -83,8 +93,7 @@ function dbmanager_page_empty() {
 	$tables = $wpdb->get_col( 'SHOW TABLES' );
 	?>
 	<?php
-	if ( ! empty( $text ) ) {
-		echo '<!-- Last Action --><div id="message" class="updated fade"><p>' . $text . '</p></div>'; }
+	dbmanager_render_messages( $messages );
 	?>
 <!-- Empty/Drop Tables -->
 <form method="post" action="<?php echo esc_url( admin_url( 'admin.php?page=' . plugin_basename( __FILE__ ) ) ); ?>">
@@ -106,13 +115,24 @@ function dbmanager_page_empty() {
 					if ( 0 === $no % 2 ) {
 						$style = '';
 					} else {
-						$style = ' class="alternate"';
+						$style = 'alternate';
 					}
 					++$no;
-					$table_attr = esc_attr( $table_name );
-					echo "<tr $style><th align=\"left\" scope=\"row\">" . esc_html( $table_name ) . "</th>\n";
-					echo "<td><input type=\"radio\" id=\"$table_attr-empty\" name=\"emptydrop[$table_attr]\" value=\"empty\" />&nbsp;<label for=\"$table_attr-empty\">" . __( 'Empty', 'wp-dbmanager' ) . '</label></td>';
-					echo "<td><input type=\"radio\" id=\"$table_attr-drop\" name=\"emptydrop[$table_attr]\" value=\"drop\" />&nbsp;<label for=\"$table_attr-drop\">" . __( 'Drop', 'wp-dbmanager' ) . '</label></td></tr>';
+					printf(
+						'<tr class="%1$s"><th align="left" scope="row">%2$s</th>',
+						esc_attr( $style ),
+						esc_html( $table_name )
+					);
+					printf(
+						'<td><input type="radio" id="%1$s-empty" name="emptydrop[%1$s]" value="empty" />&nbsp;<label for="%1$s-empty">%2$s</label></td>',
+						esc_attr( $table_name ),
+						esc_html__( 'Empty', 'wp-dbmanager' )
+					);
+					printf(
+						'<td><input type="radio" id="%1$s-drop" name="emptydrop[%1$s]" value="drop" />&nbsp;<label for="%1$s-drop">%2$s</label></td></tr>',
+						esc_attr( $table_name ),
+						esc_html__( 'Drop', 'wp-dbmanager' )
+					);
 				}
 				?>
 			<tr>

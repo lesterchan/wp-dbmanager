@@ -36,10 +36,6 @@ function dbmanager_page_manager() {
 	// Get MYSQL Version.
 	$sqlversion = $wpdb->get_var( 'SELECT VERSION() AS version' );
 	?>
-	<?php
-	if ( ! empty( $text ) ) {
-		echo '<!-- Last Action --><div id="message" class="updated fade"><p>' . $text . '</p></div>'; }
-	?>
 <!-- Database Information -->
 <div class="wrap">
 	<h2><?php esc_html_e( 'Database', 'wp-dbmanager' ); ?></h2>
@@ -101,33 +97,37 @@ function dbmanager_page_manager() {
 			if ( 0 === $no % 2 ) {
 				$style = '';
 			} else {
-				$style = ' class="alternate"';
+				$style = 'alternate';
 			}
 			++$no;
-			echo "<tr$style>\n";
-			echo '<td>' . number_format_i18n( $no ) . '</td>' . "\n";
-			echo '<td>' . esc_html( $tablestatus->Name ) . '</td>' . "\n";
-			echo '<td>' . number_format_i18n( $tablestatus->Rows ) . '</td>' . "\n";
-			echo '<td>' . format_size( $tablestatus->Data_length ) . '</td>' . "\n";
-			echo '<td>' . format_size( $tablestatus->Index_length ) . '</td>' . "\n";
-
-			echo '<td>' . format_size( $tablestatus->Data_free ) . '</td>' . "\n";
+			printf(
+				"<tr class=\"%1\$s\"><td>%2\$s</td><td>%3\$s</td><td>%4\$s</td><td>%5\$s</td><td>%6\$s</td><td>%7\$s</td></tr>\n",
+				esc_attr( $style ),
+				esc_html( number_format_i18n( $no ) ),
+				esc_html( $tablestatus->Name ),
+				esc_html( number_format_i18n( $tablestatus->Rows ) ),
+				esc_html( format_size( $tablestatus->Data_length ) ),
+				esc_html( format_size( $tablestatus->Index_length ) ),
+				esc_html( format_size( $tablestatus->Data_free ) )
+			);
 			$row_usage      += $tablestatus->Rows;
 			$data_usage     += $tablestatus->Data_length;
 			$index_usage    += $tablestatus->Index_length;
 			$overhead_usage += $tablestatus->Data_free;
-			echo '</tr>' . "\n";
 		}
-			echo '<tr class="thead">' . "\n";
-			echo '<th>' . __( 'Total:', 'wp-dbmanager' ) . '</th>' . "\n";
 			/* translators: %s: number of tables. */
-			echo '<th>' . sprintf( _n( '%s Table', '%s Tables', $no, 'wp-dbmanager' ), number_format_i18n( $no ) ) . '</th>' . "\n";
+			$total_tables = sprintf( _n( '%s Table', '%s Tables', $no, 'wp-dbmanager' ), number_format_i18n( $no ) );
 			/* translators: %s: number of records. */
-			echo '<th>' . sprintf( _n( '%s Record', '%s Records', $row_usage, 'wp-dbmanager' ), number_format_i18n( $row_usage ) ) . '</th>' . "\n";
-			echo '<th>' . format_size( $data_usage ) . '</th>' . "\n";
-			echo '<th>' . format_size( $index_usage ) . '</th>' . "\n";
-			echo '<th>' . format_size( $overhead_usage ) . '</th>' . "\n";
-			echo '</tr>';
+			$total_records = sprintf( _n( '%s Record', '%s Records', $row_usage, 'wp-dbmanager' ), number_format_i18n( $row_usage ) );
+			printf(
+				"<tr class=\"thead\"><th>%1\$s</th><th>%2\$s</th><th>%3\$s</th><th>%4\$s</th><th>%5\$s</th><th>%6\$s</th></tr>\n",
+				esc_html__( 'Total:', 'wp-dbmanager' ),
+				esc_html( $total_tables ),
+				esc_html( $total_records ),
+				esc_html( format_size( $data_usage ) ),
+				esc_html( format_size( $index_usage ) ),
+				esc_html( format_size( $overhead_usage ) )
+			);
 		?>
 	</table>
 </div>

@@ -68,16 +68,6 @@
 
 	</rule>
 
-	<!--
-		The page files assemble their markup into a string and echo it in one go.
-		Every dynamic value is passed through esc_html(), esc_attr() or esc_url()
-		at the point it is interpolated, which this sniff cannot follow across the
-		assignment. The sniff stays enabled for wp-dbmanager.php, where the logic
-		lives, so genuinely unescaped output there is still reported.
-	-->
-	<rule ref="WordPress.Security.EscapeOutput.OutputNotEscaped">
-		<exclude-pattern>*/database-*.php</exclude-pattern>
-	</rule>
 
 	<config name="text_domain" value="wp-dbmanager"/>
 	<config name="minimum_wp_version" value="4.6"/>

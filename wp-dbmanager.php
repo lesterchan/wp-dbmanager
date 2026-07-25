@@ -618,6 +618,34 @@ function dbmanager_is_valid_path( $path ) {
 }
 
 /**
+ * Renders the result messages for an admin page.
+ *
+ * Messages are collected as plain text and escaped here, at the point of
+ * output, rather than being assembled into an HTML string by each caller.
+ *
+ * @param array $messages List of arrays with a type of success, info or error, and a text key.
+ */
+function dbmanager_render_messages( $messages ) {
+	if ( empty( $messages ) ) {
+		return;
+	}
+
+	$colors = array(
+		'success' => 'green',
+		'info'    => 'blue',
+		'error'   => 'red',
+	);
+
+	echo '<div id="message" class="updated fade">';
+	foreach ( $messages as $message ) {
+		$type  = isset( $message['type'] ) ? $message['type'] : 'error';
+		$color = isset( $colors[ $type ] ) ? $colors[ $type ] : 'red';
+		printf( '<p style="color: %1$s;">%2$s</p>', esc_attr( $color ), esc_html( $message['text'] ) );
+	}
+	echo '</div>';
+}
+
+/**
  * Formats a Unix timestamp in the site's timezone.
  *
  * Timestamps are stored as real Unix time, so the site's GMT offset has to be
