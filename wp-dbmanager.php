@@ -195,22 +195,22 @@ function dbmanager_admin_notices() {
 			echo '<div class="error">';
 			if( !$backup_folder_writable ) {
 				echo '<p style="font-weight: bold;">' . __( 'Your backup folder is NOT writable', 'wp-postratings') . '</p>';
-				echo '<p>'.sprintf( __( 'To correct this issue, make the folder <strong>%s</strong> writable.', 'wp-dbmanager' ), $backup_options['path'] ).'</p>';
+				echo '<p>'.sprintf( __( 'To correct this issue, make the folder <strong>%s</strong> writable.', 'wp-dbmanager' ), esc_html( $backup_options['path'] ) ).'</p>';
 			}
 			if( ! $index_exists || ( is_iis() && ! $webconfig_exists ) || ( ! is_iis() && ! $htaccess_exists ) ) {
 				echo '<p style="font-weight: bold;">'.__( 'Your backup folder MIGHT be visible to the public', 'wp-dbmanager' ).'</p>';
 			}
 			if( is_iis() ) {
 				if( ! $webconfig_exists ) {
-					echo '<p>'.sprintf( __( 'To correct this issue, move the file from <strong>%s</strong> to <strong>%s</strong>', 'wp-dbmanager'), plugin_dir_path( __FILE__ ) . 'Web.config.txt', $backup_options['path'] .'/Web.config' ).'</p>';
+					echo '<p>'.sprintf( __( 'To correct this issue, move the file from <strong>%s</strong> to <strong>%s</strong>', 'wp-dbmanager'), esc_html( plugin_dir_path( __FILE__ ) . 'Web.config.txt' ), esc_html( $backup_options['path'] .'/Web.config' ) ).'</p>';
 				}
 			} else {
 				if( ! $htaccess_exists ) {
-					echo '<p>'.sprintf( __( 'To correct this issue, move the file from <strong>%s</strong> to <strong>%s</strong>', 'wp-dbmanager'), plugin_dir_path( __FILE__ ) . 'htaccess.txt', $backup_options['path'] .'/.htaccess' ).'</p>';
+					echo '<p>'.sprintf( __( 'To correct this issue, move the file from <strong>%s</strong> to <strong>%s</strong>', 'wp-dbmanager'), esc_html( plugin_dir_path( __FILE__ ) . 'htaccess.txt' ), esc_html( $backup_options['path'] .'/.htaccess' ) ).'</p>';
 				}
 			}
 			if( ! $index_exists ) {
-				echo '<p>'.sprintf( __( 'To correct this issue, move the file from <strong>%s</strong> to <strong>%s</strong>', 'wp-dbmanager'), plugin_dir_path( __FILE__ ) . 'index.php', $backup_options['path'] .'/index.php' ).'</p>';
+				echo '<p>'.sprintf( __( 'To correct this issue, move the file from <strong>%s</strong> to <strong>%s</strong>', 'wp-dbmanager'), esc_html( plugin_dir_path( __FILE__ ) . 'index.php' ), esc_html( $backup_options['path'] .'/index.php' ) ).'</p>';
 			}
 			echo '<p>' . sprintf( __( '<a href="%s">Click here</a> to let WP-DBManager try to fix it', 'wp-dbmanager' ), wp_nonce_url( admin_url( 'admin.php?page=wp-dbmanager/database-backup.php&try_fix=1' ), 'wp-dbmanager_fix' ) ) . '</a></p>';
 			echo '</div>';
@@ -611,20 +611,28 @@ function dbmanager_options() {
 		$backup_options['repair_period']            = ! empty( $_POST['db_repair_period'] ) ? (int) $_POST['db_repair_period'] : 0;
 		$backup_options['hide_admin_notices']       = ! empty( $_POST['db_hide_admin_notices'] ) ? (int) $_POST['db_hide_admin_notices'] : 0;
 
+		// Each path is validated on its own, a failure on one must not skip the checks on the others.
+		$errors = array();
+
 		if( realpath( $backup_options['path'] ) === false ) {
-			$text = '<div id="message" class="error"><p>' . sprintf( __( '%s is not a valid backup path', 'wp-dbmanager' ), stripslashes( $backup_options['path'] ) ) . '</p></div>';
+			$errors[] = sprintf( __( '%s is not a valid backup path', 'wp-dbmanager' ), stripslashes( $backup_options['path'] ) );
 			$backup_options['path'] = $old_backup_options['path'];
-		} else if( dbmanager_is_valid_path( $backup_options['mysqldumppath'] ) === 0 ) {
-			$text = '<div id="message" class="error"><p>' . sprintf( __( '%s is not a valid mysqldump path', 'wp-dbmanager' ), stripslashes( $backup_options['mysqldumppath'] ) ) . '</p></div>';
+		}
+		if( dbmanager_is_valid_path( $backup_options['mysqldumppath'] ) === 0 ) {
+			$errors[] = sprintf( __( '%s is not a valid mysqldump path', 'wp-dbmanager' ), stripslashes( $backup_options['mysqldumppath'] ) );
 			$backup_options['mysqldumppath'] = $old_backup_options['mysqldumppath'];
-		} else if( dbmanager_is_valid_path( $backup_options['mysqlpath'] ) === 0 ) {
-			$text = '<div id="message" class="error"><p>' . sprintf( __( '%s is not a valid mysql path', 'wp-dbmanager' ), stripslashes( $backup_options['mysqlpath'] ) ) . '</p></div>';
+		}
+		if( dbmanager_is_valid_path( $backup_options['mysqlpath'] ) === 0 ) {
+			$errors[] = sprintf( __( '%s is not a valid mysql path', 'wp-dbmanager' ), stripslashes( $backup_options['mysqlpath'] ) );
 			$backup_options['mysqlpath'] = $old_backup_options['mysqlpath'];
+		}
+		if( ! empty( $errors ) ) {
+			$text = '<div id="message" class="error"><p>' . implode( '</p><p>', array_map( 'esc_html', $errors ) ) . '</p></div>';
 		}
 
 		$update_db_options = update_option( 'dbmanager_options', $backup_options );
 		if( $update_db_options ) {
-			$text = '<div id="message" class="updated"><p>' . __( 'Database Options Updated', 'wp-dbmanager' ) . '</p></div>';
+			$text .= '<div id="message" class="updated"><p>' . __( 'Database Options Updated', 'wp-dbmanager' ) . '</p></div>';
 		}
 		if( empty( $text ) ) {
 			$text = '<div id="message" class="error"><p>' . __( 'No Database Option Updated', 'wp-dbmanager' ) . '</p></div>';
@@ -672,10 +680,10 @@ function dbmanager_options() {
 <script type="text/javascript">
 /* <![CDATA[*/
 	function mysqlpath() {
-		jQuery("#db_mysqlpath").val("<?php echo $path['mysql']; ?>");
+		jQuery("#db_mysqlpath").val(<?php echo wp_json_encode( $path['mysql'], JSON_HEX_TAG ); ?>);
 	}
 	function mysqldumppath() {
-		jQuery("#db_mysqldumppath").val("<?php echo $path['mysqldump']; ?>");
+		jQuery("#db_mysqldumppath").val(<?php echo wp_json_encode( $path['mysqldump'], JSON_HEX_TAG ); ?>);
 	}
 /* ]]> */
 </script>
@@ -690,28 +698,28 @@ function dbmanager_options() {
 			<tr>
 				<td width="20%" valign="top"><strong><?php _e('Path To mysqldump:', 'wp-dbmanager'); ?></strong></td>
 				<td width="80%">
-					<input type="text" id="db_mysqldumppath" name="db_mysqldumppath" size="60" maxlength="100" value="<?php echo stripslashes($backup_options['mysqldumppath']); ?>" dir="ltr" />&nbsp;&nbsp;<input type="button" value="<?php _e('Auto Detect', 'wp-dbmanager'); ?>" onclick="mysqldumppath();" />
+					<input type="text" id="db_mysqldumppath" name="db_mysqldumppath" size="60" maxlength="100" value="<?php echo esc_attr( stripslashes( $backup_options['mysqldumppath'] ) ); ?>" dir="ltr" />&nbsp;&nbsp;<input type="button" value="<?php _e('Auto Detect', 'wp-dbmanager'); ?>" onclick="mysqldumppath();" />
 					<p><?php _e('The absolute path to mysqldump without trailing slash. If unsure, please email your server administrator about this.', 'wp-dbmanager'); ?></p>
 				</td>
 			</tr>
 			<tr>
 				<td valign="top"><strong><?php _e('Path To mysql:', 'wp-dbmanager'); ?></strong></td>
 				<td>
-					<input type="text" id="db_mysqlpath" name="db_mysqlpath" size="60" maxlength="100" value="<?php echo stripslashes($backup_options['mysqlpath']); ?>" dir="ltr" />&nbsp;&nbsp;<input type="button" value="<?php _e('Auto Detect', 'wp-dbmanager'); ?>" onclick="mysqlpath();" />
+					<input type="text" id="db_mysqlpath" name="db_mysqlpath" size="60" maxlength="100" value="<?php echo esc_attr( stripslashes( $backup_options['mysqlpath'] ) ); ?>" dir="ltr" />&nbsp;&nbsp;<input type="button" value="<?php _e('Auto Detect', 'wp-dbmanager'); ?>" onclick="mysqlpath();" />
 					<p><?php _e('The absolute path to mysql without trailing slash. If unsure, please email your server administrator about this.', 'wp-dbmanager'); ?></p>
 				</td>
 			</tr>
 			<tr>
 				<td valign="top"><strong><?php _e('Path To Backup:', 'wp-dbmanager'); ?></strong></td>
 				<td>
-					<input type="text" name="db_path" size="60" maxlength="200" value="<?php echo stripslashes($backup_options['path']); ?>" dir="ltr" />
+					<input type="text" name="db_path" size="60" maxlength="200" value="<?php echo esc_attr( stripslashes( $backup_options['path'] ) ); ?>" dir="ltr" />
 					<p><?php _e('The absolute path to your database backup folder without trailing slash. Make sure the folder is writable.', 'wp-dbmanager'); ?></p>
 				</td>
 			</tr>
 			<tr>
 				<td valign="top"><strong><?php _e('Maximum Backup Files:', 'wp-dbmanager'); ?></strong></td>
 				<td>
-					<input type="text" name="db_max_backup" size="5" maxlength="5" value="<?php echo stripslashes($backup_options['max_backup']); ?>" />
+					<input type="text" name="db_max_backup" size="5" maxlength="5" value="<?php echo esc_attr( stripslashes( $backup_options['max_backup'] ) ); ?>" />
 					<p><?php _e('The maximum number of database backup files that is allowed in the backup folder as stated above. The oldest database backup file is always deleted in order to maintain this value. This is to prevent the backup folder from getting too large.', 'wp-dbmanager'); ?></p>
 				</td>
 			</tr>
