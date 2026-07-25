@@ -1,10 +1,10 @@
 # WP-DBManager
 Contributors: GamerZ  
-Donate link: http://lesterchan.net/site/donation/  
+Donate link: https://lesterchan.net/site/donation/  
 Tags: database, manage, wp-dbmanager, manager, table, optimize, backup, queries, query, drop, empty, tables, table, run, repair, cron, schedule, scheduling, automatic  
 Requires at least: 4.0  
-Tested up to: 6.7  
-Stable tag: 2.80.10  
+Tested up to: 7.0  
+Stable tag: 2.80.11  
 
 Manages your WordPress database.
 
@@ -19,9 +19,6 @@ Allows you to optimize database, repair database, backup database, restore datab
 1. If you are on IIS, move the `Web.config.txt` file from `Folder: wp-content/plugins/wp-dbmanager` to `Folder: wp-content/backup-db/Web.config` if it is not there already
 1. Move `index.php` file from `Folder: wp-content/plugins/wp-dbmanager` to `Folder: wp-content/backup-db/index.php` if it is not there already
 1. Go to `WP-Admin -> Database -> DB Options` to configure the database options
-
-### Build Status
-[![Build Status](https://travis-ci.org/lesterchan/wp-dbmanager.svg?branch=master)](https://travis-ci.org/lesterchan/wp-dbmanager)
 
 ### Development
 * [https://github.com/lesterchan/wp-dbmanager](https://github.com/lesterchan/wp-dbmanager "https://github.com/lesterchan/wp-dbmanager")
@@ -42,6 +39,12 @@ Allows you to optimize database, repair database, backup database, restore datab
 * To know about the difference between WP-DBManager and WP-DB-backup, checkout __What is the difference between WP-DBManager and WP-DB-Backup?__ in the [FAQ section](https://wordpress.org/plugins/wp-dbmanager/faq/).
 
 ## Changelog
+### Version 2.80.11
+* NEW: WordPress 7.0
+* FIXED: Escape all output on the admin screens to prevent XSS.
+* FIXED: Validate the mysqldump, mysql and backup paths independently.
+* FIXED: Removed jQuery dependency.
+
 ### Version 2.80.10
 * FIXED: Don't throw fatal error if unknown .sql files are inside the database backup folder.
 
