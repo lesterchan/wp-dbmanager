@@ -23,20 +23,11 @@ Allows you to optimize database, repair database, backup database, restore datab
 ### Development
 * [https://github.com/lesterchan/wp-dbmanager](https://github.com/lesterchan/wp-dbmanager "https://github.com/lesterchan/wp-dbmanager")
 
-### Translations
-* [http://dev.wp-plugins.org/browser/wp-dbmanager/i18n/](http://dev.wp-plugins.org/browser/wp-dbmanager/i18n/ "http://dev.wp-plugins.org/browser/wp-dbmanager/i18n/")
-
 ### Credits
-* Plugin icon by [Freepik](http://www.freepik.com) from [Flaticon](http://www.flaticon.com)
+* Plugin icon by [Freepik](https://www.freepik.com) from [Flaticon](https://www.flaticon.com)
 
 ### Donations
 * I spent most of my free time creating, updating, maintaining and supporting these plugins, if you really love my plugins and could spare me a couple of bucks, I will really appreciate it. If not feel free to use it without any obligations.
-
-### Disclaimer
-* Note that this plugin passes your datababase password via --password in the command line of mysqldump. This is convenient but as a trade off, it is insecure.
-* On some systems, your password becomes visible to system status programs such as ps that may be invoked by other users to display command lines. MySQL clients typically overwrite the command-line password argument with zeros during their initialization sequence. However, there is still a brief interval during which the value is visible. Also, on some systems this overwriting strategy is ineffective and the password remains visible to ps. Source: [End-User Guidelines for Password Security](http://dev.mysql.com/doc/refman/5.5/en/password-security-user.html)
-* If this is a concern to you, I recommend another database backup plugin called [WP-DB-Backup](https://wordpress.org/plugins/wp-db-backup/)
-* To know about the difference between WP-DBManager and WP-DB-backup, checkout __What is the difference between WP-DBManager and WP-DB-Backup?__ in the [FAQ section](https://wordpress.org/plugins/wp-dbmanager/faq/).
 
 ## Changelog
 ### Version 2.81.0
