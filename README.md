@@ -2,7 +2,7 @@
 Contributors: GamerZ  
 Donate link: https://lesterchan.net/site/donation/  
 Tags: database, manage, wp-dbmanager, manager, table, optimize, backup, queries, query, drop, empty, tables, table, run, repair, cron, schedule, scheduling, automatic  
-Requires at least: 4.0  
+Requires at least: 4.6  
 Tested up to: 7.0  
 Stable tag: 2.81.0  
 
@@ -41,6 +41,7 @@ Allows you to optimize database, repair database, backup database, restore datab
 ## Changelog
 ### Version 2.81.0
 * NOTE: The mysqldump and mysql paths are now passed as a single argument. If you added extra flags to either path under DB Options, move them out or your backups will fail.
+* NOTE: Requires WordPress 4.6 or later, up from 4.0.
 * NEW: WordPress 7.0
 * NEW: New backups are gzipped by default.
 * NEW: 'Attach Backup File' option to control whether the scheduled backup e-mail carries the database file. Existing sites keep attaching it.

@@ -10,13 +10,12 @@ if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
 }
 
 if ( is_multisite() ) {
-	$ms_sites = function_exists( 'get_sites' ) ? get_sites() : wp_get_sites();
+	// number => 0 lifts the default limit of 100, a network can be larger.
+	$ms_sites = get_sites( array( 'number' => 0 ) );
 
 	if ( 0 < count( $ms_sites ) ) {
 		foreach ( $ms_sites as $ms_site ) {
-			// Not $blog_id, that is a WordPress global and this file runs at global scope.
-			$dbmanager_blog_id = class_exists( 'WP_Site' ) ? $ms_site->blog_id : $ms_site['blog_id'];
-			switch_to_blog( $dbmanager_blog_id );
+			switch_to_blog( $ms_site->blog_id );
 			dbmanager_uninstalled();
 			// Paired inside the loop, switch_to_blog() stacks.
 			restore_current_blog();

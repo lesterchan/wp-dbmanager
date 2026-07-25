@@ -49,18 +49,14 @@ add_action( 'admin_menu', 'dbmanager_menu' );
  * Registers the Database admin menu and its sub pages.
  */
 function dbmanager_menu() {
-	if ( function_exists( 'add_menu_page' ) ) {
-		add_menu_page( __( 'Database', 'wp-dbmanager' ), __( 'Database', 'wp-dbmanager' ), 'install_plugins', 'wp-dbmanager/database-manager.php', '', 'dashicons-archive' );
-	}
-	if ( function_exists( 'add_submenu_page' ) ) {
-		add_submenu_page( 'wp-dbmanager/database-manager.php', __( 'Backup DB', 'wp-dbmanager' ), __( 'Backup DB', 'wp-dbmanager' ), 'install_plugins', 'wp-dbmanager/database-backup.php' );
-		add_submenu_page( 'wp-dbmanager/database-manager.php', __( 'Manage Backup DB', 'wp-dbmanager' ), __( 'Manage Backup DB', 'wp-dbmanager' ), 'install_plugins', 'wp-dbmanager/database-manage.php' );
-		add_submenu_page( 'wp-dbmanager/database-manager.php', __( 'Optimize DB', 'wp-dbmanager' ), __( 'Optimize DB', 'wp-dbmanager' ), 'install_plugins', 'wp-dbmanager/database-optimize.php' );
-		add_submenu_page( 'wp-dbmanager/database-manager.php', __( 'Repair DB', 'wp-dbmanager' ), __( 'Repair DB', 'wp-dbmanager' ), 'install_plugins', 'wp-dbmanager/database-repair.php' );
-		add_submenu_page( 'wp-dbmanager/database-manager.php', __( 'Empty/Drop Tables', 'wp-dbmanager' ), __( 'Empty/Drop Tables', 'wp-dbmanager' ), 'install_plugins', 'wp-dbmanager/database-empty.php' );
-		add_submenu_page( 'wp-dbmanager/database-manager.php', __( 'Run SQL Query', 'wp-dbmanager' ), __( 'Run SQL Query', 'wp-dbmanager' ), 'install_plugins', 'wp-dbmanager/database-run.php' );
-		add_submenu_page( 'wp-dbmanager/database-manager.php', __( 'DB Options', 'wp-dbmanager' ), __( 'DB Options', 'wp-dbmanager' ), 'install_plugins', 'wp-dbmanager/wp-dbmanager.php', 'dbmanager_options' );
-	}
+	add_menu_page( __( 'Database', 'wp-dbmanager' ), __( 'Database', 'wp-dbmanager' ), 'install_plugins', 'wp-dbmanager/database-manager.php', '', 'dashicons-archive' );
+	add_submenu_page( 'wp-dbmanager/database-manager.php', __( 'Backup DB', 'wp-dbmanager' ), __( 'Backup DB', 'wp-dbmanager' ), 'install_plugins', 'wp-dbmanager/database-backup.php' );
+	add_submenu_page( 'wp-dbmanager/database-manager.php', __( 'Manage Backup DB', 'wp-dbmanager' ), __( 'Manage Backup DB', 'wp-dbmanager' ), 'install_plugins', 'wp-dbmanager/database-manage.php' );
+	add_submenu_page( 'wp-dbmanager/database-manager.php', __( 'Optimize DB', 'wp-dbmanager' ), __( 'Optimize DB', 'wp-dbmanager' ), 'install_plugins', 'wp-dbmanager/database-optimize.php' );
+	add_submenu_page( 'wp-dbmanager/database-manager.php', __( 'Repair DB', 'wp-dbmanager' ), __( 'Repair DB', 'wp-dbmanager' ), 'install_plugins', 'wp-dbmanager/database-repair.php' );
+	add_submenu_page( 'wp-dbmanager/database-manager.php', __( 'Empty/Drop Tables', 'wp-dbmanager' ), __( 'Empty/Drop Tables', 'wp-dbmanager' ), 'install_plugins', 'wp-dbmanager/database-empty.php' );
+	add_submenu_page( 'wp-dbmanager/database-manager.php', __( 'Run SQL Query', 'wp-dbmanager' ), __( 'Run SQL Query', 'wp-dbmanager' ), 'install_plugins', 'wp-dbmanager/database-run.php' );
+	add_submenu_page( 'wp-dbmanager/database-manager.php', __( 'DB Options', 'wp-dbmanager' ), __( 'DB Options', 'wp-dbmanager' ), 'install_plugins', 'wp-dbmanager/wp-dbmanager.php', 'dbmanager_options' );
 }
 
 
@@ -132,7 +128,7 @@ function cron_dbmanager_backup() {
 		// than no file, because it looks like a backup until it is needed.
 		if ( ! empty( $error ) || ! is_file( $backup['filepath'] ) || filesize( $backup['filepath'] ) === 0 ) {
 			if ( is_file( $backup['filepath'] ) ) {
-				@unlink( $backup['filepath'] );
+				wp_delete_file( $backup['filepath'] );
 			}
 			return;
 		}
@@ -536,7 +532,7 @@ function dbmanager_write_defaults_file() {
 
 	$contents = "[client]\npassword=" . dbmanager_escape_option_file_value( DB_PASSWORD ) . "\n";
 	if ( @file_put_contents( $defaults_file, $contents ) === false ) {
-		@unlink( $defaults_file );
+		wp_delete_file( $defaults_file );
 		return false;
 	}
 
@@ -569,7 +565,7 @@ function dbmanager_credential_args( $defaults_file ) {
  */
 function dbmanager_delete_defaults_file( $defaults_file ) {
 	if ( false !== $defaults_file && is_file( $defaults_file ) ) {
-		@unlink( $defaults_file );
+		wp_delete_file( $defaults_file );
 	}
 }
 
@@ -604,7 +600,7 @@ function execute_backup( $command ) {
 		fwrite( $fp, $command );
 		fclose( $fp );
 		system( $tmpnam . ' > NUL', $error );
-		unlink( $tmpnam );
+		wp_delete_file( $tmpnam );
 	} else {
 		passthru( $command, $error );
 	}
@@ -809,7 +805,7 @@ function check_backup_files() {
 	while ( $total >= $max_backup ) {
 		--$total;
 		$oldest = array_shift( $database_files );
-		@unlink( $backup_options['path'] . '/' . $oldest['name'] );
+		wp_delete_file( $backup_options['path'] . '/' . $oldest['name'] );
 	}
 }
 
@@ -922,12 +918,12 @@ function dbmanager_activation( $network_wide ) {
 	);
 
 	if ( is_multisite() && $network_wide ) {
-		$ms_sites = function_exists( 'get_sites' ) ? get_sites() : wp_get_sites();
+		// number => 0 lifts the default limit of 100, a network can be larger.
+		$ms_sites = get_sites( array( 'number' => 0 ) );
 
 		if ( 0 < count( $ms_sites ) ) {
 			foreach ( $ms_sites as $ms_site ) {
-				$blog_id = class_exists( 'WP_Site' ) ? $ms_site->blog_id : $ms_site['blog_id'];
-				switch_to_blog( $blog_id );
+				switch_to_blog( $ms_site->blog_id );
 				add_option( $option_name, $option );
 				dbmanager_activate();
 				// Paired inside the loop, switch_to_blog() stacks.

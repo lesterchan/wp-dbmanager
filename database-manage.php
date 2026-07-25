@@ -117,7 +117,9 @@ function dbmanager_page_manage() {
 			case __( 'Delete', 'wp-dbmanager' ):
 				if ( ! empty( $database_file ) ) {
 					if ( is_file( $backup['path'] . '/' . $database_file ) ) {
-						if ( ! unlink( $backup['path'] . '/' . $database_file ) ) {
+						// wp_delete_file() returns nothing, so ask the filesystem whether it worked.
+						wp_delete_file( $backup['path'] . '/' . $database_file );
+						if ( file_exists( $backup['path'] . '/' . $database_file ) ) {
 							/* translators: %s: date and time of the backup file. */
 							$text .= '<p style="color: red;">' . sprintf( __( 'Unable To Delete Database Backup File On \'%s\'', 'wp-dbmanager' ), esc_html( $file['formatted_date'] ) ) . '</p>';
 						} else {

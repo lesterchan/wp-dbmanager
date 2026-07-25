@@ -72,12 +72,6 @@
 		-->
 		<exclude name="WordPress.DateTime.CurrentTimeTimestamp.Requested"/>
 
-		<!--
-			get_sites() only exists from WordPress 4.6 and this plugin still
-			supports 4.0, so the wp_get_sites() fallback stays until the minimum
-			is raised. It is only reached when get_sites() is absent.
-		-->
-		<exclude name="WordPress.WP.DeprecatedFunctions.wp_get_sitesFound"/>
 	</rule>
 
 	<!--
@@ -92,5 +86,5 @@
 	</rule>
 
 	<config name="text_domain" value="wp-dbmanager"/>
-	<config name="minimum_wp_version" value="4.0"/>
+	<config name="minimum_wp_version" value="4.6"/>
 </ruleset>
