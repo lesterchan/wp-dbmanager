@@ -33,14 +33,8 @@
 defined( 'ABSPATH' ) || exit;
 
 
-// Create Text Domain For Translations.
-add_action( 'plugins_loaded', 'dbmanager_textdomain' );
-/**
- * Loads the plugin translations.
- */
-function dbmanager_textdomain() {
-	load_plugin_textdomain( 'wp-dbmanager', false, dirname( plugin_basename( __FILE__ ) ) );
-}
+// Translations come from the WordPress.org language packs, which WordPress loads
+// on demand from the Text Domain header. No loader call is needed since 4.6.
 
 
 // Function: Database Manager Menu.

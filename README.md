@@ -56,6 +56,7 @@ The `Backup DB` page requests a file from the folder and reports what the server
 * NEW: 'Attach Backup File' option to control whether the scheduled backup e-mail carries the database file. Existing sites keep attaching it.
 * NEW: New backups are gzipped by default.
 * CHANGED: New installs no longer prefill the backup e-mail address, so scheduled backup e-mails are opt-in.
+* CHANGED: Translations now come from the WordPress.org language packs. The bundled .pot file and the load_plugin_textdomain() call are gone, both were redundant.
 * FIXED: Escape all output on the admin screens to prevent XSS.
 * FIXED: Validate table names against the database before emptying, dropping, optimizing or repairing.
 * FIXED: The database password is no longer passed on the command line.
