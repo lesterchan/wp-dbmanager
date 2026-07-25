@@ -182,7 +182,17 @@ function cron_dbmanager_reccurences($schedules) {
 ### Function: Ensure .htaccess Is In The Backup Folder
 add_action( 'admin_notices', 'dbmanager_admin_notices' );
 function dbmanager_admin_notices() {
+	// The notice exposes the backup folder path and links to a page only these users can reach.
+	if ( ! current_user_can( 'install_plugins' ) ) {
+		return;
+	}
+
 	$backup_options = get_option( 'dbmanager_options' );
+
+	if ( empty( $backup_options['path'] ) ) {
+		return;
+	}
+
 	$backup_folder_writable = ( is_dir( $backup_options['path'] ) && wp_is_writable( $backup_options['path'] ) );
 	$htaccess_exists = file_exists( $backup_options['path'] . '/.htaccess' );
 	$webconfig_exists =  file_exists( $backup_options['path'] . '/Web.config' );
@@ -194,7 +204,7 @@ function dbmanager_admin_notices() {
 
 			echo '<div class="error">';
 			if( !$backup_folder_writable ) {
-				echo '<p style="font-weight: bold;">' . __( 'Your backup folder is NOT writable', 'wp-postratings') . '</p>';
+				echo '<p style="font-weight: bold;">' . __( 'Your backup folder is NOT writable', 'wp-dbmanager') . '</p>';
 				echo '<p>'.sprintf( __( 'To correct this issue, make the folder <strong>%s</strong> writable.', 'wp-dbmanager' ), esc_html( $backup_options['path'] ) ).'</p>';
 			}
 			if( ! $index_exists || ( is_iis() && ! $webconfig_exists ) || ( ! is_iis() && ! $htaccess_exists ) ) {
