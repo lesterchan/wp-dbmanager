@@ -208,39 +208,39 @@ function dbmanager_admin_notices() {
 		return;
 	}
 
-	$backup_folder_writable = ( is_dir( $backup_options['path'] ) && wp_is_writable( $backup_options['path'] ) );
-	$htaccess_exists = file_exists( $backup_options['path'] . '/.htaccess' );
-	$webconfig_exists =  file_exists( $backup_options['path'] . '/Web.config' );
-	$index_exists =  file_exists( $backup_options['path'] . '/index.php' );
-
-	if( ! isset( $backup_options['hide_admin_notices'] ) || (int) $backup_options['hide_admin_notices'] === 0 )
-	{
-		if( ! $backup_folder_writable || ! $index_exists || ( is_iis() && ! $webconfig_exists ) || ( ! is_iis() && ! $htaccess_exists ) ) {
-
-			echo '<div class="error">';
-			if( !$backup_folder_writable ) {
-				echo '<p style="font-weight: bold;">' . __( 'Your backup folder is NOT writable', 'wp-dbmanager') . '</p>';
-				echo '<p>'.sprintf( __( 'To correct this issue, make the folder <strong>%s</strong> writable.', 'wp-dbmanager' ), esc_html( $backup_options['path'] ) ).'</p>';
-			}
-			if( ! $index_exists || ( is_iis() && ! $webconfig_exists ) || ( ! is_iis() && ! $htaccess_exists ) ) {
-				echo '<p style="font-weight: bold;">'.__( 'Your backup folder MIGHT be visible to the public', 'wp-dbmanager' ).'</p>';
-			}
-			if( is_iis() ) {
-				if( ! $webconfig_exists ) {
-					echo '<p>'.sprintf( __( 'To correct this issue, move the file from <strong>%s</strong> to <strong>%s</strong>', 'wp-dbmanager'), esc_html( plugin_dir_path( __FILE__ ) . 'Web.config.txt' ), esc_html( $backup_options['path'] .'/Web.config' ) ).'</p>';
-				}
-			} else {
-				if( ! $htaccess_exists ) {
-					echo '<p>'.sprintf( __( 'To correct this issue, move the file from <strong>%s</strong> to <strong>%s</strong>', 'wp-dbmanager'), esc_html( plugin_dir_path( __FILE__ ) . 'htaccess.txt' ), esc_html( $backup_options['path'] .'/.htaccess' ) ).'</p>';
-				}
-			}
-			if( ! $index_exists ) {
-				echo '<p>'.sprintf( __( 'To correct this issue, move the file from <strong>%s</strong> to <strong>%s</strong>', 'wp-dbmanager'), esc_html( plugin_dir_path( __FILE__ ) . 'index.php' ), esc_html( $backup_options['path'] .'/index.php' ) ).'</p>';
-			}
-			echo '<p>' . sprintf( __( '<a href="%s">Click here</a> to let WP-DBManager try to fix it', 'wp-dbmanager' ), wp_nonce_url( admin_url( 'admin.php?page=wp-dbmanager/database-backup.php&try_fix=1' ), 'wp-dbmanager_fix' ) ) . '</p>';
-			echo '</div>';
-		}
+	if( isset( $backup_options['hide_admin_notices'] ) && (int) $backup_options['hide_admin_notices'] !== 0 ) {
+		return;
 	}
+
+	$backup_folder_writable = ( is_dir( $backup_options['path'] ) && wp_is_writable( $backup_options['path'] ) );
+	$index_exists = file_exists( $backup_options['path'] . '/index.php' );
+
+	// Read the cached answer only. The Backup Database page does the actual
+	// request, no reason to hold up an unrelated admin page for it.
+	$is_public = dbmanager_is_backup_folder_public( false );
+
+	if( $backup_folder_writable && $index_exists && $is_public !== true ) {
+		return;
+	}
+
+	echo '<div class="error">';
+
+	if( ! $backup_folder_writable ) {
+		echo '<p style="font-weight: bold;">' . __( 'Your backup folder is NOT writable', 'wp-dbmanager') . '</p>';
+		echo '<p>'.sprintf( __( 'To correct this issue, make the folder <strong>%s</strong> writable.', 'wp-dbmanager' ), esc_html( $backup_options['path'] ) ).'</p>';
+	}
+
+	if( $is_public === true ) {
+		echo '<p style="font-weight: bold;">' . __( 'Your backup folder is visible to the public', 'wp-dbmanager' ) . '</p>';
+		echo '<p>' . __( 'Anyone who guesses a backup file name can download your entire database. Move the backup folder outside your web root under DB Options.', 'wp-dbmanager' ) . '</p>';
+	}
+
+	if( ! $index_exists ) {
+		echo '<p>'.sprintf( __( 'To correct this issue, move the file from <strong>%s</strong> to <strong>%s</strong>', 'wp-dbmanager'), esc_html( plugin_dir_path( __FILE__ ) . 'index.php' ), esc_html( $backup_options['path'] .'/index.php' ) ).'</p>';
+	}
+
+	echo '<p>' . sprintf( __( '<a href="%s">Click here</a> to let WP-DBManager try to fix it', 'wp-dbmanager' ), wp_nonce_url( admin_url( 'admin.php?page=wp-dbmanager/database-backup.php&try_fix=1' ), 'wp-dbmanager_fix' ) ) . '</p>';
+	echo '</div>';
 }
 
 
@@ -270,15 +270,153 @@ function detect_mysql() {
 	return $paths;
 }
 
-### Function: Check if WordPress is installed on IIS
-function is_iis() {
+### Function: Identify the web server
+### Only 'apache' honours a dropped in .htaccess, which is the whole point of
+### telling nginx apart rather than lumping it in with Apache.
+function dbmanager_get_server_type() {
 	// Not set under WP-CLI or when cron runs outside a web request.
 	$server_software = isset( $_SERVER['SERVER_SOFTWARE'] ) ? strtolower( $_SERVER['SERVER_SOFTWARE'] ) : '';
-	if ( strpos( $server_software, 'microsoft-iis') !== false ) {
-		return true;
+
+	if ( strpos( $server_software, 'microsoft-iis' ) !== false ) {
+		return 'iis';
+	}
+
+	if ( strpos( $server_software, 'nginx' ) !== false ) {
+		return 'nginx';
+	}
+
+	return 'apache';
+}
+
+
+### Function: Check if WordPress is installed on IIS
+function is_iis() {
+	return dbmanager_get_server_type() === 'iis';
+}
+
+
+### Function: Public URL of the backup folder, or false when it is outside the web root
+function dbmanager_get_backup_url() {
+	$backup_options = get_option( 'dbmanager_options' );
+
+	if ( empty( $backup_options['path'] ) ) {
+		return false;
+	}
+
+	$backup_path = realpath( $backup_options['path'] );
+	if ( $backup_path === false ) {
+		return false;
+	}
+
+	$backup_path = str_replace( '\\', '/', $backup_path );
+
+	// Content directory first, it is the more specific of the two and may well
+	// sit outside ABSPATH.
+	$roots = array();
+	$content_dir = realpath( WP_CONTENT_DIR );
+	if ( $content_dir !== false ) {
+		$roots[] = array( 'dir' => str_replace( '\\', '/', $content_dir ), 'url' => content_url() );
+	}
+	$abspath = realpath( ABSPATH );
+	if ( $abspath !== false ) {
+		$roots[] = array( 'dir' => str_replace( '\\', '/', $abspath ), 'url' => site_url() );
+	}
+
+	foreach ( $roots as $root ) {
+		if ( $backup_path === $root['dir'] ) {
+			return $root['url'];
+		}
+		if ( strpos( $backup_path, $root['dir'] . '/' ) === 0 ) {
+			return $root['url'] . substr( $backup_path, strlen( $root['dir'] ) );
+		}
 	}
 
 	return false;
+}
+
+
+### Function: Is the backup folder actually reachable over HTTP
+### Returns true, false, or null when it could not be determined. Asks the server
+### rather than trusting that a dropped in file did anything, because on nginx it
+### did not. Pass false to read the cached answer without making a request.
+function dbmanager_is_backup_folder_public( $probe = true ) {
+	$transient_name = 'dbmanager_backup_folder_public';
+	$cached = get_transient( $transient_name );
+
+	if ( $cached !== false ) {
+		if ( $cached === 'unknown' ) {
+			return null;
+		}
+		return $cached === 'public';
+	}
+
+	if ( ! $probe ) {
+		return null;
+	}
+
+	$result = 'unknown';
+	$backup_url = dbmanager_get_backup_url();
+	$backup_options = get_option( 'dbmanager_options' );
+
+	if ( $backup_url === false ) {
+		// Outside the web root, there is nothing for the server to hand out.
+		$result = 'protected';
+	} else if ( ! empty( $backup_options['path'] ) ) {
+		// Probe a real backup file when there is one. That is the exact question:
+		// can somebody download the dump? Fall back to index.php on a fresh install.
+		// Not .htaccess, plenty of nginx configs deny dotfiles while serving .sql,
+		// which would read as a false all clear.
+		$backup_files = dbmanager_list_backup_files( $backup_options['path'] );
+		if ( ! empty( $backup_files ) ) {
+			$target = end( $backup_files );
+			$target = $target['name'];
+		} else if ( is_file( $backup_options['path'] . '/index.php' ) ) {
+			$target = 'index.php';
+		} else {
+			$target = '';
+		}
+
+		if ( $target !== '' ) {
+			// Redirects are followed, an http to https hop is not protection. A second
+			// request for a name that cannot exist tells a real 200 apart from a catch
+			// all redirect that answers 200 for everything.
+			$args = array(
+				'timeout'     => 5,
+				'redirection' => 3,
+				'sslverify'   => false,
+			);
+			$missing = 'wp-dbmanager-probe-' . md5( uniqid( '', true ) ) . '.sql';
+
+			$real_response = wp_remote_head( $backup_url . '/' . $target, $args );
+			$missing_response = wp_remote_head( $backup_url . '/' . $missing, $args );
+
+			if ( ! is_wp_error( $real_response ) && ! is_wp_error( $missing_response ) ) {
+				$real_code = (int) wp_remote_retrieve_response_code( $real_response );
+				$missing_code = (int) wp_remote_retrieve_response_code( $missing_response );
+
+				if ( $real_code !== 200 ) {
+					$result = 'protected';
+				} else if ( $missing_code !== 200 ) {
+					$result = 'public';
+				}
+				// Both answered 200, the server answers 200 for anything. Inconclusive.
+			}
+		}
+	}
+
+	set_transient( $transient_name, $result, HOUR_IN_SECONDS );
+
+	if ( $result === 'unknown' ) {
+		return null;
+	}
+
+	return $result === 'public';
+}
+
+
+### Function: Forget the cached reachability answer
+function dbmanager_flush_backup_folder_public() {
+	delete_transient( 'dbmanager_backup_folder_public' );
 }
 
 ### Function: Escape A Value For A MySQL Option File
@@ -676,6 +814,7 @@ function dbmanager_try_fix() {
 		}
 		check_admin_referer( 'wp-dbmanager_fix' );
 		dbmanager_create_backup_folder();
+		dbmanager_flush_backup_folder_public();
 	}
 }
 
@@ -776,6 +915,9 @@ function dbmanager_options() {
 		}
 
 		$update_db_options = update_option( 'dbmanager_options', $backup_options );
+
+		// The backup path may have moved, the cached answer is about the old one.
+		dbmanager_flush_backup_folder_public();
 		if( $update_db_options ) {
 			$text .= '<div id="message" class="updated"><p>' . __( 'Database Options Updated', 'wp-dbmanager' ) . '</p></div>';
 		}

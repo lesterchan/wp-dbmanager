@@ -45,6 +45,11 @@ Allows you to optimize database, repair database, backup database, restore datab
 * NEW: New backups are gzipped by default.
 * NEW: 'Attach Backup File' option to control whether the scheduled backup e-mail carries the database file. Existing sites keep attaching it.
 * CHANGED: New installs no longer prefill the backup e-mail address, so scheduled backup e-mails are opt-in.
+* NEW: The Backup Database page now asks the server whether the backup folder is actually reachable over HTTP, instead of assuming a dropped in .htaccess protects it. nginx is detected and given a configuration snippet that works.
+* FIXED: Cron backups no longer rename and e-mail a dump that failed, an empty file is no longer passed off as a backup.
+* FIXED: Restoring no longer reports success when the restore did not run.
+* FIXED: Two backups written in the same second are no longer invisible to pruning and the manage screen.
+* FIXED: Every file now refuses to run when loaded directly.
 * FIXED: Escape all output on the admin screens to prevent XSS.
 * FIXED: Validate the mysqldump, mysql and backup paths independently.
 * FIXED: Validate table names against the database before emptying, dropping, optimizing or repairing.

@@ -85,21 +85,52 @@ $disabled_function = false;
 	<h3><?php _e('Checking Security Status', 'wp-dbmanager'); ?></h3>
 	<p>
 		<?php
-			if( is_iis() ) {
-				if ( ! is_file( $backup_path . '/Web.config' ) ) {
-					echo '<p style="color: red;">' . sprintf( __( 'Web.config is missing from %s', 'wp-dbmanager' ), esc_html( $backup_path ) ) . '</p>';
-					$has_error = true;
-				} else {
-					echo '<p style="color: green;">' . sprintf( __( 'Web.config is present in %s', 'wp-dbmanager' ), esc_html( $backup_path ) ) . '</p>';
-				}
+			$server_type = dbmanager_get_server_type();
+			$backup_url = dbmanager_get_backup_url();
+
+			// Ask the server whether the folder is reachable rather than assuming a
+			// dropped in file did the job. On nginx it did not.
+			$is_public = dbmanager_is_backup_folder_public();
+
+			if( $backup_url === false ) {
+				echo '<p style="color: green;">' . __( 'Your backup folder is outside the web root, so it cannot be downloaded over HTTP.', 'wp-dbmanager' ) . '</p>';
 			} else {
-				if( ! is_file( $backup_path . '/.htaccess' ) ) {
-					echo '<p style="color: red;">' . sprintf( __( '.htaccess is missing from %s', 'wp-dbmanager' ), esc_html( $backup_path ) ) . '</p>';
+				echo '<p>' . sprintf( __( 'Your backup folder is inside the web root, at %s', 'wp-dbmanager' ), '<strong>' . esc_html( $backup_url ) . '</strong>' ) . '</p>';
+
+				if( $is_public === true ) {
+					echo '<p style="color: red; font-weight: bold;">' . __( 'The backup folder responds over HTTP. Anyone who guesses a backup file name can download your entire database.', 'wp-dbmanager' ) . '</p>';
 					$has_error = true;
+				} else if( $is_public === false ) {
+					echo '<p style="color: green;">' . __( 'The backup folder does not respond over HTTP.', 'wp-dbmanager' ) . '</p>';
 				} else {
-					echo '<p style="color: green;">' . sprintf( __( '.htaccess is present in %s', 'wp-dbmanager' ), esc_html( $backup_path ) ) . '</p>';
+					echo '<p style="color: red;">' . __( 'Could not determine whether the backup folder responds over HTTP. Check it yourself, or move the folder outside the web root.', 'wp-dbmanager' ) . '</p>';
+					$has_error = true;
+				}
+
+				if( $server_type === 'nginx' ) {
+					echo '<p style="color: red;">' . __( 'This site runs on nginx, which ignores .htaccess files. No file placed in the backup folder can protect it.', 'wp-dbmanager' ) . '</p>';
+					echo '<p>' . __( 'Move the backup folder outside your web root under DB Options, or add this to your nginx server block:', 'wp-dbmanager' ) . '</p>';
+					$backup_uri = parse_url( $backup_url, PHP_URL_PATH );
+					echo '<pre style="background: #f6f7f7; border: 1px solid #dcdcde; padding: 8px; display: inline-block;" dir="ltr">location ^~ ' . esc_html( trailingslashit( $backup_uri ) ) . ' { deny all; }</pre>';
+				}
+
+				if( $server_type === 'iis' ) {
+					if ( ! is_file( $backup_path . '/Web.config' ) ) {
+						echo '<p style="color: red;">' . sprintf( __( 'Web.config is missing from %s', 'wp-dbmanager' ), esc_html( $backup_path ) ) . '</p>';
+						$has_error = true;
+					} else {
+						echo '<p style="color: green;">' . sprintf( __( 'Web.config is present in %s', 'wp-dbmanager' ), esc_html( $backup_path ) ) . '</p>';
+					}
+				} else if( $server_type === 'apache' ) {
+					if( ! is_file( $backup_path . '/.htaccess' ) ) {
+						echo '<p style="color: red;">' . sprintf( __( '.htaccess is missing from %s', 'wp-dbmanager' ), esc_html( $backup_path ) ) . '</p>';
+						$has_error = true;
+					} else {
+						echo '<p style="color: green;">' . sprintf( __( '.htaccess is present in %s', 'wp-dbmanager' ), esc_html( $backup_path ) ) . '</p>';
+					}
 				}
 			}
+
 			if( ! is_file( $backup_path . '/index.php' ) ) {
 				echo '<p style="color: red;">' . sprintf( __( 'index.php is missing from %s', 'wp-dbmanager' ), esc_html( $backup_path ) ) . '</p>';
 				$has_error = true;
