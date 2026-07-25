@@ -4,9 +4,14 @@
  * Plugin URI: https://lesterchan.net/portfolio/programming/php/
  * Description: Manages your WordPress database. Allows you to optimize database, repair database, backup database, restore database, delete backup database , drop/empty tables and run selected queries. Supports automatic scheduling of backing up, optimizing and repairing of database.
  * Version: 3.0.0
+ * Requires at least: 4.6
+ * Requires PHP: 7.2
  * Author: Lester 'GaMerZ' Chan
  * Author URI: https://lesterchan.net
+ * License: GPLv2 or later
+ * License URI: https://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain: wp-dbmanager
+ * Domain Path: /languages
  *
  * @package WP-DBManager
  */

@@ -5,6 +5,9 @@ Tags: database, backup, restore, optimize, repair
 Requires at least: 4.6  
 Tested up to: 7.0  
 Stable tag: 3.0.0  
+Requires PHP: 7.2  
+License: GPLv2 or later
+License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
 Manages your WordPress database.
 
@@ -165,7 +168,7 @@ The `Backup DB` page requests a file from the folder and reports what the server
 * FIXED: Set default character set to UTF-8. Props Karsonito
 
 ### Version 2.64
-* FIXED: Use intval() instead of is_int() when checking for port number. Props [Webby Scots](http://webbyscots.com/ "Webby Scots")
+* FIXED: Use intval() instead of is_int() when checking for port number. Props [Webby Scots](https://webbyscots.com/ "Webby Scots")
 
 ### Version 2.63 (03-05-2011)
 * NEW: Added Auto Repair Functionality
