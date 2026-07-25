@@ -4,7 +4,7 @@ Donate link: https://lesterchan.net/site/donation/
 Tags: database, manage, wp-dbmanager, manager, table, optimize, backup, queries, query, drop, empty, tables, table, run, repair, cron, schedule, scheduling, automatic  
 Requires at least: 4.6  
 Tested up to: 7.0  
-Stable tag: 2.81.0  
+Stable tag: 3.0.0  
 
 Manages your WordPress database.
 
@@ -47,7 +47,7 @@ The `Backup DB` page requests a file from the folder and reports what the server
 * I spent most of my free time creating, updating, maintaining and supporting these plugins, if you really love my plugins and could spare me a couple of bucks, I will really appreciate it. If not feel free to use it without any obligations.
 
 ## Changelog
-### Version 2.81.0
+### Version 3.0.0
 * NOTE: The mysqldump and mysql paths are now passed as a single argument. If you added extra flags to either path under DB Options, move them out or your backups will fail.
 * NOTE: Requires WordPress 4.6 or later, up from 4.0.
 * NOTE: Backup file names now carry a real Unix timestamp. Backups taken before this release will show a date shifted by your timezone offset. The files themselves are fine.
