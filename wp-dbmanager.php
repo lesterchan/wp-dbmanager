@@ -257,7 +257,8 @@ function detect_mysql() {
 
 ### Function: Check if WordPress is installed on IIS
 function is_iis() {
-	$server_software = strtolower( $_SERVER['SERVER_SOFTWARE'] );
+	// Not set under WP-CLI or when cron runs outside a web request.
+	$server_software = isset( $_SERVER['SERVER_SOFTWARE'] ) ? strtolower( $_SERVER['SERVER_SOFTWARE'] ) : '';
 	if ( strpos( $server_software, 'microsoft-iis') !== false ) {
 		return true;
 	}
@@ -428,6 +429,13 @@ function dbmanager_is_folder_valid( $folder ){
 ### Function: Make Sure Maximum Number Of Database Backup Files Does Not Exceed
 function check_backup_files() {
 	$backup_options = get_option( 'dbmanager_options' );
+	$max_backup = isset( $backup_options['max_backup'] ) ? (int) $backup_options['max_backup'] : 0;
+
+	// A limit below one is treated as no limit. Deleting every backup is never the intent.
+	if ( $max_backup < 1 ) {
+		return;
+	}
+
 	$database_files = array();
 	if ( dbmanager_is_folder_valid( $backup_options['path'] ) ) {
 		if ( $handle = opendir($backup_options['path'] ) ) {
@@ -440,8 +448,12 @@ function check_backup_files() {
 			ksort( $database_files );
 		}
 	}
-	if ( sizeof( $database_files ) >= $backup_options['max_backup'] ) {
-		@unlink( $backup_options['path'] . '/' . $database_files[ array_key_first( $database_files ) ] );
+
+	// Prune down to the limit, leaving room for the backup about to be written.
+	while ( sizeof( $database_files ) >= $max_backup ) {
+		$oldest = array_key_first( $database_files );
+		@unlink( $backup_options['path'] . '/' . $database_files[ $oldest ] );
+		unset( $database_files[ $oldest ] );
 	}
 }
 
@@ -567,12 +579,19 @@ function download_database() {
 			wp_die( 'Access Denied' );
 		}
 		check_admin_referer( 'wp-dbmanager_manage' );
-		$database_file = trim( $_POST['database_file'] );
-		if( substr( $database_file, strlen( $database_file ) -4, 4 ) === '.sql' || substr( $database_file, strlen( $database_file ) -7, 7 ) === '.sql.gz' ) {
-			$backup_options = get_option( 'dbmanager_options' );
-			$clean_file_name = sanitize_file_name( $database_file );
-			$clean_file_name = str_replace( 'sql_.gz', 'sql.gz', $clean_file_name );
-			$file_path = $backup_options['path'] . '/' . $clean_file_name;
+		$backup_options = get_option( 'dbmanager_options' );
+		$clean_file_name = sanitize_file_name( trim( $_POST['database_file'] ) );
+		$clean_file_name = str_replace( 'sql_.gz', 'sql.gz', $clean_file_name );
+
+		// Check the name that is actually read, not the one that was submitted.
+		$has_valid_extension = ( substr( $clean_file_name, -4 ) === '.sql' || substr( $clean_file_name, -7 ) === '.sql.gz' );
+
+		// Resolve both paths and confirm the file really sits inside the backup folder.
+		$backup_dir = realpath( $backup_options['path'] );
+		$file_path = realpath( $backup_options['path'] . '/' . $clean_file_name );
+		$is_inside_backup_dir = ( $backup_dir !== false && $file_path !== false && strpos( $file_path, $backup_dir . DIRECTORY_SEPARATOR ) === 0 );
+
+		if( $has_valid_extension && $is_inside_backup_dir && is_file( $file_path ) ) {
 			header( 'Pragma: public' );
 			header( 'Expires: 0' );
 			header( 'Cache-Control: must-revalidate, post-check=0, pre-check=0' );
