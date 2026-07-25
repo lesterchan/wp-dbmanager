@@ -70,6 +70,7 @@ if(!empty($_POST['do'])) {
 ### Backup File Name
 $backup['filename'] = $backup['date'].'_-_'.DB_NAME.'.sql';
 $backup_path = stripslashes( $backup['path'] );
+$backup_gzip = isset( $backup_options['backup_gzip'] ) ? (int) $backup_options['backup_gzip'] : dbmanager_default_options( 'backup_gzip' );
 
 ### MYSQL Base Dir
 $has_error = false;
@@ -246,7 +247,7 @@ $disabled_function = false;
 			</tr>
 			<tr>
 				<th><?php _e('GZIP Database Backup File?', 'wp-dbmanager'); ?></th>
-				<td><input type="radio" id="gzip-yes" name="gzip" value="1" />&nbsp;<label for="gzip-yes"><?php _e('Yes', 'wp-dbmanager'); ?></label>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<input type="radio" id="gzip-no" name="gzip" value="0" checked="checked" />&nbsp;<label for="gzip-no"><?php _e('No', 'wp-dbmanager'); ?></label></td>
+				<td><input type="radio" id="gzip-yes" name="gzip" value="1"<?php checked( 1, $backup_gzip ); ?> />&nbsp;<label for="gzip-yes"><?php _e('Yes', 'wp-dbmanager'); ?></label>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<input type="radio" id="gzip-no" name="gzip" value="0"<?php checked( 0, $backup_gzip ); ?> />&nbsp;<label for="gzip-no"><?php _e('No', 'wp-dbmanager'); ?></label></td>
 			</tr>
 			<tr>
 				<td colspan="2" align="center"><input type="submit" name="do" value="<?php _e('Backup', 'wp-dbmanager'); ?>" class="button" />&nbsp;&nbsp;<input type="button" name="cancel" value="<?php _e('Cancel', 'wp-dbmanager'); ?>" class="button" onclick="javascript:history.go(-1)" /></td>

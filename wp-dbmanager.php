@@ -3,7 +3,7 @@
 Plugin Name: WP-DBManager
 Plugin URI: https://lesterchan.net/portfolio/programming/php/
 Description: Manages your WordPress database. Allows you to optimize database, repair database, backup database, restore database, delete backup database , drop/empty tables and run selected queries. Supports automatic scheduling of backing up, optimizing and repairing of database.
-Version: 2.80.11
+Version: 2.81.0
 Author: Lester 'GaMerZ' Chan
 Author URI: https://lesterchan.net
 Text Domain: wp-dbmanager
@@ -532,6 +532,9 @@ function dbmanager_default_options( $option_name )
 		case 'hide_admin_notices':
 			return 0;
 			break;
+		case 'backup_gzip':
+			return 1;
+			break;
 	}
 }
 
@@ -547,7 +550,7 @@ function dbmanager_activation( $network_wide ) {
 		, 'path'                    => str_replace( '\\', '/', WP_CONTENT_DIR ).'/backup-db'
 		, 'max_backup'              => 10
 		, 'backup'                  => 1
-		, 'backup_gzip'             => 0
+		, 'backup_gzip'             => dbmanager_default_options( 'backup_gzip' )
 		, 'backup_period'           => 604800
 		, 'backup_email'            => get_option( 'admin_email' )
 		, 'backup_email_from'       => dbmanager_default_options( 'backup_email_from' )
@@ -767,6 +770,10 @@ function dbmanager_options() {
 	if( !isset( $backup_options['hide_admin_notices'] ) )
 	{
 		$backup_options['hide_admin_notices'] = dbmanager_default_options( 'hide_admin_notices' );
+	}
+	if( !isset( $backup_options['backup_gzip'] ) )
+	{
+		$backup_options['backup_gzip'] = dbmanager_default_options( 'backup_gzip' );
 	}
 
 ?>
