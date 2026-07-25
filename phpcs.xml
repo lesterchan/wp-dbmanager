@@ -62,14 +62,6 @@
 		-->
 		<exclude name="WordPress.WP.CronInterval.ChangeDetected"/>
 
-		<!-- House style. -->
-		<exclude name="WordPress.PHP.YodaConditions.NotYoda"/>
-		<exclude name="Squiz.Commenting.InlineComment.InvalidEndChar"/>
-		<exclude name="Squiz.Commenting.FunctionComment.Missing"/>
-		<exclude name="Squiz.Commenting.FunctionComment.WrongStyle"/>
-		<exclude name="Squiz.Commenting.FileComment.Missing"/>
-		<exclude name="Squiz.Commenting.FileComment.WrongStyle"/>
-
 		<!-- $wpdb and MySQL result columns are not ours to rename. -->
 		<exclude name="WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase"/>
 

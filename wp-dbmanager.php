@@ -1,14 +1,15 @@
 <?php
-/*
-Plugin Name: WP-DBManager
-Plugin URI: https://lesterchan.net/portfolio/programming/php/
-Description: Manages your WordPress database. Allows you to optimize database, repair database, backup database, restore database, delete backup database , drop/empty tables and run selected queries. Supports automatic scheduling of backing up, optimizing and repairing of database.
-Version: 2.81.0
-Author: Lester 'GaMerZ' Chan
-Author URI: https://lesterchan.net
-Text Domain: wp-dbmanager
-*/
-
+/**
+ * Plugin Name: WP-DBManager
+ * Plugin URI: https://lesterchan.net/portfolio/programming/php/
+ * Description: Manages your WordPress database. Allows you to optimize database, repair database, backup database, restore database, delete backup database , drop/empty tables and run selected queries. Supports automatic scheduling of backing up, optimizing and repairing of database.
+ * Version: 2.81.0
+ * Author: Lester 'GaMerZ' Chan
+ * Author URI: https://lesterchan.net
+ * Text Domain: wp-dbmanager
+ *
+ * @package WP-DBManager
+ */
 
 /*
 	Copyright 2026  Lester Chan  (email : lesterchan@gmail.com)
@@ -32,15 +33,21 @@ Text Domain: wp-dbmanager
 defined( 'ABSPATH' ) || exit;
 
 
-// Create Text Domain For Translations
+// Create Text Domain For Translations.
 add_action( 'plugins_loaded', 'dbmanager_textdomain' );
+/**
+ * Loads the plugin translations.
+ */
 function dbmanager_textdomain() {
 	load_plugin_textdomain( 'wp-dbmanager', false, dirname( plugin_basename( __FILE__ ) ) );
 }
 
 
-// Function: Database Manager Menu
+// Function: Database Manager Menu.
 add_action( 'admin_menu', 'dbmanager_menu' );
+/**
+ * Registers the Database admin menu and its sub pages.
+ */
 function dbmanager_menu() {
 	if ( function_exists( 'add_menu_page' ) ) {
 		add_menu_page( __( 'Database', 'wp-dbmanager' ), __( 'Database', 'wp-dbmanager' ), 'install_plugins', 'wp-dbmanager/database-manager.php', '', 'dashicons-archive' );
@@ -59,20 +66,29 @@ function dbmanager_menu() {
 
 // Function: Append to the allowed mime types so .sql uploads are permitted.
 add_filter( 'upload_mimes', 'dbmanager_upload_mimes' );
+/**
+ * Allows .sql files to be uploaded to the media library.
+ *
+ * @param array $mime_types Allowed mime types keyed by extension.
+ * @return array Allowed mime types with sql added.
+ */
 function dbmanager_upload_mimes( $mime_types ) {
 	$mime_types['sql'] = 'application/sql';
 	return $mime_types;
 }
 
-// Function: Database Manager Cron
+// Function: Database Manager Cron.
 add_filter( 'cron_schedules', 'cron_dbmanager_reccurences' );
 add_action( 'dbmanager_cron_backup', 'cron_dbmanager_backup' );
 add_action( 'dbmanager_cron_optimize', 'cron_dbmanager_optimize' );
 add_action( 'dbmanager_cron_repair', 'cron_dbmanager_repair' );
+/**
+ * Runs the scheduled database backup.
+ */
 function cron_dbmanager_backup() {
 	$backup_options = get_option( 'dbmanager_options' );
 
-	// Enesure that backup path is valid before proceeding
+	// Enesure that backup path is valid before proceeding.
 	if ( empty( $backup_options['path'] ) || ! dbmanager_is_folder_valid( $backup_options['path'] ) ) {
 		return;
 	}
@@ -90,7 +106,7 @@ function cron_dbmanager_backup() {
 		if ( strpos( DB_HOST, ':' ) !== false ) {
 			$db_host        = explode( ':', DB_HOST );
 			$backup['host'] = $db_host[0];
-			if ( (int) $db_host[1] !== 0 ) {
+			if ( 0 !== (int) $db_host[1] ) {
 				$backup['port'] = ' --port=' . escapeshellarg( (int) $db_host[1] );
 			} else {
 				$backup['sock'] = ' --socket=' . escapeshellarg( $db_host[1] );
@@ -99,7 +115,7 @@ function cron_dbmanager_backup() {
 		$backup['command']  = '';
 		$backup['filename'] = $backup['date'] . '_-_' . DB_NAME . '.sql';
 		$defaults_file      = dbmanager_write_defaults_file();
-		if ( (int) $backup_options['backup_gzip'] === 1 ) {
+		if ( 1 === (int) $backup_options['backup_gzip'] ) {
 			$backup['filename'] .= '.gz';
 			$backup['filepath']  = $backup['path'] . '/' . $backup['filename'];
 			do_action( 'wp_dbmanager_before_escapeshellcmd' );
@@ -125,12 +141,15 @@ function cron_dbmanager_backup() {
 		rename( $backup['filepath'], $new_filepath );
 		$backup_email = $backup_options['backup_email'];
 		if ( ! empty( $backup_email ) ) {
-			$attach = isset( $backup_options['backup_email_attach'] ) ? (int) $backup_options['backup_email_attach'] === 1 : (bool) dbmanager_default_options( 'backup_email_attach' );
+			$attach = isset( $backup_options['backup_email_attach'] ) ? 1 === (int) $backup_options['backup_email_attach'] : (bool) dbmanager_default_options( 'backup_email_attach' );
 			dbmanager_email_backup( $backup_email, $new_filepath, $attach );
 		}
 	}
 }
 
+/**
+ * Runs the scheduled table optimisation.
+ */
 function cron_dbmanager_optimize() {
 	global $wpdb;
 	$backup_options  = get_option( 'dbmanager_options' );
@@ -145,6 +164,9 @@ function cron_dbmanager_optimize() {
 	}
 }
 
+/**
+ * Runs the scheduled table repair.
+ */
 function cron_dbmanager_repair() {
 	global $wpdb;
 	$backup_options = get_option( 'dbmanager_options' );
@@ -159,6 +181,12 @@ function cron_dbmanager_repair() {
 	}
 }
 
+/**
+ * Registers the plugin cron schedules from the configured intervals.
+ *
+ * @param array $schedules Existing cron schedules.
+ * @return array Schedules with the plugin intervals added.
+ */
 function cron_dbmanager_reccurences( $schedules ) {
 	$backup_options = get_option( 'dbmanager_options' );
 
@@ -178,13 +206,13 @@ function cron_dbmanager_reccurences( $schedules ) {
 		$repair = 0;
 	}
 
-	if ( $backup === 0 ) {
+	if ( 0 === $backup ) {
 		$backup = 31536000;
 	}
-	if ( $optimize === 0 ) {
+	if ( 0 === $optimize ) {
 		$optimize = 31536000;
 	}
-	if ( $repair === 0 ) {
+	if ( 0 === $repair ) {
 		$repair = 31536000;
 	}
 	$schedules['dbmanager_backup']   = array(
@@ -203,8 +231,11 @@ function cron_dbmanager_reccurences( $schedules ) {
 }
 
 
-// Function: Ensure .htaccess Is In The Backup Folder
+// Function: Ensure .htaccess Is In The Backup Folder.
 add_action( 'admin_notices', 'dbmanager_admin_notices' );
+/**
+ * Warns about a backup folder that is not writable or is publicly reachable.
+ */
 function dbmanager_admin_notices() {
 	// The notice exposes the backup folder path and links to a page only these users can reach.
 	if ( ! current_user_can( 'install_plugins' ) ) {
@@ -217,7 +248,7 @@ function dbmanager_admin_notices() {
 		return;
 	}
 
-	if ( isset( $backup_options['hide_admin_notices'] ) && (int) $backup_options['hide_admin_notices'] !== 0 ) {
+	if ( isset( $backup_options['hide_admin_notices'] ) && 0 !== (int) $backup_options['hide_admin_notices'] ) {
 		return;
 	}
 
@@ -228,7 +259,7 @@ function dbmanager_admin_notices() {
 	// request, no reason to hold up an unrelated admin page for it.
 	$is_public = dbmanager_is_backup_folder_public( false );
 
-	if ( $backup_folder_writable && $index_exists && $is_public !== true ) {
+	if ( $backup_folder_writable && $index_exists && true !== $is_public ) {
 		return;
 	}
 
@@ -241,7 +272,7 @@ function dbmanager_admin_notices() {
 		echo '<p>' . sprintf( __( 'To correct this issue, make the folder <strong>%s</strong> writable.', 'wp-dbmanager' ), esc_html( $backup_options['path'] ) ) . '</p>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Markup is part of the translated string, substitutions are escaped at the call.
 	}
 
-	if ( $is_public === true ) {
+	if ( true === $is_public ) {
 		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Static translated string wrapped in fixed markup.
 		echo '<p style="font-weight: bold;">' . __( 'Your backup folder is visible to the public', 'wp-dbmanager' ) . '</p>';
 		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Static translated string wrapped in fixed markup.
@@ -259,7 +290,11 @@ function dbmanager_admin_notices() {
 }
 
 
-// Function: Auto Detect MYSQL and MYSQL Dump Paths
+/**
+ * Attempts to locate the mysql and mysqldump binaries.
+ *
+ * @return array Paths keyed by mysql and mysqldump.
+ */
 function detect_mysql() {
 	global $wpdb;
 	$paths = array(
@@ -286,9 +321,14 @@ function detect_mysql() {
 	return $paths;
 }
 
-// Function: Identify the web server
-// Only 'apache' honours a dropped in .htaccess, which is the whole point of
-// telling nginx apart rather than lumping it in with Apache.
+/**
+ * Identifies the web server.
+ *
+ * Only 'apache' honours a dropped in .htaccess, which is the whole point of
+ * telling nginx apart rather than lumping it in with Apache.
+ *
+ * @return string One of iis, nginx or apache.
+ */
 function dbmanager_get_server_type() {
 	// Not set under WP-CLI or when cron runs outside a web request.
 	$server_software = isset( $_SERVER['SERVER_SOFTWARE'] ) ? strtolower( sanitize_text_field( wp_unslash( $_SERVER['SERVER_SOFTWARE'] ) ) ) : '';
@@ -305,13 +345,21 @@ function dbmanager_get_server_type() {
 }
 
 
-// Function: Check if WordPress is installed on IIS
+/**
+ * Whether the site runs on IIS.
+ *
+ * @return bool True when the server is IIS.
+ */
 function is_iis() {
 	return dbmanager_get_server_type() === 'iis';
 }
 
 
-// Function: Public URL of the backup folder, or false when it is outside the web root
+/**
+ * Public URL of the backup folder.
+ *
+ * @return string|false The URL, or false when the folder is outside the web root.
+ */
 function dbmanager_get_backup_url() {
 	$backup_options = get_option( 'dbmanager_options' );
 
@@ -320,7 +368,7 @@ function dbmanager_get_backup_url() {
 	}
 
 	$backup_path = realpath( $backup_options['path'] );
-	if ( $backup_path === false ) {
+	if ( false === $backup_path ) {
 		return false;
 	}
 
@@ -330,14 +378,14 @@ function dbmanager_get_backup_url() {
 	// sit outside ABSPATH.
 	$roots       = array();
 	$content_dir = realpath( WP_CONTENT_DIR );
-	if ( $content_dir !== false ) {
+	if ( false !== $content_dir ) {
 		$roots[] = array(
 			'dir' => str_replace( '\\', '/', $content_dir ),
 			'url' => content_url(),
 		);
 	}
 	$abspath = realpath( ABSPATH );
-	if ( $abspath !== false ) {
+	if ( false !== $abspath ) {
 		$roots[] = array(
 			'dir' => str_replace( '\\', '/', $abspath ),
 			'url' => site_url(),
@@ -357,19 +405,25 @@ function dbmanager_get_backup_url() {
 }
 
 
-// Function: Is the backup folder actually reachable over HTTP
-// Returns true, false, or null when it could not be determined. Asks the server
-// rather than trusting that a dropped in file did anything, because on nginx it
-// did not. Pass false to read the cached answer without making a request.
+/**
+ * Whether the backup folder can be reached over HTTP.
+ *
+ * Returns true, false, or null when it could not be determined. Asks the server
+ * rather than trusting that a dropped in file did anything, because on nginx it
+ * did not. Pass false to read the cached answer without making a request.
+ *
+ * @param bool $probe Whether to make a request. Pass false to read the cached answer only.
+ * @return bool|null True when reachable, false when not, null when undetermined.
+ */
 function dbmanager_is_backup_folder_public( $probe = true ) {
 	$transient_name = 'dbmanager_backup_folder_public';
 	$cached         = get_transient( $transient_name );
 
-	if ( $cached !== false ) {
-		if ( $cached === 'unknown' ) {
+	if ( false !== $cached ) {
+		if ( 'unknown' === $cached ) {
 			return null;
 		}
-		return $cached === 'public';
+		return 'public' === $cached;
 	}
 
 	if ( ! $probe ) {
@@ -380,7 +434,7 @@ function dbmanager_is_backup_folder_public( $probe = true ) {
 	$backup_url     = dbmanager_get_backup_url();
 	$backup_options = get_option( 'dbmanager_options' );
 
-	if ( $backup_url === false ) {
+	if ( false === $backup_url ) {
 		// Outside the web root, there is nothing for the server to hand out.
 		$result = 'protected';
 	} elseif ( ! empty( $backup_options['path'] ) ) {
@@ -398,7 +452,7 @@ function dbmanager_is_backup_folder_public( $probe = true ) {
 			$target = '';
 		}
 
-		if ( $target !== '' ) {
+		if ( '' !== $target ) {
 			// Redirects are followed, an http to https hop is not protection. A second
 			// request for a name that cannot exist tells a real 200 apart from a catch
 			// all redirect that answers 200 for everything.
@@ -416,9 +470,9 @@ function dbmanager_is_backup_folder_public( $probe = true ) {
 				$real_code    = (int) wp_remote_retrieve_response_code( $real_response );
 				$missing_code = (int) wp_remote_retrieve_response_code( $missing_response );
 
-				if ( $real_code !== 200 ) {
+				if ( 200 !== $real_code ) {
 					$result = 'protected';
-				} elseif ( $missing_code !== 200 ) {
+				} elseif ( 200 !== $missing_code ) {
 					$result = 'public';
 				}
 				// Both answered 200, the server answers 200 for anything. Inconclusive.
@@ -428,20 +482,27 @@ function dbmanager_is_backup_folder_public( $probe = true ) {
 
 	set_transient( $transient_name, $result, HOUR_IN_SECONDS );
 
-	if ( $result === 'unknown' ) {
+	if ( 'unknown' === $result ) {
 		return null;
 	}
 
-	return $result === 'public';
+	return 'public' === $result;
 }
 
 
-// Function: Forget the cached reachability answer
+/**
+ * Forgets the cached reachability answer.
+ */
 function dbmanager_flush_backup_folder_public() {
 	delete_transient( 'dbmanager_backup_folder_public' );
 }
 
-// Function: Escape A Value For A MySQL Option File
+/**
+ * Escapes a value for a MySQL option file.
+ *
+ * @param string $value Raw value.
+ * @return string Quoted and escaped value.
+ */
 function dbmanager_escape_option_file_value( $value ) {
 	// Backslash is an escape character inside option files, so it has to be doubled
 	// before the value is wrapped in quotes.
@@ -452,8 +513,13 @@ function dbmanager_escape_option_file_value( $value ) {
 }
 
 
-// Function: Write The Database Password To A Temporary Option File
-// Keeps the password off the command line where 'ps' would expose it.
+/**
+ * Writes the database password to a temporary option file.
+ *
+ * Keeps the password off the command line where 'ps' would expose it.
+ *
+ * @return string|false Path to the file, or false when it could not be written.
+ */
 function dbmanager_write_defaults_file() {
 	$temp_dir = get_temp_dir();
 	if ( ! is_dir( $temp_dir ) || ! wp_is_writable( $temp_dir ) ) {
@@ -461,7 +527,7 @@ function dbmanager_write_defaults_file() {
 	}
 
 	$defaults_file = @tempnam( $temp_dir, 'wp-dbmanager-' );
-	if ( $defaults_file === false ) {
+	if ( false === $defaults_file ) {
 		return false;
 	}
 
@@ -478,10 +544,16 @@ function dbmanager_write_defaults_file() {
 }
 
 
-// Function: Build The Credential Argument For A mysql/mysqldump Command
-// Must be placed immediately after the binary, --defaults-extra-file has to come first.
+/**
+ * Builds the credential argument for a mysql or mysqldump command.
+ *
+ * Must be placed immediately after the binary, --defaults-extra-file has to come first.
+ *
+ * @param string|false $defaults_file Path to the option file, or false to fall back to --password.
+ * @return string Argument to place immediately after the binary.
+ */
 function dbmanager_credential_args( $defaults_file ) {
-	if ( $defaults_file !== false ) {
+	if ( false !== $defaults_file ) {
 		return ' --defaults-extra-file=' . escapeshellarg( $defaults_file );
 	}
 
@@ -490,15 +562,26 @@ function dbmanager_credential_args( $defaults_file ) {
 }
 
 
-// Function: Remove The Temporary Option File
+/**
+ * Removes the temporary option file.
+ *
+ * @param string|false $defaults_file Path to the file, or false when none was written.
+ */
 function dbmanager_delete_defaults_file( $defaults_file ) {
-	if ( $defaults_file !== false && is_file( $defaults_file ) ) {
+	if ( false !== $defaults_file && is_file( $defaults_file ) ) {
 		@unlink( $defaults_file );
 	}
 }
 
 
-// Executes OS-Dependent mysqldump Command (By: Vlad Sharanhovich)
+/**
+ * Executes the backup command for the current platform.
+ *
+ * Executes OS-Dependent mysqldump Command (By: Vlad Sharanhovich).
+ *
+ * @param string $command Shell command to run.
+ * @return int|string Exit code, or an error message when a configured path is invalid.
+ */
 function execute_backup( $command ) {
 	$backup_options = get_option( 'dbmanager_options' );
 	check_backup_files();
@@ -528,12 +611,22 @@ function execute_backup( $command ) {
 	return $error;
 }
 
-// Function: Check for valid file path
+/**
+ * Checks a path for characters that are not allowed.
+ *
+ * @param string $path Path to check.
+ * @return int 1 when the path is acceptable, 0 when it is not.
+ */
 function dbmanager_is_valid_path( $path ) {
 	return preg_match( '/^[^*?"<>|;]*$/', $path );
 }
 
-// Functionn : Breakdown the file name into array
+/**
+ * Breaks a backup file name into its parts.
+ *
+ * @param string $filename Backup file name.
+ * @return array Checksum, timestamp, database, name and formatted date.
+ */
 function dbmanager_parse_filename( $filename ) {
 	$file_parts = explode( '_-_', $filename );
 	if ( count( $file_parts ) > 2 ) {
@@ -562,7 +655,12 @@ function dbmanager_parse_filename( $filename ) {
 	return $file;
 }
 
-// Functionn : Return extra information like file size and nice date of the file
+/**
+ * Returns the parsed name of a backup file along with its size.
+ *
+ * @param string $filepath Full path to the backup file.
+ * @return array File parts plus path, size and formatted size.
+ */
 function dbmanager_parse_file( $filepath ) {
 	$filename                     = basename( $filepath );
 	$file_parts                   = dbmanager_parse_filename( $filename );
@@ -573,9 +671,17 @@ function dbmanager_parse_file( $filepath ) {
 	return $file_parts;
 }
 
-// Function: Email database backup
-// $attach controls whether the dump itself is attached. The details in the
-// message body are useful on their own when it is not.
+/**
+ * E-mails the details of a backup, optionally attaching the file.
+ *
+ * $attach controls whether the dump itself is attached. The details in the
+ * message body are useful on their own when it is not.
+ *
+ * @param string $to Recipient address.
+ * @param string $backup_file_path Full path to the backup file.
+ * @param bool   $attach Whether to attach the backup file itself.
+ * @return bool Whether the mail was handed off successfully.
+ */
 function dbmanager_email_backup( $to, $backup_file_path, $attach = true ) {
 	$to = ( ! empty( $to ) ? $to : get_option( 'admin_email' ) );
 
@@ -622,8 +728,14 @@ function dbmanager_email_backup( $to, $backup_file_path, $attach = true ) {
 }
 
 
-// Function: Format Bytes Into KB/MB
+// Function: Format Bytes Into KB/MB.
 if ( ! function_exists( 'format_size' ) ) {
+	/**
+	 * Formats a byte count for display.
+	 *
+	 * @param int $raw_size Size in bytes.
+	 * @return string Localised size with a unit.
+	 */
 	function format_size( $raw_size ) {
 		if ( $raw_size / 1073741824 > 1 ) {
 			return number_format_i18n( $raw_size / 1048576, 1 ) . ' ' . __( 'GiB', 'wp-dbmanager' );
@@ -638,27 +750,38 @@ if ( ! function_exists( 'format_size' ) ) {
 }
 
 
-// Function: Get File Extension
+// Function: Get File Extension.
 if ( ! function_exists( 'file_ext' ) ) {
+	/**
+	 * Returns the extension of a file name.
+	 *
+	 * @param string $file_name File name.
+	 * @return string Extension without the dot.
+	 */
 	function file_ext( $file_name ) {
 		return substr( strrchr( $file_name, '.' ), 1 );
 	}
 }
 
 
-// Function: Check Folder Whether There Are Any Files Inside
+/**
+ * Checks that a folder is readable, a directory, and not empty.
+ *
+ * @param string $folder Path to check.
+ * @return bool Whether the folder can be used.
+ */
 function dbmanager_is_folder_valid( $folder ) {
-	// Check folder whether it is readable
+	// Check folder whether it is readable.
 	if ( ! is_readable( $folder ) ) {
 		return false;
 	}
 
-	// Ensure folder is a directory
+	// Ensure folder is a directory.
 	if ( ! is_dir( $folder ) ) {
 		return false;
 	}
 
-	// Ensure folder is not empty. 2 because it includes '.' and '..'
+	// Ensure folder is not empty. 2 because it includes '.' and '..'.
 	if ( scandir( $folder ) <= 2 ) {
 		return false;
 	}
@@ -667,7 +790,9 @@ function dbmanager_is_folder_valid( $folder ) {
 }
 
 
-// Function: Make Sure Maximum Number Of Database Backup Files Does Not Exceed
+/**
+ * Prunes the oldest backups so the configured maximum is not exceeded.
+ */
 function check_backup_files() {
 	$backup_options = get_option( 'dbmanager_options' );
 	$max_backup     = isset( $backup_options['max_backup'] ) ? (int) $backup_options['max_backup'] : 0;
@@ -689,9 +814,15 @@ function check_backup_files() {
 }
 
 
-// Function: List The Backup Files In A Folder, Oldest First
-// Returned as a list rather than keyed by mtime, two files written in the same
-// second would otherwise collide and one would never be seen.
+/**
+ * Lists the backup files in a folder, oldest first.
+ *
+ * Returned as a list rather than keyed by mtime, two files written in the same
+ * second would otherwise collide and one would never be seen.
+ *
+ * @param string $path Backup folder path.
+ * @return array List of arrays with name and mtime keys.
+ */
 function dbmanager_list_backup_files( $path ) {
 	$database_files = array();
 
@@ -720,7 +851,13 @@ function dbmanager_list_backup_files( $path ) {
 }
 
 
-// Function: Sort Backup Files By Modification Time, Oldest First
+/**
+ * Compares two backup files by modification time.
+ *
+ * @param array $a First file, with name and mtime keys.
+ * @param array $b Second file, with name and mtime keys.
+ * @return int Negative, zero or positive per usort().
+ */
 function dbmanager_sort_backup_files( $a, $b ) {
 	if ( $a['mtime'] === $b['mtime'] ) {
 		return strcmp( $a['name'], $b['name'] );
@@ -730,7 +867,12 @@ function dbmanager_sort_backup_files( $a, $b ) {
 }
 
 
-// Function: DBManager Default Options
+/**
+ * Returns the default value for an option.
+ *
+ * @param string $option_name Option key.
+ * @return mixed Default value, or null for an unknown key.
+ */
 function dbmanager_default_options( $option_name ) {
 	switch ( $option_name ) {
 		case 'backup_email_from':
@@ -748,11 +890,16 @@ function dbmanager_default_options( $option_name ) {
 	}
 }
 
-// Function: Acticate Plugin
+// Function: Acticate Plugin.
 register_activation_hook( __FILE__, 'dbmanager_activation' );
+/**
+ * Creates the default options and the backup folder on activation.
+ *
+ * @param bool $network_wide Whether the plugin is being activated network wide.
+ */
 function dbmanager_activation( $network_wide ) {
 	$auto = detect_mysql();
-	// Add Options
+	// Add Options.
 	$option_name = 'dbmanager_options';
 	$option      = array(
 		'mysqldumppath'          => $auto['mysqldump'],
@@ -793,16 +940,22 @@ function dbmanager_activation( $network_wide ) {
 	}
 }
 
+/**
+ * Prepares a single site on activation.
+ */
 function dbmanager_activate() {
 	dbmanager_create_backup_folder();
 
-	// Remove 'manage_database', we use 'install_plugins' from 2.80.6
+	// Remove 'manage_database', we use 'install_plugins' from 2.80.6.
 	$role = get_role( 'administrator' );
 	if ( $role->has_cap( 'manage_database' ) ) {
 		$role->remove_cap( 'manage_database' );
 	}
 }
 
+/**
+ * Creates the backup folder and drops the protection files into it.
+ */
 function dbmanager_create_backup_folder() {
 	$plugin_path    = plugin_dir_path( __FILE__ );
 	$backup_path    = WP_CONTENT_DIR . '/backup-db';
@@ -812,7 +965,7 @@ function dbmanager_create_backup_folder() {
 		$backup_path = $backup_options['path'];
 	}
 
-	// Create Backup Folder
+	// Create Backup Folder.
 	wp_mkdir_p( $backup_path );
 	if ( is_dir( $backup_path ) && wp_is_writable( $backup_path ) ) {
 		if ( is_iis() ) {
@@ -830,8 +983,12 @@ function dbmanager_create_backup_folder() {
 }
 
 add_action( 'init', 'dbmanager_try_fix' );
+/**
+ * Recreates the backup folder when asked to from the admin notice.
+ */
 function dbmanager_try_fix() {
-	if ( ! empty( $_GET['try_fix'] ) && (int) $_GET['try_fix'] === 1 ) {
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Only decides whether this request is ours, check_admin_referer() runs immediately below.
+	if ( ! empty( $_GET['try_fix'] ) && 1 === (int) $_GET['try_fix'] ) {
 		if ( ! current_user_can( 'install_plugins' ) ) {
 			wp_die( 'Access Denied' );
 		}
@@ -842,10 +999,13 @@ function dbmanager_try_fix() {
 }
 
 
-// Function: Download Database
+// Function: Download Database.
 add_action( 'init', 'download_database' );
+/**
+ * Sends a backup file to the browser as a download.
+ */
 function download_database() {
-	if ( isset( $_POST['do'] ) && $_POST['do'] === __( 'Download', 'wp-dbmanager' ) && ! empty( $_POST['database_file'] ) ) {
+	if ( isset( $_POST['do'] ) && __( 'Download', 'wp-dbmanager' ) === $_POST['do'] && ! empty( $_POST['database_file'] ) ) {
 		if ( ! current_user_can( 'install_plugins' ) ) {
 			wp_die( 'Access Denied' );
 		}
@@ -860,7 +1020,7 @@ function download_database() {
 		// Resolve both paths and confirm the file really sits inside the backup folder.
 		$backup_dir           = realpath( $backup_options['path'] );
 		$file_path            = realpath( $backup_options['path'] . '/' . $clean_file_name );
-		$is_inside_backup_dir = ( $backup_dir !== false && $file_path !== false && strpos( $file_path, $backup_dir . DIRECTORY_SEPARATOR ) === 0 );
+		$is_inside_backup_dir = ( false !== $backup_dir && false !== $file_path && strpos( $file_path, $backup_dir . DIRECTORY_SEPARATOR ) === 0 );
 
 		if ( $has_valid_extension && $is_inside_backup_dir && is_file( $file_path ) ) {
 			header( 'Pragma: public' );
@@ -878,13 +1038,24 @@ function download_database() {
 	}
 }
 
-// Function: Check whether a function is disabled.
+/**
+ * Whether a PHP function has been disabled in the configuration.
+ *
+ * @param string $function_name Function to check.
+ * @return bool Whether the function is disabled.
+ */
 function dbmanager_is_function_disabled( $function_name ) {
 	return in_array( $function_name, array_map( 'trim', explode( ',', ini_get( 'disable_functions' ) ) ), true );
 }
 
-// Function: Polyfill array_key_first() for PHP < 7.3
+// Function: Polyfill array_key_first() for PHP < 7.3.
 if ( ! function_exists( 'array_key_first' ) ) {
+	/**
+	 * Returns the first key of an array.
+	 *
+	 * @param array $arr Array to read.
+	 * @return mixed|null First key, or null when the array is empty.
+	 */
 	function array_key_first( $arr ) {
 		foreach ( $arr as $key => $unused ) {
 			return $key;
@@ -893,7 +1064,9 @@ if ( ! function_exists( 'array_key_first' ) ) {
 	}
 }
 
-// Function: Database Options
+/**
+ * Renders and saves the DB Options page.
+ */
 function dbmanager_options() {
 	$text               = '';
 	$backup_options     = get_option( 'dbmanager_options' );
@@ -971,7 +1144,7 @@ function dbmanager_options() {
 	}
 	$path = detect_mysql();
 
-	// Default Options
+	// Default Options.
 	if ( ! isset( $backup_options['backup_email_from'] ) ) {
 		$backup_options['backup_email_from'] = dbmanager_default_options( 'backup_email_from' );
 	}
@@ -1202,8 +1375,8 @@ function dbmanager_options() {
 				<td valign="top"><strong><?php esc_html_e( 'Hide Admin Notices', 'wp-dbmanager' ); ?></strong></td>
 				<td>
 					<p>
-						<input type="radio" name="db_hide_admin_notices" value="1"<?php echo (int) $backup_options['hide_admin_notices'] === 1 ? ' checked="checked"' : ''; ?> />&nbsp;<?php esc_html_e( 'Yes', 'wp-dbmanager' ); ?>
-						<input type="radio" name="db_hide_admin_notices" value="0"<?php echo (int) $backup_options['hide_admin_notices'] === 0 ? ' checked="checked"' : ''; ?> />&nbsp;<?php esc_html_e( 'No', 'wp-dbmanager' ); ?>
+						<input type="radio" name="db_hide_admin_notices" value="1"<?php echo 1 === (int) $backup_options['hide_admin_notices'] ? ' checked="checked"' : ''; ?> />&nbsp;<?php esc_html_e( 'Yes', 'wp-dbmanager' ); ?>
+						<input type="radio" name="db_hide_admin_notices" value="0"<?php echo 0 === (int) $backup_options['hide_admin_notices'] ? ' checked="checked"' : ''; ?> />&nbsp;<?php esc_html_e( 'No', 'wp-dbmanager' ); ?>
 					</p>
 				</td>
 			</tr>

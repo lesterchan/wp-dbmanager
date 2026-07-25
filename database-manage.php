@@ -1,7 +1,13 @@
 <?php
+/**
+ * Manage Backup Database admin page.
+ *
+ * @package WP-DBManager
+ */
+
 defined( 'ABSPATH' ) || exit;
 
-// Check Whether User Can Manage Database
+// Check Whether User Can Manage Database.
 if ( ! current_user_can( 'install_plugins' ) ) {
 	die( 'Access Denied' );
 }
@@ -16,7 +22,7 @@ dbmanager_page_manage();
  */
 function dbmanager_page_manage() {
 
-	// Variables Variables Variables
+	// Variables Variables Variables.
 	$base_name               = plugin_basename( 'wp-dbmanager/database-manager.php' );
 	$base_page               = 'admin.php?page=' . $base_name;
 	$backup                  = array();
@@ -27,15 +33,15 @@ function dbmanager_page_manage() {
 	$backup['path']          = $backup_options['path'];
 	$backup['charset']       = ' --default-character-set="utf8mb4"';
 
-	// Form Processing
+	// Form Processing.
 	if ( ! empty( $_POST['do'] ) ) {
 		check_admin_referer( 'wp-dbmanager_manage' );
-		// Lets Prepare The Variables
+		// Lets Prepare The Variables.
 		$database_file = ! empty( $_POST['database_file'] ) ? sanitize_file_name( wp_unslash( $_POST['database_file'] ) ) : '';
 		$file          = dbmanager_parse_filename( $database_file );
 		$text          = '';
 
-		// Decide What To Do
+		// Decide What To Do.
 		switch ( $_POST['do'] ) {
 			case __( 'Restore', 'wp-dbmanager' ):
 				if ( ! empty( $database_file ) ) {
@@ -45,7 +51,7 @@ function dbmanager_page_manage() {
 					if ( strpos( DB_HOST, ':' ) !== false ) {
 						$db_host        = explode( ':', DB_HOST );
 						$backup['host'] = $db_host[0];
-						if ( (int) $db_host[1] !== 0 ) {
+						if ( 0 !== (int) $db_host[1] ) {
 							$backup['port'] = ' --port=' . escapeshellarg( (int) $db_host[1] );
 						} else {
 							$backup['sock'] = ' --socket=' . escapeshellarg( $db_host[1] );
@@ -157,7 +163,7 @@ function dbmanager_page_manage() {
 			if ( ! empty( $database_files ) ) {
 				foreach ( $database_files as $database_file_entry ) {
 					$database_file = $database_file_entry['name'];
-					if ( $no % 2 === 0 ) {
+					if ( 0 === $no % 2 ) {
 						$style = '';
 					} else {
 						$style = ' class="alternate"';

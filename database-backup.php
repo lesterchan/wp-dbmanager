@@ -1,7 +1,13 @@
 <?php
+/**
+ * Backup Database admin page.
+ *
+ * @package WP-DBManager
+ */
+
 defined( 'ABSPATH' ) || exit;
 
-// Check Whether User Can Manage Database
+// Check Whether User Can Manage Database.
 if ( ! current_user_can( 'install_plugins' ) ) {
 	die( 'Access Denied' );
 }
@@ -16,7 +22,7 @@ dbmanager_page_backup();
  */
 function dbmanager_page_backup() {
 
-	// Variables Variables Variables
+	// Variables Variables Variables.
 	$base_name = plugin_basename( 'wp-dbmanager/database-manager.php' );
 	$base_page = 'admin.php?page=' . $base_name;
 	/* translators: 1: date, 2: time. */
@@ -29,13 +35,13 @@ function dbmanager_page_backup() {
 	$backup['path']          = $backup_options['path'];
 	$backup['charset']       = ' --default-character-set="utf8mb4"';
 
-	// Form Processing
+	// Form Processing.
 	if ( ! empty( $_POST['do'] ) ) {
 		// Verified before any request data is read, not part way down the switch.
 		check_admin_referer( 'wp-dbmanager_backup' );
 
 		$text = '';
-		// Decide What To Do
+		// Decide What To Do.
 		switch ( $_POST['do'] ) {
 			case __( 'Backup', 'wp-dbmanager' ):
 				$backup['host'] = DB_HOST;
@@ -44,7 +50,7 @@ function dbmanager_page_backup() {
 				if ( strpos( DB_HOST, ':' ) !== false ) {
 					$db_host        = explode( ':', DB_HOST );
 					$backup['host'] = $db_host[0];
-					if ( (int) $db_host[1] !== 0 ) {
+					if ( 0 !== (int) $db_host[1] ) {
 						$backup['port'] = ' --port=' . escapeshellarg( (int) $db_host[1] );
 					} else {
 						$backup['sock'] = ' --socket=' . escapeshellarg( $db_host[1] );
@@ -53,7 +59,7 @@ function dbmanager_page_backup() {
 				$gzip               = isset( $_POST['gzip'] ) ? (int) $_POST['gzip'] : 0;
 				$backup['filename'] = $backup['date'] . '_-_' . DB_NAME . '.sql';
 				$defaults_file      = dbmanager_write_defaults_file();
-				if ( $gzip === 1 ) {
+				if ( 1 === $gzip ) {
 					$backup['filename'] .= '.gz';
 					$backup['filepath']  = $backup['path'] . '/' . $backup['filename'];
 					do_action( 'wp_dbmanager_before_escapeshellcmd' );
@@ -86,12 +92,12 @@ function dbmanager_page_backup() {
 		}
 	}
 
-	// Backup File Name
+	// Backup File Name.
 	$backup['filename'] = $backup['date'] . '_-_' . DB_NAME . '.sql';
 	$backup_path        = $backup['path'];
 	$backup_gzip        = isset( $backup_options['backup_gzip'] ) ? (int) $backup_options['backup_gzip'] : dbmanager_default_options( 'backup_gzip' );
 
-	// MYSQL Base Dir
+	// MYSQL Base Dir.
 	$has_error         = false;
 	$disabled_function = false;
 	?>
@@ -112,30 +118,30 @@ function dbmanager_page_backup() {
 			// dropped in file did the job. On nginx it did not.
 			$is_public = dbmanager_is_backup_folder_public();
 
-		if ( $backup_url === false ) {
+		if ( false === $backup_url ) {
 			echo '<p style="color: green;">' . __( 'Your backup folder is outside the web root, so it cannot be downloaded over HTTP.', 'wp-dbmanager' ) . '</p>';
 		} else {
 			/* translators: %s: public URL of the backup folder. */
 			echo '<p>' . sprintf( __( 'Your backup folder is inside the web root, at %s', 'wp-dbmanager' ), '<strong>' . esc_html( $backup_url ) . '</strong>' ) . '</p>';
 
-			if ( $is_public === true ) {
+			if ( true === $is_public ) {
 				echo '<p style="color: red; font-weight: bold;">' . __( 'The backup folder responds over HTTP. Anyone who guesses a backup file name can download your entire database.', 'wp-dbmanager' ) . '</p>';
 				$has_error = true;
-			} elseif ( $is_public === false ) {
+			} elseif ( false === $is_public ) {
 				echo '<p style="color: green;">' . __( 'The backup folder does not respond over HTTP.', 'wp-dbmanager' ) . '</p>';
 			} else {
 				echo '<p style="color: red;">' . __( 'Could not determine whether the backup folder responds over HTTP. Check it yourself, or move the folder outside the web root.', 'wp-dbmanager' ) . '</p>';
 				$has_error = true;
 			}
 
-			if ( $server_type === 'nginx' ) {
+			if ( 'nginx' === $server_type ) {
 				echo '<p style="color: red;">' . __( 'This site runs on nginx, which ignores .htaccess files. No file placed in the backup folder can protect it.', 'wp-dbmanager' ) . '</p>';
 				echo '<p>' . __( 'Move the backup folder outside your web root under DB Options, or add this to your nginx server block:', 'wp-dbmanager' ) . '</p>';
 				$backup_uri = parse_url( $backup_url, PHP_URL_PATH );
 				echo '<pre style="background: #f6f7f7; border: 1px solid #dcdcde; padding: 8px; display: inline-block;" dir="ltr">location ^~ ' . esc_html( trailingslashit( $backup_uri ) ) . ' { deny all; }</pre>';
 			}
 
-			if ( $server_type === 'iis' ) {
+			if ( 'iis' === $server_type ) {
 				if ( ! is_file( $backup_path . '/Web.config' ) ) {
 					/* translators: %s: backup folder path. */
 					echo '<p style="color: red;">' . sprintf( __( 'Web.config is missing from %s', 'wp-dbmanager' ), esc_html( $backup_path ) ) . '</p>';
@@ -144,7 +150,7 @@ function dbmanager_page_backup() {
 					/* translators: %s: backup folder path. */
 					echo '<p style="color: green;">' . sprintf( __( 'Web.config is present in %s', 'wp-dbmanager' ), esc_html( $backup_path ) ) . '</p>';
 				}
-			} elseif ( $server_type === 'apache' ) {
+			} elseif ( 'apache' === $server_type ) {
 				if ( ! is_file( $backup_path . '/.htaccess' ) ) {
 					/* translators: %s: backup folder path. */
 					echo '<p style="color: red;">' . sprintf( __( '.htaccess is missing from %s', 'wp-dbmanager' ), esc_html( $backup_path ) ) . '</p>';

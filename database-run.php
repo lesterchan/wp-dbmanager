@@ -1,7 +1,13 @@
 <?php
+/**
+ * Run SQL Query admin page.
+ *
+ * @package WP-DBManager
+ */
+
 defined( 'ABSPATH' ) || exit;
 
-// Check Whether User Can Manage Database
+// Check Whether User Can Manage Database.
 if ( ! current_user_can( 'install_plugins' ) ) {
 	die( 'Access Denied' );
 }
@@ -17,7 +23,7 @@ dbmanager_page_run();
 function dbmanager_page_run() {
 	global $wpdb;
 
-	// Variables Variables Variables
+	// Variables Variables Variables.
 	$base_name               = plugin_basename( 'wp-dbmanager/database-manager.php' );
 	$base_page               = 'admin.php?page=' . $base_name;
 	$backup                  = array();
@@ -27,13 +33,13 @@ function dbmanager_page_run() {
 	$backup['mysqlpath']     = $backup_options['mysqlpath'];
 	$backup['path']          = $backup_options['path'];
 
-	// Form Processing
+	// Form Processing.
 	if ( ! empty( $_POST['do'] ) ) {
 		// Verified before any request data is read, not part way down the switch.
 		check_admin_referer( 'wp-dbmanager_run' );
 
 		$text = '';
-		// Decide What To Do
+		// Decide What To Do.
 		switch ( $_POST['do'] ) {
 			case __( 'Run', 'wp-dbmanager' ):
 				// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- This is a raw SQL console, sanitizing the query would defeat the feature. Statement types are filtered below.

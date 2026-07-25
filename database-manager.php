@@ -1,7 +1,13 @@
 <?php
+/**
+ * Database information admin page.
+ *
+ * @package WP-DBManager
+ */
+
 defined( 'ABSPATH' ) || exit;
 
-// Check Whether User Can Manage Database
+// Check Whether User Can Manage Database.
 if ( ! current_user_can( 'install_plugins' ) ) {
 	die( 'Access Denied' );
 }
@@ -17,7 +23,7 @@ dbmanager_page_manager();
 function dbmanager_page_manager() {
 	global $wpdb;
 
-	// Variables Variables Variables
+	// Variables Variables Variables.
 	$base_name               = plugin_basename( 'wp-dbmanager/database-manager.php' );
 	$base_page               = 'admin.php?page=' . $base_name;
 	$backup                  = array();
@@ -27,7 +33,7 @@ function dbmanager_page_manager() {
 	$backup['mysqlpath']     = $backup_options['mysqlpath'];
 	$backup['path']          = $backup_options['path'];
 
-	// Get MYSQL Version
+	// Get MYSQL Version.
 	$sqlversion = $wpdb->get_var( 'SELECT VERSION() AS version' );
 	?>
 	<?php

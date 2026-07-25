@@ -1,6 +1,8 @@
 <?php
-/*
- * Uninstall plugin
+/**
+ * Uninstall routine, removes the plugin options and scheduled events.
+ *
+ * @package WP-DBManager
  */
 
 if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
