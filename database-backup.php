@@ -26,10 +26,10 @@ function dbmanager_page_backup() {
 	$base_name = plugin_basename( 'wp-dbmanager/database-manager.php' );
 	$base_page = 'admin.php?page=' . $base_name;
 	/* translators: 1: date, 2: time. */
-	$current_date            = mysql2date( sprintf( __( '%1$s @ %2$s', 'wp-dbmanager' ), get_option( 'date_format' ), get_option( 'time_format' ) ), gmdate( 'Y-m-d H:i:s', current_time( 'timestamp' ) ) );
+	$current_date            = dbmanager_format_timestamp( time() );
 	$backup                  = array();
 	$backup_options          = get_option( 'dbmanager_options' );
-	$backup['date']          = current_time( 'timestamp' );
+	$backup['date']          = time();
 	$backup['mysqldumppath'] = $backup_options['mysqldumppath'];
 	$backup['mysqlpath']     = $backup_options['mysqlpath'];
 	$backup['path']          = $backup_options['path'];
@@ -299,7 +299,7 @@ function dbmanager_page_backup() {
 				<th><?php esc_html_e( 'Database Backup Date:', 'wp-dbmanager' ); ?></th>
 				/* translators: 1: date, 2: time. */
 				<?php /* translators: 1: date, 2: time. */ ?>
-				<td><?php echo mysql2date( sprintf( __( '%1$s @ %2$s', 'wp-dbmanager' ), get_option( 'date_format' ), get_option( 'time_format' ) ), gmdate( 'Y-m-d H:i:s', $backup['date'] ) ); ?></td>
+				<td><?php echo dbmanager_format_timestamp( $backup['date'] ); ?></td>
 			</tr>
 			<tr style="background-color: #eee;">
 				<th><?php esc_html_e( 'Database Backup File Name:', 'wp-dbmanager' ); ?></th>

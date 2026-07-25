@@ -91,7 +91,7 @@ function cron_dbmanager_backup() {
 
 	if ( (int) $backup_options['backup_period'] > 0 ) {
 		$backup                  = array();
-		$backup['date']          = current_time( 'timestamp' );
+		$backup['date']          = time();
 		$backup['mysqldumppath'] = $backup_options['mysqldumppath'];
 		$backup['mysqlpath']     = $backup_options['mysqlpath'];
 		$backup['path']          = $backup_options['path'];
@@ -618,6 +618,27 @@ function dbmanager_is_valid_path( $path ) {
 }
 
 /**
+ * Formats a Unix timestamp in the site's timezone.
+ *
+ * Timestamps are stored as real Unix time, so the site's GMT offset has to be
+ * applied before formatting.
+ *
+ * @param int         $timestamp Unix timestamp.
+ * @param string|null $format    Date format, defaults to the site date and time formats combined.
+ * @return string Formatted date.
+ */
+function dbmanager_format_timestamp( $timestamp, $format = null ) {
+	if ( null === $format ) {
+		/* translators: 1: date, 2: time. */
+		$format = sprintf( __( '%1$s @ %2$s', 'wp-dbmanager' ), get_option( 'date_format' ), get_option( 'time_format' ) );
+	}
+
+	$offset = (float) get_option( 'gmt_offset' ) * HOUR_IN_SECONDS;
+
+	return mysql2date( $format, gmdate( 'Y-m-d H:i:s', (int) ( $timestamp + $offset ) ) );
+}
+
+/**
  * Breaks a backup file name into its parts.
  *
  * @param string $filename Backup file name.
@@ -643,7 +664,7 @@ function dbmanager_parse_filename( $filename ) {
 
 	if ( is_numeric( $file['timestamp'] ) ) {
 		/* translators: 1: date, 2: time. */
-		$file['formatted_date'] = mysql2date( sprintf( __( '%1$s @ %2$s', 'wp-dbmanager' ), get_option( 'date_format' ), get_option( 'time_format' ) ), gmdate( 'Y-m-d H:i:s', $file['timestamp'] ) );
+		$file['formatted_date'] = dbmanager_format_timestamp( $file['timestamp'] );
 	} else {
 		$file['formatted_date'] = '-';
 	}
@@ -684,8 +705,7 @@ function dbmanager_email_backup( $to, $backup_file_path, $attach = true ) {
 	if ( is_email( $to ) && file_exists( $backup_file_path ) ) {
 		$backup_options = get_option( 'dbmanager_options' );
 
-		$file          = dbmanager_parse_file( $backup_file_path );
-		$file_gmt_date = gmdate( 'Y-m-d H:i:s', $file['timestamp'] );
+		$file = dbmanager_parse_file( $backup_file_path );
 
 		$subject = ( ! empty( $backup_options['backup_email_subject'] ) ? $backup_options['backup_email_subject'] : dbmanager_default_options( 'backup_email_subject' ) );
 		$subject = str_replace(
@@ -696,8 +716,8 @@ function dbmanager_email_backup( $to, $backup_file_path, $attach = true ) {
 			),
 			array(
 				wp_specialchars_decode( get_bloginfo( 'name' ), ENT_QUOTES ),
-				mysql2date( get_option( 'date_format' ), $file_gmt_date ),
-				mysql2date( get_option( 'time_format' ), $file_gmt_date ),
+				dbmanager_format_timestamp( $file['timestamp'], get_option( 'date_format' ) ),
+				dbmanager_format_timestamp( $file['timestamp'], get_option( 'time_format' ) ),
 			),
 			$subject
 		);
@@ -1246,7 +1266,7 @@ function dbmanager_options() {
 						esc_html_e( 'Next backup date: ', 'wp-dbmanager' );
 					if ( wp_next_scheduled( 'dbmanager_cron_backup' ) ) {
 						/* translators: 1: date, 2: time. */
-						echo '<strong>' . mysql2date( sprintf( __( '%1$s @ %2$s', 'wp-dbmanager' ), get_option( 'date_format' ), get_option( 'time_format' ) ), gmdate( 'Y-m-d H:i:s', ( wp_next_scheduled( 'dbmanager_cron_backup' ) + ( get_option( 'gmt_offset' ) * 3600 ) ) ) ) . '</strong>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- mysql2date() formats a timestamp, there is no user input in it.
+						echo '<strong>' . dbmanager_format_timestamp( wp_next_scheduled( 'dbmanager_cron_backup' ) ) . '</strong>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- mysql2date() formats a timestamp, there is no user input in it.
 					} else {
 						esc_html_e( 'N/A', 'wp-dbmanager' );
 					}
@@ -1277,7 +1297,7 @@ function dbmanager_options() {
 						esc_html_e( 'Next optimize date: ', 'wp-dbmanager' );
 					if ( wp_next_scheduled( 'dbmanager_cron_optimize' ) ) {
 						/* translators: 1: date, 2: time. */
-						echo '<strong>' . mysql2date( sprintf( __( '%1$s @ %2$s', 'wp-dbmanager' ), get_option( 'date_format' ), get_option( 'time_format' ) ), gmdate( 'Y-m-d H:i:s', ( wp_next_scheduled( 'dbmanager_cron_optimize' ) + ( get_option( 'gmt_offset' ) * 3600 ) ) ) ) . '</strong>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- mysql2date() formats a timestamp, there is no user input in it.
+						echo '<strong>' . dbmanager_format_timestamp( wp_next_scheduled( 'dbmanager_cron_optimize' ) ) . '</strong>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- mysql2date() formats a timestamp, there is no user input in it.
 					} else {
 						esc_html_e( 'N/A', 'wp-dbmanager' );
 					}
@@ -1303,7 +1323,7 @@ function dbmanager_options() {
 						esc_html_e( 'Next repair date: ', 'wp-dbmanager' );
 					if ( wp_next_scheduled( 'dbmanager_cron_repair' ) ) {
 						/* translators: 1: date, 2: time. */
-						echo '<strong>' . mysql2date( sprintf( __( '%1$s @ %2$s', 'wp-dbmanager' ), get_option( 'date_format' ), get_option( 'time_format' ) ), gmdate( 'Y-m-d H:i:s', ( wp_next_scheduled( 'dbmanager_cron_repair' ) + ( get_option( 'gmt_offset' ) * 3600 ) ) ) ) . '</strong>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- mysql2date() formats a timestamp, there is no user input in it.
+						echo '<strong>' . dbmanager_format_timestamp( wp_next_scheduled( 'dbmanager_cron_repair' ) ) . '</strong>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- mysql2date() formats a timestamp, there is no user input in it.
 					} else {
 						esc_html_e( 'N/A', 'wp-dbmanager' );
 					}

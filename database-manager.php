@@ -28,7 +28,7 @@ function dbmanager_page_manager() {
 	$base_page               = 'admin.php?page=' . $base_name;
 	$backup                  = array();
 	$backup_options          = get_option( 'dbmanager_options' );
-	$backup['date']          = current_time( 'timestamp' );
+	$backup['date']          = time();
 	$backup['mysqldumppath'] = $backup_options['mysqldumppath'];
 	$backup['mysqlpath']     = $backup_options['mysqlpath'];
 	$backup['path']          = $backup_options['path'];
