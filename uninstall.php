@@ -14,22 +14,26 @@ if ( is_multisite() ) {
 		foreach ( $ms_sites as $ms_site ) {
 			$blog_id = class_exists( 'WP_Site' ) ? $ms_site->blog_id : $ms_site['blog_id'];
 			switch_to_blog( $blog_id );
-			plugin_uninstalled();
+			dbmanager_uninstalled();
 		}
 	}
 
 	restore_current_blog();
 } else {
-	plugin_uninstalled();
+	dbmanager_uninstalled();
 }
 
 /**
  * Delete plugin data when uninstalled
  *
+ * The database backup files are deliberately left on disk. They are the
+ * user's data, not the plugin's, and removing the plugin should not
+ * destroy the only copy of their backups.
+ *
  * @access public
  * @return void
  */
-function plugin_uninstalled() {
+function dbmanager_uninstalled() {
 	$option_name = 'dbmanager_options';
 
 	delete_option( $option_name );
