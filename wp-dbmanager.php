@@ -680,10 +680,10 @@ function dbmanager_options() {
 <script type="text/javascript">
 /* <![CDATA[*/
 	function mysqlpath() {
-		jQuery("#db_mysqlpath").val(<?php echo wp_json_encode( $path['mysql'], JSON_HEX_TAG ); ?>);
+		document.getElementById("db_mysqlpath").value = <?php echo wp_json_encode( $path['mysql'], JSON_HEX_TAG ); ?>;
 	}
 	function mysqldumppath() {
-		jQuery("#db_mysqldumppath").val(<?php echo wp_json_encode( $path['mysqldump'], JSON_HEX_TAG ); ?>);
+		document.getElementById("db_mysqldumppath").value = <?php echo wp_json_encode( $path['mysqldump'], JSON_HEX_TAG ); ?>;
 	}
 /* ]]> */
 </script>
