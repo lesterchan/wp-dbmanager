@@ -29,7 +29,6 @@ if( !empty( $_POST['do'] ) ) {
 	switch($_POST['do']) {
 		case __('Restore', 'wp-dbmanager'):
 			if(!empty($database_file)) {
-				$brace = substr(PHP_OS, 0, 3) === 'WIN' ? '"' : '';
 				$backup['host'] = DB_HOST;
 				$backup['port'] = '';
 				$backup['sock'] = '';
@@ -43,12 +42,12 @@ if( !empty( $_POST['do'] ) ) {
 					}
 				}
 
+				$defaults_file = dbmanager_write_defaults_file();
+				do_action( 'wp_dbmanager_before_escapeshellcmd' );
 				if ( false !== stripos( $database_file, '.gz' ) ) {
-					do_action( 'wp_dbmanager_before_escapeshellcmd' );
-					$backup['command'] = 'gunzip < ' . $brace . escapeshellcmd( $backup['path'] . '/' . $database_file ) . $brace . ' | ' . $brace . escapeshellcmd( $backup['mysqlpath'] ) . $brace . ' --host=' . escapeshellarg( $backup['host'] ) . ' --user=' . escapeshellarg( DB_USER ) . ' --password=' . escapeshellarg( DB_PASSWORD ) . $backup['port'] . $backup['sock'] . $backup['charset'] . ' ' . DB_NAME;
+					$backup['command'] = 'gunzip < ' . escapeshellarg( $backup['path'] . '/' . $database_file ) . ' | ' . escapeshellarg( $backup['mysqlpath'] ) . dbmanager_credential_args( $defaults_file ) . ' --host=' . escapeshellarg( $backup['host'] ) . ' --user=' . escapeshellarg( DB_USER ) . $backup['port'] . $backup['sock'] . $backup['charset'] . ' ' . escapeshellarg( DB_NAME );
 				} else {
-					do_action( 'wp_dbmanager_before_escapeshellcmd' );
-					$backup['command'] = $brace . escapeshellcmd( $backup['mysqlpath'] ) . $brace . ' --host=' . escapeshellarg( $backup['host'] ) . ' --user=' . escapeshellarg( DB_USER ) . ' --password=' . escapeshellarg( DB_PASSWORD ) . $backup['port'] . $backup['sock'] . $backup['charset'] . ' ' . DB_NAME . ' < ' . $brace . escapeshellcmd( $backup['path'] . '/' . $database_file ) . $brace;
+					$backup['command'] = escapeshellarg( $backup['mysqlpath'] ) . dbmanager_credential_args( $defaults_file ) . ' --host=' . escapeshellarg( $backup['host'] ) . ' --user=' . escapeshellarg( DB_USER ) . $backup['port'] . $backup['sock'] . $backup['charset'] . ' ' . escapeshellarg( DB_NAME ) . ' < ' . escapeshellarg( $backup['path'] . '/' . $database_file );
 				}
 				if( realpath( $backup['path'] ) === false ) {
 					$text = '<p style="color: red;">' . sprintf(__('%s is not a valid backup path', 'wp-dbmanager'), stripslashes( $backup['path'] ) ) . '</p>';
@@ -57,6 +56,7 @@ if( !empty( $_POST['do'] ) ) {
 				} else {
 					passthru( $backup['command'], $error );
 				}
+				dbmanager_delete_defaults_file( $defaults_file );
 				if($error) {
 					$text = '<p style="color: red;">' . sprintf( __( 'Database On \'%s\' Failed To Restore', 'wp-dbmanager' ), esc_html( $file['formatted_date'] ) ) . '</p>';
 				} else {

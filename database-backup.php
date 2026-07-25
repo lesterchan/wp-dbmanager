@@ -24,7 +24,6 @@ if(!empty($_POST['do'])) {
 	switch($_POST['do']) {
 		case __('Backup', 'wp-dbmanager'):
 			check_admin_referer('wp-dbmanager_backup');
-			$brace = 0 === strpos( PHP_OS, 'WIN' ) ? '"' : '';
 			$backup['host'] = DB_HOST;
 			$backup['port'] = '';
 			$backup['sock'] = '';
@@ -39,17 +38,19 @@ if(!empty($_POST['do'])) {
 			}
 			$gzip = isset( $_POST['gzip'] ) ? (int) $_POST['gzip'] : 0;
 			$backup['filename'] = $backup['date'] . '_-_' . DB_NAME . '.sql';
+			$defaults_file = dbmanager_write_defaults_file();
 			if ( $gzip === 1 ) {
 				$backup['filename'] .= '.gz';
 				$backup['filepath'] = $backup['path'] . '/' . $backup['filename'];
 				do_action( 'wp_dbmanager_before_escapeshellcmd' );
-				$backup['command'] = $brace . escapeshellcmd( $backup['mysqldumppath'] ) . $brace . ' --force --host=' . escapeshellarg( $backup['host'] ) . ' --user=' . escapeshellarg( DB_USER ) . ' --password=' . escapeshellarg( DB_PASSWORD ) . $backup['port'] . $backup['sock'] . $backup['charset'] . ' --add-drop-table --skip-lock-tables ' . DB_NAME . ' | gzip > ' . $brace . escapeshellcmd( $backup['filepath'] ) . $brace;
+				$backup['command'] = escapeshellarg( $backup['mysqldumppath'] ) . dbmanager_credential_args( $defaults_file ) . ' --force --host=' . escapeshellarg( $backup['host'] ) . ' --user=' . escapeshellarg( DB_USER ) . $backup['port'] . $backup['sock'] . $backup['charset'] . ' --add-drop-table --skip-lock-tables ' . escapeshellarg( DB_NAME ) . ' | gzip > ' . escapeshellarg( $backup['filepath'] );
 			} else {
 				$backup['filepath'] = $backup['path'] . '/' . $backup['filename'];
 				do_action( 'wp_dbmanager_before_escapeshellcmd' );
-				$backup['command'] = $brace . escapeshellcmd( $backup['mysqldumppath'] ) . $brace . ' --force --host=' . escapeshellarg( $backup['host'] ) . ' --user=' . escapeshellarg( DB_USER ) . ' --password=' . escapeshellarg( DB_PASSWORD ) . $backup['port'] . $backup['sock'] . $backup['charset'] . ' --add-drop-table --skip-lock-tables ' . DB_NAME . ' > ' . $brace . escapeshellcmd( $backup['filepath'] ) . $brace;
+				$backup['command'] = escapeshellarg( $backup['mysqldumppath'] ) . dbmanager_credential_args( $defaults_file ) . ' --force --host=' . escapeshellarg( $backup['host'] ) . ' --user=' . escapeshellarg( DB_USER ) . $backup['port'] . $backup['sock'] . $backup['charset'] . ' --add-drop-table --skip-lock-tables ' . escapeshellarg( DB_NAME ) . ' > ' . escapeshellarg( $backup['filepath'] );
 			}
 			$error = execute_backup( $backup['command'] );
+			dbmanager_delete_defaults_file( $defaults_file );
 			if ( ! is_writable( $backup['path'] ) ) {
 				$text = '<p style="color: red;">'.sprintf(__('Database Failed To Backup On \'%s\'. Backup Folder Not Writable.', 'wp-dbmanager'), $current_date).'</p>';
 			} elseif ( is_file( $backup['filepath'] ) && filesize( $backup['filepath'] ) === 0 ) {

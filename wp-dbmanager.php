@@ -95,18 +95,19 @@ function cron_dbmanager_backup() {
 		}
 		$backup['command'] = '';
 		$backup['filename'] = $backup['date'] . '_-_' . DB_NAME . '.sql';
-		$brace = 0 === strpos( PHP_OS, 'WIN' ) ? '"' : '';
+		$defaults_file = dbmanager_write_defaults_file();
 		if ( (int) $backup_options['backup_gzip'] === 1 ) {
 			$backup['filename'] .= '.gz';
 			$backup['filepath'] = $backup['path'] . '/'. $backup['filename'];
 			do_action( 'wp_dbmanager_before_escapeshellcmd' );
-			$backup['command'] = $brace . escapeshellcmd( $backup['mysqldumppath'] ) . $brace . ' --force --host=' . escapeshellarg( $backup['host'] ).' --user=' . escapeshellarg( DB_USER ) . ' --password=' . escapeshellarg( DB_PASSWORD ) . $backup['port'] . $backup['sock'] . $backup['charset'] . ' --add-drop-table --skip-lock-tables ' . DB_NAME . ' | gzip > '. $brace . escapeshellcmd( $backup['filepath'] ) . $brace;
+			$backup['command'] = escapeshellarg( $backup['mysqldumppath'] ) . dbmanager_credential_args( $defaults_file ) . ' --force --host=' . escapeshellarg( $backup['host'] ).' --user=' . escapeshellarg( DB_USER ) . $backup['port'] . $backup['sock'] . $backup['charset'] . ' --add-drop-table --skip-lock-tables ' . escapeshellarg( DB_NAME ) . ' | gzip > '. escapeshellarg( $backup['filepath'] );
 		} else {
 			$backup['filepath'] = $backup['path'] . '/'. $backup['filename'];
 			do_action( 'wp_dbmanager_before_escapeshellcmd' );
-			$backup['command'] = $brace . escapeshellcmd( $backup['mysqldumppath'] ) . $brace . ' --force --host=' . escapeshellarg( $backup['host'] ).' --user=' . escapeshellarg( DB_USER ). ' --password=' . escapeshellarg( DB_PASSWORD ) . $backup['port'] . $backup['sock'] . $backup['charset'] . ' --add-drop-table --skip-lock-tables ' . DB_NAME . ' > ' . $brace . escapeshellcmd( $backup['filepath'] ) . $brace;
+			$backup['command'] = escapeshellarg( $backup['mysqldumppath'] ) . dbmanager_credential_args( $defaults_file ) . ' --force --host=' . escapeshellarg( $backup['host'] ).' --user=' . escapeshellarg( DB_USER ). $backup['port'] . $backup['sock'] . $backup['charset'] . ' --add-drop-table --skip-lock-tables ' . escapeshellarg( DB_NAME ) . ' > ' . escapeshellarg( $backup['filepath'] );
 		}
 		execute_backup( $backup['command'] );
+		dbmanager_delete_defaults_file( $defaults_file );
 		$new_filepath = $backup['path'] . '/' . md5_file( $backup['filepath'] ) . '_-_' . $backup['filename'];
 		rename( $backup['filepath'], $new_filepath );
 		$backup_email = stripslashes( $backup_options['backup_email'] );
@@ -265,6 +266,63 @@ function is_iis() {
 
 	return false;
 }
+
+### Function: Escape A Value For A MySQL Option File
+function dbmanager_escape_option_file_value( $value ) {
+	// Backslash is an escape character inside option files, so it has to be doubled
+	// before the value is wrapped in quotes.
+	$value = str_replace( '\\', '\\\\', $value );
+	$value = str_replace( '"', '\\"', $value );
+
+	return '"' . $value . '"';
+}
+
+
+### Function: Write The Database Password To A Temporary Option File
+### Keeps the password off the command line where 'ps' would expose it.
+function dbmanager_write_defaults_file() {
+	$temp_dir = get_temp_dir();
+	if ( ! is_dir( $temp_dir ) || ! wp_is_writable( $temp_dir ) ) {
+		return false;
+	}
+
+	$defaults_file = @tempnam( $temp_dir, 'wp-dbmanager-' );
+	if ( $defaults_file === false ) {
+		return false;
+	}
+
+	// Readable only by the user running PHP, before anything is written to it.
+	@chmod( $defaults_file, 0600 );
+
+	$contents = "[client]\npassword=" . dbmanager_escape_option_file_value( DB_PASSWORD ) . "\n";
+	if ( @file_put_contents( $defaults_file, $contents ) === false ) {
+		@unlink( $defaults_file );
+		return false;
+	}
+
+	return $defaults_file;
+}
+
+
+### Function: Build The Credential Argument For A mysql/mysqldump Command
+### Must be placed immediately after the binary, --defaults-extra-file has to come first.
+function dbmanager_credential_args( $defaults_file ) {
+	if ( $defaults_file !== false ) {
+		return ' --defaults-extra-file=' . escapeshellarg( $defaults_file );
+	}
+
+	// No option file could be written, fall back to the old command line password.
+	return ' --password=' . escapeshellarg( DB_PASSWORD );
+}
+
+
+### Function: Remove The Temporary Option File
+function dbmanager_delete_defaults_file( $defaults_file ) {
+	if ( $defaults_file !== false && is_file( $defaults_file ) ) {
+		@unlink( $defaults_file );
+	}
+}
+
 
 ### Executes OS-Dependent mysqldump Command (By: Vlad Sharanhovich)
 function execute_backup($command) {
