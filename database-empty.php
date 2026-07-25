@@ -26,29 +26,32 @@ if(!empty($_POST['do'])) {
 	switch($_POST['do']) {
 		case __('Empty/Drop', 'wp-dbmanager'):
 			check_admin_referer('wp-dbmanager_empty');
+			// The table names arrive as request keys, only act on ones that really exist.
+			$valid_tables = $wpdb->get_col("SHOW TABLES");
 			$empty_tables = array();
-			$drop_tables = '';
-			if(!empty($emptydrop)) {
-				foreach($emptydrop as $key => $value) {
-					if($value == 'empty') {
-						$empty_tables[] = $key;
-					} elseif($value == 'drop') {
-						$drop_tables .=  ', '.$key;
-					}
+			$drop_tables = array();
+			foreach($emptydrop as $key => $value) {
+				if(!in_array($key, $valid_tables, true)) {
+					continue;
 				}
-			} else {
+				if($value == 'empty') {
+					$empty_tables[] = $key;
+				} elseif($value == 'drop') {
+					$drop_tables[] = $key;
+				}
+			}
+			if(empty($empty_tables) && empty($drop_tables)) {
 				$text = '<p style="color: red;">'.__('No Tables Selected.', 'wp-dbmanager').'</p>';
 			}
-			$drop_tables = substr($drop_tables, 2);
 			if(!empty($empty_tables)) {
 				foreach($empty_tables as $empty_table) {
-					$empty_query = $wpdb->query("TRUNCATE $empty_table");
+					$empty_query = $wpdb->query("TRUNCATE `$empty_table`");
 					$text .= '<p style="color: green;">'.sprintf(__('Table \'%s\' Emptied', 'wp-dbmanager'), esc_html($empty_table)).'</p>';
 				}
 			}
 			if(!empty($drop_tables)) {
-				$drop_query = $wpdb->query("DROP TABLE $drop_tables");
-				$text = '<p style="color: green;">'.sprintf(__('Table(s) \'%s\' Dropped', 'wp-dbmanager'), esc_html($drop_tables)).'</p>';
+				$drop_query = $wpdb->query("DROP TABLE `".implode('`, `', $drop_tables)."`");
+				$text = '<p style="color: green;">'.sprintf(__('Table(s) \'%s\' Dropped', 'wp-dbmanager'), esc_html(implode(', ', $drop_tables))).'</p>';
 			}
 			break;
 	}

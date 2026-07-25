@@ -12,31 +12,29 @@ $base_page = 'admin.php?page='.$base_name;
 ### Form Processing
 if(!empty($_POST['do'])) {
 	// Lets Prepare The Variables
-	$repair = $_POST['repair'];
+	$repair = (!empty($_POST['repair']) ? $_POST['repair'] : array());
 	$text = '';
 
 	// Decide What To Do
 	switch($_POST['do']) {
 		case __('Repair', 'wp-dbmanager'):
 			check_admin_referer('wp-dbmanager_repair');
-			if(!empty($repair)) {
-				$tables_string = '';
-				foreach($repair as $key => $value) {
-					if($value == 'yes') {
-						$tables_string .=  '`, `'.$key;
-					}
+			// The table names arrive as request keys, only act on ones that really exist.
+			$valid_tables = $wpdb->get_col("SHOW TABLES");
+			$selected_tables = array();
+			foreach($repair as $key => $value) {
+				if($value == 'yes' && in_array($key, $valid_tables, true)) {
+					$selected_tables[] = $key;
 				}
-			} else {
-				$text = '<p style="color: red;">'.__('No Tables Selected', 'wp-dbmanager').'</p>';
 			}
-			$selected_tables = substr($tables_string, 2);
-			$selected_tables .= '`';
-			if(!empty($selected_tables)) {
-				$repair2 = $wpdb->query("REPAIR TABLE $selected_tables");
+			if(empty($selected_tables)) {
+				$text = '<p style="color: red;">'.__('No Tables Selected', 'wp-dbmanager').'</p>';
+			} else {
+				$repair2 = $wpdb->query("REPAIR TABLE `".implode('`, `', $selected_tables)."`");
 				if(!$repair2) {
-					$text = '<p style="color: red;">'.sprintf(__('Table(s) \'%s\' NOT Repaired', 'wp-dbmanager'), esc_html(str_replace('`', '', $selected_tables))).'</p>';
+					$text = '<p style="color: red;">'.sprintf(__('Table(s) \'%s\' NOT Repaired', 'wp-dbmanager'), esc_html(implode(', ', $selected_tables))).'</p>';
 				} else {
-					$text = '<p style="color: green;">'.sprintf(__('Table(s) \'%s\' Repaired', 'wp-dbmanager'), esc_html(str_replace('`', '', $selected_tables))).'</p>';
+					$text = '<p style="color: green;">'.sprintf(__('Table(s) \'%s\' Repaired', 'wp-dbmanager'), esc_html(implode(', ', $selected_tables))).'</p>';
 				}
 			}
 			break;
