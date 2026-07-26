@@ -50,7 +50,7 @@ The `Backup DB` page requests a file from the folder and reports what the server
 * I spent most of my free time creating, updating, maintaining and supporting these plugins, if you really love my plugins and could spare me a couple of bucks, I will really appreciate it. If not feel free to use it without any obligations.
 
 ## Changelog
-### Version 3.0.0
+### 3.0.0
 * NOTE: The mysqldump and mysql paths are now passed as a single argument. If you added extra flags to either path under DB Options, move them out or your backups will fail.
 * NOTE: Requires WordPress 6.0 or later, up from 4.0, and PHP 7.4 or later.
 * NOTE: Backup file names now carry a real Unix timestamp. Backups taken before this release will show a date shifted by your timezone offset. The files themselves are fine.
@@ -75,86 +75,86 @@ The `Backup DB` page requests a file from the folder and reports what the server
 * FIXED: Uninstalling on multisite no longer overwrites the current site ID while it works.
 * FIXED: Removed jQuery dependency.
 
-### Version 2.80.10
+### 2.80.10
 * FIXED: Don't throw fatal error if unknown .sql files are inside the database backup folder.
 
-### Version 2.80.9
+### 2.80.9
 * FIXED: Handle folder permissions properly
 
-### Version 2.80.8
+### 2.80.8
 * FIXED: Miss out database-backup.php.
 
-### Version 2.80.7
+### 2.80.7
 * FIXED: Changed 'edit_files' capability to 'install_plugins' instead.
 
-### Version 2.80.6
+### 2.80.6
 * FIXED: Remove 'manage_database' and use 'edit_files' to check for capability instead.
 
-### Version 2.80.5
+### 2.80.5
 * FIXED: Changed utf8 to utf8mb4 for backing up
 
-### Version 2.80.4
+### 2.80.4
 * FIXED: Clear WP-DBManager cron jobs on uninstall
 
-### Version 2.80.3
+### 2.80.3
 * FIXED: Poly fill array_key_first() for PHP < 7.3
 
-### Version 2.80.2
+### 2.80.2
 * FIXED: Newer backup is being replaced instead of older backup
 
-### Version 2.80.1
+### 2.80.1
 * FIXED: 1970 date issues.
 * FIXED: Sorting order of backup files. 
 
-### Version 2.80
+### 2.80
 * NEW: Prefix MD5 checksum to the database backup file to prevent user from guessing the filename.
  
-### Version 2.79.2
+### 2.79.2
 * FIXED: Arbitrary file delete bug by sanitizing filename. Props [RIPS Technologies](https://www.ripstech.com).
 
-### Version 2.79.1
+### 2.79.1
 * FIXED: Added default utf8 charset
 
-### Version 2.79
+### 2.79
 * FIXED: Proper check for disabled functions
 
-### Version 2.78.1
+### 2.78.1
 * NEW: Bump WordPress 4.7
 * FIXED: Undefined index: repair and repair_period
 
-### Version 2.78
+### 2.78
 * FIXED: escapeshellcmd on Windows. Props Gregory Karpinsky. 
 * FIXED: Move wp_mkdir_p() up before if check. Props Scott Allen.
 
-### Version 2.77
+### 2.77
 * FIXED: Blank screen downloading backup
 * FIXED: Remove MySQL Version check to display tables stats
 
-### Version 2.76
+### 2.76
 * NEW: Add wp_dbmanager_before_escapeshellcmd action just before escapeshellcmd()
 * FIXED: Missing / for Windows
 
-### Version 2.75
+### 2.75
 * FIXED: When activating the plugin, copy index.php to the backup folder
 * FIXED: If you are on Apache, .htaccess will be copied to the backup folder, if you are on IIS, Web.config will be copied to the backup folder
 * FIXED: When choosing 1 Month(s) for Backup/Optimize/Repair, the next date calculation is wrong
 
-### Version 2.74
+### 2.74
 * FIXED: escapeshellarg() already escape $, no need to double escape it
 
-### Version 2.73
+### 2.73
 * FIXED: Unable to backup/restore database if user database password has certain special characters in them
 
-### Version 2.72
+### 2.72
 * FIXED: Use escapeshellcmd() to escape shell commands. Props Larry W. Cashdollari.
 * FIXED: Do not allow LOAD_FILE to be run. Props Larry W. Cashdollari.
 * FIXED: Uses dbmanager_is_valid_path() to check for mysql and mysqldump path. Fixes arbitrary command injection using backup path. Props Larry W. Cashdollari.
 * FIXED: Uses realpath() to check for backup path. Fixes arbitrary command injection using backup path. Props Larry W. Cashdollari.
 
-### Version 2.71
+### 2.71
 * NEW: Bump to 4.0
 
-### Version 2.70
+### 2.70
 * New: Uses WordPress 3.9 Dashicons
 * NEW: Allow you to hide admin notices in the DB Options page
 * NEW: Allow Multisite Network Activate
@@ -164,13 +164,13 @@ The `Backup DB` page requests a file from the folder and reports what the server
 * FIXED: Issues with email from field if site title contains , (comma)
 * FIXED: Notices
 
-### Version 2.65
+### 2.65
 * FIXED: Set default character set to UTF-8. Props Karsonito
 
-### Version 2.64
+### 2.64
 * FIXED: Use intval() instead of is_int() when checking for port number. Props [Webby Scots](https://webbyscots.com/ "Webby Scots")
 
-### Version 2.63 (03-05-2011)
+### 2.63 (03-05-2011)
 * NEW: Added Auto Repair Functionality
 * NEW: Added nonce To All Forms For Added Security
 
