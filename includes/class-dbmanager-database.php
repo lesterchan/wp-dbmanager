@@ -325,6 +325,51 @@ class DBManager_Database {
 	}
 
 	/**
+	 * Whether a finished dump actually contains anything.
+	 *
+	 * Size is not a good enough test once gzip is involved, and neither is the
+	 * command's exit status. `mysqldump ... | gzip > file` reports the status of
+	 * the *last* command in the pipeline, and gzip is perfectly happy to turn
+	 * empty input into a valid twenty byte stream - so a mysqldump that failed
+	 * outright produced a non-empty file and an exit status of zero, and the
+	 * result was renamed with a checksum and e-mailed out as a backup.
+	 *
+	 * POSIX sh has no pipefail, so the pipeline cannot be made to report the
+	 * failure. Reading the dump back is what settles it.
+	 *
+	 * @param string $filepath Finished dump.
+	 * @param bool   $gzip     Whether it is compressed.
+	 * @return bool
+	 */
+	protected static function dump_has_content( $filepath, $gzip ) {
+		if ( ! is_file( $filepath ) ) {
+			return false;
+		}
+
+		if ( ! $gzip ) {
+			return filesize( $filepath ) > 0;
+		}
+
+		// zlib ships with essentially every WordPress-capable PHP, but fall back
+		// to a size floor rather than accepting anything if it is missing. An
+		// empty gzip stream is twenty bytes.
+		if ( ! function_exists( 'gzopen' ) ) {
+			return filesize( $filepath ) > 64;
+		}
+
+		$handle = gzopen( $filepath, 'rb' );
+
+		if ( false === $handle ) {
+			return false;
+		}
+
+		$head = gzread( $handle, 1024 );
+		gzclose( $handle );
+
+		return is_string( $head ) && '' !== trim( $head );
+	}
+
+	/**
 	 * Take a backup.
 	 *
 	 * Writes the dump, checks that it is real, then renames it to carry its own
@@ -358,20 +403,23 @@ class DBManager_Database {
 			return $result;
 		}
 
-		if ( is_file( $filepath ) && 0 === filesize( $filepath ) ) {
-			// An empty file is worse than no file: it looks like a backup right up
-			// until somebody needs it.
-			wp_delete_file( $filepath );
-			$result['reason'] = 'empty';
-			return $result;
-		}
-
 		if ( ! is_file( $filepath ) ) {
 			$result['reason'] = 'missing';
 			return $result;
 		}
 
+		// An empty dump is worse than no dump: it looks like a backup right up
+		// until somebody needs it. This has to be a content check rather than a
+		// size check, and it has to come before $error is consulted, because
+		// neither of those catches the gzip case - see dump_has_content().
+		if ( ! self::dump_has_content( $filepath, $gzip ) ) {
+			wp_delete_file( $filepath );
+			$result['reason'] = 'empty';
+			return $result;
+		}
+
 		if ( $error ) {
+			wp_delete_file( $filepath );
 			$result['reason'] = 'command';
 			return $result;
 		}
