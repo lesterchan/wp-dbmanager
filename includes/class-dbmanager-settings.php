@@ -222,7 +222,13 @@ class DBManager_Settings {
 	<form method="post" action="options.php">
 		<?php
 		settings_fields( self::GROUP );
-		settings_errors( $option );
+
+		// Deliberately unfiltered. options.php registers its "Settings saved."
+		// under the 'general' slug rather than under the option being saved, so
+		// passing the option name here shows the validation errors and silently
+		// swallows the confirmation - the screen saves and says nothing at all,
+		// where it used to say "Database Options Updated".
+		settings_errors();
 		?>
 		<h3><?php esc_html_e( 'Paths', 'wp-dbmanager' ); ?></h3>
 		<table class="form-table">

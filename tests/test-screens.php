@@ -60,6 +60,46 @@ class Test_DBManager_Screens extends DBManager_TestCase {
 	}
 
 	/**
+	 * A completed save is confirmed on screen.
+	 *
+	 * options.php stores its "Settings saved." notice in a transient under the
+	 * 'general' slug, not under the option being saved, so a settings_errors()
+	 * call scoped to the option name renders validation errors and drops the
+	 * confirmation. The screen then saves correctly and tells the user nothing,
+	 * which is indistinguishable from having done nothing.
+	 */
+	public function test_a_completed_save_is_confirmed() {
+		set_transient(
+			'settings_errors',
+			array(
+				array(
+					'setting' => 'general',
+					'code'    => 'settings_updated',
+					'message' => 'Settings saved.',
+					'type'    => 'success',
+				),
+			),
+			30
+		);
+
+		$html = $this->render( array( 'DBManager_Settings', 'render' ), array(), array( 'settings-updated' => 'true' ) );
+
+		$this->assertScreenIsClean( $html );
+		$this->assertStringContainsString( 'Settings saved.', $html );
+	}
+
+	/**
+	 * A validation error is still shown on the screen that caused it.
+	 */
+	public function test_a_validation_error_is_shown() {
+		add_settings_error( DBManager_Options::OPTION, 'path', 'That backup path is no good.' );
+
+		$html = $this->render( array( 'DBManager_Settings', 'render' ) );
+
+		$this->assertStringContainsString( 'That backup path is no good.', $html );
+	}
+
+	/**
 	 * Every POST branch renders cleanly and says what it did.
 	 *
 	 * @dataProvider data_post_views
