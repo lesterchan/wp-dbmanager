@@ -325,7 +325,7 @@ class Test_DBManager_Database extends DBManager_TestCase {
 	/**
 	 * An empty gzip stream is recognised as containing nothing.
 	 *
-	 * gzip produces exactly this from a mysqldump that wrote nothing, and it is
+	 * Gzip produces exactly this from a mysqldump that wrote nothing, and it is
 	 * a valid, non-empty file - which is how it used to get through.
 	 */
 	public function test_an_empty_gzip_stream_has_no_content() {
@@ -385,7 +385,7 @@ class Test_DBManager_Database extends DBManager_TestCase {
 	}
 
 	/**
-	 * execute() refuses to run anything when a path is unusable.
+	 * Nothing is executed when a configured path is unusable.
 	 */
 	public function test_execute_refuses_an_invalid_configuration() {
 		$options                  = DBManager_Options::get();

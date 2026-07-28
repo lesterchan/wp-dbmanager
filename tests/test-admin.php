@@ -291,7 +291,7 @@ class Test_DBManager_Admin extends DBManager_TestCase {
 
 		add_filter(
 			'pre_http_request',
-			function ( $preempt ) use ( &$requests ) {
+			function () use ( &$requests ) {
 				++$requests;
 				return new WP_Error( 'no-http-in-tests' );
 			}

@@ -43,6 +43,50 @@
 		field.value = l10n[ which ] || '';
 	}
 
+	/**
+	 * Confirm destructive bulk actions before the form goes anywhere.
+	 *
+	 * The confirmation belongs to the chosen action rather than to a button:
+	 * a list table has one Apply button per end of the table, and which of
+	 * Empty, Drop, Restore or Delete it is about depends on the dropdown next
+	 * to it.
+	 *
+	 * @param {Event} event Submit event.
+	 * @return {void}
+	 */
+	function confirmBulkAction( event ) {
+		const form = event.target;
+
+		if ( ! form.matches || ! form.matches( '[data-dbmanager-confirm-actions]' ) ) {
+			return;
+		}
+
+		let messages;
+
+		try {
+			messages = JSON.parse( form.getAttribute( 'data-dbmanager-confirm-actions' ) );
+		} catch {
+			return;
+		}
+
+		// Whichever dropdown was used, core leaves the unused one on "-1".
+		const chosen = [ 'action', 'action2' ]
+			.map( ( name ) => form.querySelector( '[name="' + name + '"]' ) )
+			.filter( ( select ) => select && '-1' !== select.value )
+			.map( ( select ) => select.value )[ 0 ];
+
+		if ( ! chosen || ! messages[ chosen ] ) {
+			return;
+		}
+
+		// eslint-disable-next-line no-alert
+		if ( ! window.confirm( withLineBreaks( messages[ chosen ] ) ) ) {
+			event.preventDefault();
+		}
+	}
+
+	document.addEventListener( 'submit', confirmBulkAction );
+
 	document.addEventListener( 'click', function( event ) {
 		const target = event.target;
 

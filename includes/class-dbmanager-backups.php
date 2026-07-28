@@ -246,14 +246,25 @@ class DBManager_Backups {
 	 * @return void
 	 */
 	public static function maybe_download() {
-		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Only decides whether this request is ours; check_admin_referer() runs below, before anything is read.
-		$action = isset( $_POST['do'] ) ? sanitize_text_field( wp_unslash( $_POST['do'] ) ) : '';
+		// The Manage screen posts its bulk action in "action" at the top of the
+		// table and "action2" at the bottom, exactly as core's list tables do.
+		// phpcs:disable WordPress.Security.NonceVerification.Missing -- Only decides whether this request is ours; check_admin_referer() runs below, before anything is read.
+		$action = isset( $_POST['action'] ) ? sanitize_key( wp_unslash( $_POST['action'] ) ) : '';
 
-		if ( __( 'Download', 'wp-dbmanager' ) !== $action ) {
+		if ( 'download' !== $action ) {
+			$action = isset( $_POST['action2'] ) ? sanitize_key( wp_unslash( $_POST['action2'] ) ) : '';
+		}
+
+		if ( 'download' !== $action || empty( $_POST['backups'] ) ) {
 			return;
 		}
 
-		if ( empty( $_POST['database_file'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing -- As above.
+		$selected = array_map( 'sanitize_file_name', (array) wp_unslash( $_POST['backups'] ) );
+		// phpcs:enable WordPress.Security.NonceVerification.Missing
+
+		// Downloading sends one file. A multiple selection is refused by the
+		// screen rather than resolved to whichever came first.
+		if ( count( $selected ) !== 1 ) {
 			return;
 		}
 
@@ -261,9 +272,9 @@ class DBManager_Backups {
 			wp_die( esc_html__( 'Access Denied', 'wp-dbmanager' ) );
 		}
 
-		check_admin_referer( 'wp-dbmanager_manage' );
+		check_admin_referer( DBManager_Backups_Table::nonce_action() );
 
-		$file_path = self::resolve( sanitize_file_name( wp_unslash( $_POST['database_file'] ) ) );
+		$file_path = self::resolve( sanitize_file_name( reset( $selected ) ) );
 
 		if ( false !== $file_path ) {
 			header( 'Pragma: public' );

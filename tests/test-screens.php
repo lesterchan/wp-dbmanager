@@ -127,39 +127,45 @@ class Test_DBManager_Screens extends DBManager_TestCase {
 		return array(
 			'restore with nothing selected' => array(
 				'manage',
-				'wp-dbmanager_manage',
-				array( 'do' => 'Restore' ),
+				DBManager_Backups_Table::nonce_action(),
+				array( 'action' => 'restore' ),
 				'No Backup Database File Selected',
 			),
 			'delete with nothing selected'  => array(
 				'manage',
-				'wp-dbmanager_manage',
-				array( 'do' => 'Delete' ),
+				DBManager_Backups_Table::nonce_action(),
+				array( 'action' => 'delete' ),
 				'No Backup Database File Selected',
 			),
 			'e-mail with nothing selected'  => array(
 				'manage',
-				'wp-dbmanager_manage',
-				array( 'do' => 'E-Mail' ),
+				DBManager_Backups_Table::nonce_action(),
+				array( 'action' => 'email' ),
 				'No Backup Database File Selected',
 			),
 			'optimize with none selected'   => array(
 				'optimize',
-				'wp-dbmanager_optimize',
-				array( 'do' => 'Optimize' ),
+				DBManager_Tables_Table::nonce_action(),
+				array( 'action' => 'optimize' ),
 				'No Tables Selected',
 			),
 			'repair with none selected'     => array(
 				'repair',
-				'wp-dbmanager_repair',
-				array( 'do' => 'Repair' ),
+				DBManager_Tables_Table::nonce_action(),
+				array( 'action' => 'repair' ),
 				'No Tables Selected',
 			),
 			'empty with none selected'      => array(
 				'empty_tables',
-				'wp-dbmanager_empty',
-				array( 'do' => 'Empty/Drop' ),
-				'No Tables Selected.',
+				DBManager_Tables_Table::nonce_action(),
+				array( 'action' => 'empty' ),
+				'No Tables Selected',
+			),
+			'drop with none selected'       => array(
+				'empty_tables',
+				DBManager_Tables_Table::nonce_action(),
+				array( 'action' => 'drop' ),
+				'No Tables Selected',
 			),
 			'an empty query'                => array(
 				'run',
@@ -194,7 +200,7 @@ class Test_DBManager_Screens extends DBManager_TestCase {
 		$this->assertScreenIsClean( $html );
 		$this->assertStringContainsString( str_repeat( 'c', 32 ), $html, 'The checksum column is empty.' );
 		$this->assertStringContainsString( 'sitedb.sql', $html );
-		$this->assertStringContainsString( '1 Backup File', $html );
+		$this->assertStringContainsString( '1 backup file', $html );
 		$this->assertStringNotContainsString( 'There Are No Database Backup Files Available.', $html );
 	}
 
@@ -218,9 +224,9 @@ class Test_DBManager_Screens extends DBManager_TestCase {
 		$html = $this->render(
 			array( 'DBManager_Screens', 'manage' ),
 			array(
-				'do'            => 'Delete',
-				'database_file' => $name,
-				'_wpnonce'      => wp_create_nonce( 'wp-dbmanager_manage' ),
+				'action'   => 'delete',
+				'backups'  => array( $name ),
+				'_wpnonce' => wp_create_nonce( DBManager_Backups_Table::nonce_action() ),
 			)
 		);
 
@@ -236,9 +242,9 @@ class Test_DBManager_Screens extends DBManager_TestCase {
 		$html = $this->render(
 			array( 'DBManager_Screens', 'manage' ),
 			array(
-				'do'            => 'Delete',
-				'database_file' => 'nothing_-_1700000000_-_sitedb.sql',
-				'_wpnonce'      => wp_create_nonce( 'wp-dbmanager_manage' ),
+				'action'   => 'delete',
+				'backups'  => array( 'nothing_-_1700000000_-_sitedb.sql' ),
+				'_wpnonce' => wp_create_nonce( DBManager_Backups_Table::nonce_action() ),
 			)
 		);
 
@@ -257,10 +263,10 @@ class Test_DBManager_Screens extends DBManager_TestCase {
 		$html = $this->render(
 			array( 'DBManager_Screens', 'manage' ),
 			array(
-				'do'            => 'E-Mail',
-				'database_file' => $name,
-				'email_to'      => 'someone@example.com',
-				'_wpnonce'      => wp_create_nonce( 'wp-dbmanager_manage' ),
+				'action'   => 'email',
+				'backups'  => array( $name ),
+				'email_to' => 'someone@example.com',
+				'_wpnonce' => wp_create_nonce( DBManager_Backups_Table::nonce_action() ),
 			)
 		);
 
@@ -294,10 +300,11 @@ class Test_DBManager_Screens extends DBManager_TestCase {
 	 */
 	public function data_nonce_screens() {
 		return array(
-			'manage'   => array( 'manage', array( 'do' => 'Delete' ) ),
-			'optimize' => array( 'optimize', array( 'do' => 'Optimize' ) ),
-			'repair'   => array( 'repair', array( 'do' => 'Repair' ) ),
-			'empty'    => array( 'empty_tables', array( 'do' => 'Empty/Drop' ) ),
+			'manage'   => array( 'manage', array( 'action' => 'delete' ) ),
+			'optimize' => array( 'optimize', array( 'action' => 'optimize' ) ),
+			'repair'   => array( 'repair', array( 'action' => 'repair' ) ),
+			'empty'    => array( 'empty_tables', array( 'action' => 'empty' ) ),
+			'drop'     => array( 'empty_tables', array( 'action' => 'drop' ) ),
 			'run'      => array( 'run', array( 'do' => 'Run' ) ),
 			'backup'   => array( 'backup', array( 'do' => 'Backup' ) ),
 		);
@@ -312,8 +319,8 @@ class Test_DBManager_Screens extends DBManager_TestCase {
 		$html = $this->render( array( 'DBManager_Screens', 'manager' ) );
 
 		$this->assertStringContainsString( $wpdb->posts, $html );
-		$this->assertStringContainsString( 'Total:', $html );
 		$this->assertMatchesRegularExpression( '/[0-9,]+ Tables?/', $html );
+		$this->assertMatchesRegularExpression( '/[0-9,]+ Records?/', $html );
 		$this->assertStringContainsString( DB_NAME, $html );
 	}
 
@@ -328,8 +335,23 @@ class Test_DBManager_Screens extends DBManager_TestCase {
 		$html = $this->render( array( 'DBManager_Screens', 'manage' ) );
 
 		$this->assertStringNotContainsString( 'onclick', $html );
-		$this->assertStringContainsString( 'data-dbmanager-confirm="', $html );
-		$this->assertStringContainsString( 'Database.\nThis Action Is Not Reversible.', $html );
+		$this->assertStringContainsString( 'data-dbmanager-confirm-actions="', $html );
+
+		// The attribute is a JSON map of bulk action to message, so the script
+		// can confirm whichever action the dropdown happens to be on. Assert on
+		// the decoded value rather than the raw markup: JSON encoding doubles
+		// the backslash, so the attribute itself reads "\\n".
+		preg_match( '/data-dbmanager-confirm-actions="([^"]+)"/', $html, $m );
+		$messages = json_decode( html_entity_decode( $m[1] ), true );
+
+		$this->assertIsArray( $messages );
+		$this->assertArrayHasKey( 'restore', $messages );
+		$this->assertArrayHasKey( 'delete', $messages );
+
+		// The \n survives as two characters, which the script turns into a real
+		// line break. Before 3.0.0 esc_js() ate it, so the dialog showed an n
+		// where the line break belonged.
+		$this->assertStringContainsString( 'Database.\nThis Action Is Not Reversible.', $messages['restore'] );
 	}
 
 	/**

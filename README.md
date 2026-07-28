@@ -53,10 +53,14 @@ The `Backup DB` page requests a file from the folder and reports what the server
 ### 3.0.0
 * IMPORTANT: The Database admin pages have new addresses. `admin.php?page=wp-dbmanager/database-backup.php` is now `admin.php?page=wp-dbmanager-backup`, and so on for every screen. Update any bookmarks. The menu itself is unchanged, and the plugin no longer cares what its folder is called.
 * IMPORTANT: A gzipped backup could be written, checksummed and e-mailed to you even when mysqldump had failed and produced nothing at all. See the FAQ. Check that your recent `.sql.gz` backups are not around 20 bytes.
+* IMPORTANT: `Optimize DB` and `Repair DB` no longer tick every table for you. Select the tables you want, then choose the action from `Bulk actions`. Previously every table was pre-selected, so one click acted on all of them.
+* IMPORTANT: `Empty/Drop Tables` can no longer empty some tables and drop others in the same submit. Choose `Empty` or `Drop` from `Bulk actions`, then submit again for the other.
 * NOTE: The mysqldump and mysql paths are now passed as a single argument. If you added extra flags to either path under DB Options, move them out or your backups will fail.
 * NOTE: Requires WordPress 6.0 or later, up from 4.0, and PHP 7.4 or later.
 * NOTE: Backup file names now carry a real Unix timestamp. Backups taken before this release will show a date shifted by your timezone offset. The files themselves are fine.
 * NOTE: The plugin's PHP functions are no longer global. Everything now lives in `DBManager_*` classes under `includes/`. The `wp_dbmanager_before_escapeshellcmd` action is unchanged.
+* NEW: Every table on the Database, Manage Backup DB, Optimize, Repair and Empty/Drop screens is now a standard WordPress list table. Columns sort, the select-all box works, and the Optimize and Repair screens show each table's size and overhead so you can see what is actually worth acting on.
+* NEW: Several backups can be deleted or e-mailed in one go. Restore and Download still act on one at a time, and say so rather than guessing.
 * NEW: DB Options is a Settings API screen, and the backup, optimize and repair schedules now follow the settings however they are changed, including from WP-CLI.
 * NEW: A PHPUnit test suite and GitHub Actions CI covering every admin screen, the settings, the schedules and the backup handling.
 * FIXED: A failed gzipped backup is no longer passed off as a real one. `mysqldump | gzip` reports gzip's exit status rather than mysqldump's, and gzip turns empty input into a valid 20 byte file, so the old size check never saw the failure. Gzip is the default, so this was the common case.
@@ -207,6 +211,12 @@ The `Backup DB` page requests a file from the folder and reports what the server
 * That is an empty gzip stream: `mysqldump` failed and produced nothing, and `gzip` compressed the nothing.
 * Before 3.0.0 the plugin could not tell. `mysqldump | gzip` reports gzip's exit status rather than mysqldump's, and the file it leaves behind is not empty, so the check for a zero byte backup never fired. The file was renamed with a checksum and, if you had backup e-mails on, sent to you.
 * From 3.0.0 the dump is read back before it is accepted, and one with nothing in it is deleted and reported as a failure. **Check any recent `.sql.gz` backups you are relying on** — a real one is far larger than 20 bytes, and `gunzip -c yourbackup.sql.gz | head` should show SQL.
+
+### I clicked Optimize (or Repair) and it says "No Tables Selected"
+
+* From 3.0.0 these screens no longer tick every table for you. Tick the tables you want — or the box in the header row to take the lot — then pick `Optimize` from `Bulk actions` and press `Apply`.
+* The old screens pre-selected everything, so a single click acted on the whole database whether or not that was what you meant. Selecting first is the WordPress convention and is a good deal harder to do by accident.
+* The same applies to `Empty/Drop Tables`, which additionally can no longer empty some tables and drop others in one submit — pick one action, apply it, then pick the other.
 
 ### The Database pages say "Sorry, you are not allowed to access this page"
 * Your bookmark points at the old address. In 3.0.0 the screens moved from `admin.php?page=wp-dbmanager/database-backup.php` to `admin.php?page=wp-dbmanager-backup`, and likewise for the others.

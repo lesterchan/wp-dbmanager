@@ -69,61 +69,11 @@ class DBManager_Screens {
 <div class="wrap">
 	<h3><?php esc_html_e( 'Tables Information', 'wp-dbmanager' ); ?></h3>
 	<br style="clear" />
-	<table class="widefat">
-		<thead>
-			<tr>
-				<th><?php esc_html_e( 'No.', 'wp-dbmanager' ); ?></th>
-				<th><?php esc_html_e( 'Tables', 'wp-dbmanager' ); ?></th>
-				<th><?php esc_html_e( 'Records', 'wp-dbmanager' ); ?></th>
-				<th><?php esc_html_e( 'Data Usage', 'wp-dbmanager' ); ?></th>
-				<th><?php esc_html_e( 'Index Usage', 'wp-dbmanager' ); ?></th>
-				<th><?php esc_html_e( 'Overhead', 'wp-dbmanager' ); ?></th>
-			</tr>
-		</thead>
 		<?php
-		$no             = 0;
-		$row_usage      = 0;
-		$data_usage     = 0;
-		$index_usage    = 0;
-		$overhead_usage = 0;
-
-		foreach ( DBManager_Tables::status() as $table ) {
-			$style = ( 0 === $no % 2 ) ? '' : 'alternate';
-			++$no;
-
-			printf(
-				"<tr class=\"%1\$s\"><td>%2\$s</td><td>%3\$s</td><td>%4\$s</td><td>%5\$s</td><td>%6\$s</td><td>%7\$s</td></tr>\n",
-				esc_attr( $style ),
-				esc_html( number_format_i18n( $no ) ),
-				esc_html( $table->Name ),
-				esc_html( number_format_i18n( $table->Rows ) ),
-				esc_html( DBManager_Backups::format_size( $table->Data_length ) ),
-				esc_html( DBManager_Backups::format_size( $table->Index_length ) ),
-				esc_html( DBManager_Backups::format_size( $table->Data_free ) )
-			);
-
-			$row_usage      += $table->Rows;
-			$data_usage     += $table->Data_length;
-			$index_usage    += $table->Index_length;
-			$overhead_usage += $table->Data_free;
-		}
-
-		/* translators: %s: number of tables. */
-		$total_tables = sprintf( _n( '%s Table', '%s Tables', $no, 'wp-dbmanager' ), number_format_i18n( $no ) );
-		/* translators: %s: number of records. */
-		$total_records = sprintf( _n( '%s Record', '%s Records', $row_usage, 'wp-dbmanager' ), number_format_i18n( $row_usage ) );
-
-		printf(
-			"<tr class=\"thead\"><th>%1\$s</th><th>%2\$s</th><th>%3\$s</th><th>%4\$s</th><th>%5\$s</th><th>%6\$s</th></tr>\n",
-			esc_html__( 'Total:', 'wp-dbmanager' ),
-			esc_html( $total_tables ),
-			esc_html( $total_records ),
-			esc_html( DBManager_Backups::format_size( $data_usage ) ),
-			esc_html( DBManager_Backups::format_size( $index_usage ) ),
-			esc_html( DBManager_Backups::format_size( $overhead_usage ) )
-		);
+		$tables = new DBManager_Tables_Table( 'info' );
+		$tables->prepare_items();
+		$tables->display();
 		?>
-	</table>
 </div>
 		<?php
 	}
@@ -428,58 +378,125 @@ class DBManager_Screens {
 		$options  = DBManager_Options::get();
 		$messages = array();
 
-		$action = isset( $_POST['do'] ) ? sanitize_text_field( wp_unslash( $_POST['do'] ) ) : '';
+		$table = new DBManager_Backups_Table();
 
-		if ( '' !== $action ) {
-			check_admin_referer( 'wp-dbmanager_manage' );
+		// current_action() reads the bulk dropdown at either end of the table.
+		$action = $table->current_action();
 
-			$database_file = ! empty( $_POST['database_file'] ) ? sanitize_file_name( wp_unslash( $_POST['database_file'] ) ) : '';
-			$file          = DBManager_Backups::parse_filename( $database_file );
+		if ( false !== $action ) {
+			check_admin_referer( DBManager_Backups_Table::nonce_action() );
 
-			$none_selected = array(
-				'type' => 'error',
-				'text' => __( 'No Backup Database File Selected', 'wp-dbmanager' ),
+			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Each entry is run through sanitize_file_name() below.
+			$selected = isset( $_POST['backups'] ) ? (array) wp_unslash( $_POST['backups'] ) : array();
+			$selected = array_filter( array_map( 'sanitize_file_name', $selected ) );
+
+			$messages = self::handle_backup_action( $action, $selected, $options );
+		}
+
+		DBManager_Admin::render_messages( $messages );
+
+		$table->prepare_items();
+
+		$restore_warning = __( 'You Are About To Restore A Database.\nThis Action Is Not Reversible.\nAny Data Inserted After The Backup Date Will Be Gone.\n\n Choose [Cancel] to stop, [Ok] to restore.', 'wp-dbmanager' );
+		$delete_warning  = __( 'You Are About To Delete The Selected Database Backup Files.\nThis Action Is Not Reversible.\n\n Choose [Cancel] to stop, [Ok] to delete.', 'wp-dbmanager' );
+
+		$confirmations = wp_json_encode(
+			array(
+				'restore' => $restore_warning,
+				'delete'  => $delete_warning,
+			)
+		);
+		?>
+<div class="wrap">
+	<h2><?php esc_html_e( 'Manage Backup Database', 'wp-dbmanager' ); ?></h2>
+	<p><?php esc_html_e( 'Choose A Backup To E-Mail, Restore, Download Or Delete. Restore and Download act on one backup at a time.', 'wp-dbmanager' ); ?></p>
+	<form method="post" action="<?php echo esc_url( DBManager_Admin::page_url( 'manage' ) ); ?>" data-dbmanager-confirm-actions="<?php echo esc_attr( $confirmations ); ?>">
+		<p>
+			<label for="email_to"><?php esc_html_e( 'E-mail database backup file to:', 'wp-dbmanager' ); ?></label>
+			<input type="text" id="email_to" name="email_to" size="30" maxlength="50" value="<?php echo esc_attr( get_option( 'admin_email' ) ); ?>" dir="ltr" />
+		</p>
+		<?php $table->display(); ?>
+		<p>
+			<?php
+			printf(
+				/* translators: 1: number of backup files, 2: total size on disk. */
+				esc_html( _n( '%1$s backup file, %2$s on disk.', '%1$s backup files, %2$s on disk.', count( $table->items ), 'wp-dbmanager' ) ),
+				esc_html( number_format_i18n( count( $table->items ) ) ),
+				esc_html( DBManager_Backups::format_size( $table->total_size() ) )
 			);
+			?>
+		</p>
+	</form>
+</div>
+		<?php
+	}
 
-			switch ( $action ) {
-				case __( 'Restore', 'wp-dbmanager' ):
-					if ( empty( $database_file ) ) {
-						$messages[] = $none_selected;
-						break;
-					}
+	/**
+	 * Carry out a bulk action from the Manage screen.
+	 *
+	 * @param string $action   Chosen action.
+	 * @param array  $selected Sanitized backup file names.
+	 * @param array  $options  Plugin settings.
+	 * @return array Messages to render.
+	 */
+	protected static function handle_backup_action( $action, array $selected, array $options ) {
+		$messages = array();
 
-					$result = DBManager_Database::restore( $database_file );
+		if ( empty( $selected ) ) {
+			return array(
+				array(
+					'type' => 'error',
+					'text' => __( 'No Backup Database File Selected', 'wp-dbmanager' ),
+				),
+			);
+		}
 
-					foreach ( $result['errors'] as $error ) {
-						$messages[] = array(
-							'type' => 'error',
-							'text' => $error,
-						);
-					}
+		// Restoring overwrites the whole database and downloading sends one file,
+		// so neither has a sensible meaning for a multiple selection. Refusing is
+		// better than silently picking one of them.
+		if ( in_array( $action, array( 'restore', 'download' ), true ) && count( $selected ) > 1 ) {
+			return array(
+				array(
+					'type' => 'error',
+					'text' => __( 'Please Select Only One Backup Database File', 'wp-dbmanager' ),
+				),
+			);
+		}
 
-					// Only report on the restore when it actually ran; the path
-					// errors above already explain why it did not.
-					if ( $result['ran'] ) {
-						$messages[] = array(
-							'type' => $result['error'] ? 'error' : 'success',
-							'text' => $result['error']
-								/* translators: %s: date and time of the backup file. */
-								? sprintf( __( 'Database On \'%s\' Failed To Restore', 'wp-dbmanager' ), $file['formatted_date'] )
-								/* translators: %s: date and time of the backup file. */
-								: sprintf( __( 'Database On \'%s\' Restored Successfully', 'wp-dbmanager' ), $file['formatted_date'] ),
-						);
-					}
-					break;
+		switch ( $action ) {
+			case 'restore':
+				$file   = DBManager_Backups::parse_filename( $selected[0] );
+				$result = DBManager_Database::restore( $selected[0] );
 
-				case __( 'E-Mail', 'wp-dbmanager' ):
-					if ( empty( $database_file ) ) {
-						$messages[] = $none_selected;
-						break;
-					}
+				foreach ( $result['errors'] as $error ) {
+					$messages[] = array(
+						'type' => 'error',
+						'text' => $error,
+					);
+				}
 
-					$to = ! empty( $_POST['email_to'] ) ? sanitize_email( wp_unslash( $_POST['email_to'] ) ) : get_option( 'admin_email' );
+				// Only report on the restore when it actually ran; the path errors
+				// above already explain why it did not.
+				if ( $result['ran'] ) {
+					$messages[] = array(
+						'type' => $result['error'] ? 'error' : 'success',
+						'text' => $result['error']
+							/* translators: %s: date and time of the backup file. */
+							? sprintf( __( 'Database On \'%s\' Failed To Restore', 'wp-dbmanager' ), $file['formatted_date'] )
+							/* translators: %s: date and time of the backup file. */
+							: sprintf( __( 'Database On \'%s\' Restored Successfully', 'wp-dbmanager' ), $file['formatted_date'] ),
+					);
+				}
+				break;
 
-					if ( DBManager_Mailer::send( $to, $options['path'] . '/' . $database_file ) ) {
+			case 'email':
+				// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Verified by the caller before anything is read.
+				$to = ! empty( $_POST['email_to'] ) ? sanitize_email( wp_unslash( $_POST['email_to'] ) ) : get_option( 'admin_email' );
+
+				foreach ( $selected as $name ) {
+					$file = DBManager_Backups::parse_filename( $name );
+
+					if ( DBManager_Mailer::send( $to, $options['path'] . '/' . $name ) ) {
 						$messages[] = array(
 							'type' => 'success',
 							/* translators: 1: date and time of the backup file, 2: e-mail address. */
@@ -492,124 +509,49 @@ class DBManager_Screens {
 							'text' => sprintf( __( 'Unable To E-Mail Database Backup File For \'%1$s\' To \'%2$s\'', 'wp-dbmanager' ), $file['formatted_date'], $to ),
 						);
 					}
-					break;
+				}
+				break;
 
-				case __( 'Download', 'wp-dbmanager' ):
-					// A real download exits during init; reaching here means there
-					// was nothing selected to download.
-					$messages[] = $none_selected;
-					break;
+			case 'download':
+				// A real download exits during init, so reaching here means the
+				// file could not be resolved inside the backup folder.
+				$messages[] = array(
+					'type' => 'error',
+					'text' => __( 'Invalid Database Backup File', 'wp-dbmanager' ),
+				);
+				break;
 
-				case __( 'Delete', 'wp-dbmanager' ):
-					if ( empty( $database_file ) ) {
-						$messages[] = $none_selected;
-						break;
-					}
+			case 'delete':
+				foreach ( $selected as $name ) {
+					$file = DBManager_Backups::parse_filename( $name );
+					$path = $options['path'] . '/' . $name;
 
-					if ( ! is_file( $options['path'] . '/' . $database_file ) ) {
+					if ( ! is_file( $path ) ) {
 						$messages[] = array(
 							'type' => 'error',
 							/* translators: %s: date and time of the backup file. */
 							'text' => sprintf( __( 'Invalid Database Backup File On \'%s\'', 'wp-dbmanager' ), $file['formatted_date'] ),
 						);
-						break;
+						continue;
 					}
 
 					// wp_delete_file() returns nothing, so ask the filesystem
 					// whether it actually worked.
-					wp_delete_file( $options['path'] . '/' . $database_file );
+					wp_delete_file( $path );
 
 					$messages[] = array(
-						'type' => file_exists( $options['path'] . '/' . $database_file ) ? 'error' : 'success',
-						'text' => file_exists( $options['path'] . '/' . $database_file )
+						'type' => file_exists( $path ) ? 'error' : 'success',
+						'text' => file_exists( $path )
 							/* translators: %s: date and time of the backup file. */
 							? sprintf( __( 'Unable To Delete Database Backup File On \'%s\'', 'wp-dbmanager' ), $file['formatted_date'] )
 							/* translators: %s: date and time of the backup file. */
 							: sprintf( __( 'Database Backup File On \'%s\' Deleted Successfully', 'wp-dbmanager' ), $file['formatted_date'] ),
 					);
-					break;
-			}
+				}
+				break;
 		}
 
-		DBManager_Admin::render_messages( $messages );
-
-		$restore_warning = __( 'You Are About To Restore A Database.\nThis Action Is Not Reversible.\nAny Data Inserted After The Backup Date Will Be Gone.\n\n Choose [Cancel] to stop, [Ok] to restore.', 'wp-dbmanager' );
-		$delete_warning  = __( 'You Are About To Delete The Selected Database Backup Files.\nThis Action Is Not Reversible.\n\n Choose [Cancel] to stop, [Ok] to delete.', 'wp-dbmanager' );
-		?>
-<!-- Manage Backup Database -->
-<form method="post" action="<?php echo esc_url( DBManager_Admin::page_url( 'manage' ) ); ?>">
-		<?php wp_nonce_field( 'wp-dbmanager_manage' ); ?>
-	<div class="wrap">
-		<h2><?php esc_html_e( 'Manage Backup Database', 'wp-dbmanager' ); ?></h2>
-		<p><?php esc_html_e( 'Choose A Backup Date To E-Mail, Restore, Download Or Delete', 'wp-dbmanager' ); ?></p>
-		<table class="widefat">
-			<thead>
-				<tr>
-					<th><?php esc_html_e( 'No.', 'wp-dbmanager' ); ?></th>
-					<th><?php esc_html_e( 'MD5 Checksum', 'wp-dbmanager' ); ?></th>
-					<th><?php esc_html_e( 'Database File', 'wp-dbmanager' ); ?></th>
-					<th><?php esc_html_e( 'Date/Time', 'wp-dbmanager' ); ?></th>
-					<th><?php esc_html_e( 'Size', 'wp-dbmanager' ); ?></th>
-					<th><?php esc_html_e( 'Select', 'wp-dbmanager' ); ?></th>
-				</tr>
-			</thead>
-			<?php
-			$no        = 0;
-			$totalsize = 0;
-			$files     = array_reverse( DBManager_Backups::all( $options['path'] ) );
-
-			if ( ! empty( $files ) ) {
-				foreach ( $files as $entry ) {
-					$style = ( 0 === $no % 2 ) ? '' : 'alternate';
-					++$no;
-
-					$file = DBManager_Backups::parse_file( $options['path'] . '/' . $entry['name'] );
-
-					printf(
-						'<tr class="%1$s"><td>%2$s</td><td>%3$s</td><td>%4$s</td><td>%5$s</td><td>%6$s</td>',
-						esc_attr( $style ),
-						esc_html( number_format_i18n( $no ) ),
-						esc_html( $file['checksum'] ),
-						esc_html( $file['database'] ),
-						esc_html( $file['formatted_date'] ),
-						esc_html( $file['formatted_size'] )
-					);
-					printf(
-						'<td><input type="radio" name="database_file" value="%s" /></td></tr>',
-						esc_attr( $entry['name'] )
-					);
-
-					$totalsize += $file['size'];
-				}
-			} else {
-				printf(
-					'<tr><td align="center" colspan="6">%s</td></tr>',
-					esc_html__( 'There Are No Database Backup Files Available.', 'wp-dbmanager' )
-				);
-			}
-			?>
-			<tr class="thead">
-				<?php /* translators: %s: number of backup files. */ ?>
-				<th colspan="4"><?php printf( esc_html( _n( '%s Backup File', '%s Backup Files', $no, 'wp-dbmanager' ) ), esc_html( number_format_i18n( $no ) ) ); ?></th>
-				<th><?php echo esc_html( DBManager_Backups::format_size( $totalsize ) ); ?></th>
-				<th>&nbsp;</th>
-			</tr>
-		</table>
-		<table class="form-table">
-			<tr>
-				<td colspan="5" align="center"><label for="email_to"><?php esc_html_e( 'E-mail database backup file to:', 'wp-dbmanager' ); ?></label> <input type="text" id="email_to" name="email_to" size="30" maxlength="50" value="<?php echo esc_attr( get_option( 'admin_email' ) ); ?>" dir="ltr" />&nbsp;&nbsp;<input type="submit" name="do" value="<?php esc_attr_e( 'E-Mail', 'wp-dbmanager' ); ?>" class="button" /></td>
-			</tr>
-			<tr>
-				<td colspan="5" align="center">
-					<input type="submit" name="do" value="<?php esc_attr_e( 'Download', 'wp-dbmanager' ); ?>" class="button" />&nbsp;&nbsp;
-					<input type="submit" name="do" value="<?php esc_attr_e( 'Restore', 'wp-dbmanager' ); ?>" data-dbmanager-confirm="<?php echo esc_attr( $restore_warning ); ?>" class="button" />&nbsp;&nbsp;
-					<input type="submit" class="button" name="do" value="<?php esc_attr_e( 'Delete', 'wp-dbmanager' ); ?>" data-dbmanager-confirm="<?php echo esc_attr( $delete_warning ); ?>" />&nbsp;&nbsp;
-					<input type="button" name="cancel" value="<?php esc_attr_e( 'Cancel', 'wp-dbmanager' ); ?>" class="button" data-dbmanager-back="1" /></td>
-			</tr>
-		</table>
-	</div>
-</form>
-		<?php
+		return $messages;
 	}
 
 	/**
@@ -618,87 +560,11 @@ class DBManager_Screens {
 	 * @return void
 	 */
 	public static function optimize() {
-		DBManager_Admin::check_capability();
-
-		$messages = array();
-
-		$action = isset( $_POST['do'] ) ? sanitize_text_field( wp_unslash( $_POST['do'] ) ) : '';
-
-		if ( '' !== $action ) {
-			// Verified before any request data is read, not part way down the switch.
-			check_admin_referer( 'wp-dbmanager_optimize' );
-
-			if ( __( 'Optimize', 'wp-dbmanager' ) === $action ) {
-				// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Keys are table names, validated against SHOW TABLES by filter().
-				$submitted = ! empty( $_POST['optimize'] ) ? wp_unslash( $_POST['optimize'] ) : array();
-				$tables    = DBManager_Tables::filter( $submitted, 'yes' );
-
-				if ( empty( $tables ) ) {
-					$messages[] = array(
-						'type' => 'error',
-						'text' => __( 'No Tables Selected', 'wp-dbmanager' ),
-					);
-				} elseif ( DBManager_Tables::optimize( $tables ) ) {
-					$messages[] = array(
-						'type' => 'success',
-						/* translators: %s: comma separated table names. */
-						'text' => sprintf( __( 'Table(s) \'%s\' Optimized', 'wp-dbmanager' ), implode( ', ', $tables ) ),
-					);
-				} else {
-					$messages[] = array(
-						'type' => 'error',
-						/* translators: %s: comma separated table names. */
-						'text' => sprintf( __( 'Table(s) \'%s\' NOT Optimized', 'wp-dbmanager' ), implode( ', ', $tables ) ),
-					);
-				}
-			}
-		}
-
-		DBManager_Admin::render_messages( $messages );
-		?>
-<!-- Optimize Database -->
-<form method="post" action="<?php echo esc_url( DBManager_Admin::page_url( 'optimize' ) ); ?>">
-		<?php wp_nonce_field( 'wp-dbmanager_optimize' ); ?>
-	<div class="wrap">
-		<h2><?php esc_html_e( 'Optimize Database', 'wp-dbmanager' ); ?></h2>
-		<br style="clear" />
-		<table class="widefat">
-			<thead>
-				<tr>
-					<th><?php esc_html_e( 'Tables', 'wp-dbmanager' ); ?></th>
-					<th><?php esc_html_e( 'Options', 'wp-dbmanager' ); ?></th>
-				</tr>
-			</thead>
-			<?php
-			$no = 0;
-
-			foreach ( DBManager_Tables::all() as $table_name ) {
-				$style = ( 0 === $no % 2 ) ? '' : 'alternate';
-				++$no;
-
-				printf(
-					'<tr class="%1$s"><th align="left" scope="row">%2$s</th>',
-					esc_attr( $style ),
-					esc_html( $table_name )
-				);
-				printf(
-					'<td><input type="radio" id="%1$s-no" name="optimize[%1$s]" value="no" />&nbsp;<label for="%1$s-no">%2$s</label>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<input type="radio" id="%1$s-yes" name="optimize[%1$s]" value="yes" checked="checked" />&nbsp;<label for="%1$s-yes">%3$s</label></td></tr>',
-					esc_attr( $table_name ),
-					esc_html__( 'No', 'wp-dbmanager' ),
-					esc_html__( 'Yes', 'wp-dbmanager' )
-				);
-			}
-			?>
-			<tr>
-				<td colspan="2" align="center"><?php esc_html_e( 'Database should be optimized once every month.', 'wp-dbmanager' ); ?></td>
-			</tr>
-			<tr>
-				<td colspan="2" align="center"><input type="submit" name="do" value="<?php esc_attr_e( 'Optimize', 'wp-dbmanager' ); ?>" class="button" />&nbsp;&nbsp;<input type="button" name="cancel" value="<?php esc_attr_e( 'Cancel', 'wp-dbmanager' ); ?>" class="button" data-dbmanager-back="1" /></td>
-			</tr>
-		</table>
-	</div>
-</form>
-		<?php
+		self::render_table_screen(
+			'optimize',
+			__( 'Optimize Database', 'wp-dbmanager' ),
+			array( 'p' => __( 'Database should be optimized once every month. Select the tables to optimize, then choose Optimize from the bulk actions.', 'wp-dbmanager' ) )
+		);
 	}
 
 	/**
@@ -707,84 +573,11 @@ class DBManager_Screens {
 	 * @return void
 	 */
 	public static function repair() {
-		DBManager_Admin::check_capability();
-
-		$messages = array();
-
-		$action = isset( $_POST['do'] ) ? sanitize_text_field( wp_unslash( $_POST['do'] ) ) : '';
-
-		if ( '' !== $action ) {
-			// Verified before any request data is read, not part way down the switch.
-			check_admin_referer( 'wp-dbmanager_repair' );
-
-			if ( __( 'Repair', 'wp-dbmanager' ) === $action ) {
-				// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Keys are table names, validated against SHOW TABLES by filter().
-				$submitted = ! empty( $_POST['repair'] ) ? wp_unslash( $_POST['repair'] ) : array();
-				$tables    = DBManager_Tables::filter( $submitted, 'yes' );
-
-				if ( empty( $tables ) ) {
-					$messages[] = array(
-						'type' => 'error',
-						'text' => __( 'No Tables Selected', 'wp-dbmanager' ),
-					);
-				} elseif ( DBManager_Tables::repair( $tables ) ) {
-					$messages[] = array(
-						'type' => 'success',
-						/* translators: %s: comma separated table names. */
-						'text' => sprintf( __( 'Table(s) \'%s\' Repaired', 'wp-dbmanager' ), implode( ', ', $tables ) ),
-					);
-				} else {
-					$messages[] = array(
-						'type' => 'error',
-						/* translators: %s: comma separated table names. */
-						'text' => sprintf( __( 'Table(s) \'%s\' NOT Repaired', 'wp-dbmanager' ), implode( ', ', $tables ) ),
-					);
-				}
-			}
-		}
-
-		DBManager_Admin::render_messages( $messages );
-		?>
-<!-- Repair Database -->
-<form method="post" action="<?php echo esc_url( DBManager_Admin::page_url( 'repair' ) ); ?>">
-		<?php wp_nonce_field( 'wp-dbmanager_repair' ); ?>
-	<div class="wrap">
-		<h2><?php esc_html_e( 'Repair Database', 'wp-dbmanager' ); ?></h2>
-		<br style="clear" />
-		<table class="widefat">
-			<thead>
-				<tr>
-					<th><?php esc_html_e( 'Tables', 'wp-dbmanager' ); ?></th>
-					<th><?php esc_html_e( 'Options', 'wp-dbmanager' ); ?></th>
-				</tr>
-			</thead>
-			<?php
-			$no = 0;
-
-			foreach ( DBManager_Tables::all() as $table_name ) {
-				$style = ( 0 === $no % 2 ) ? '' : 'alternate';
-				++$no;
-
-				printf(
-					'<tr class="%1$s"><th align="left" scope="row">%2$s</th>',
-					esc_attr( $style ),
-					esc_html( $table_name )
-				);
-				printf(
-					'<td><input type="radio" id="%1$s-no" name="repair[%1$s]" value="no" />&nbsp;<label for="%1$s-no">%2$s</label>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<input type="radio" id="%1$s-yes" name="repair[%1$s]" value="yes" checked="checked" />&nbsp;<label for="%1$s-yes">%3$s</label></td></tr>',
-					esc_attr( $table_name ),
-					esc_html__( 'No', 'wp-dbmanager' ),
-					esc_html__( 'Yes', 'wp-dbmanager' )
-				);
-			}
-			?>
-			<tr>
-				<td colspan="2" align="center"><input type="submit" name="do" value="<?php esc_attr_e( 'Repair', 'wp-dbmanager' ); ?>" class="button" />&nbsp;&nbsp;<input type="button" name="cancel" value="<?php esc_attr_e( 'Cancel', 'wp-dbmanager' ); ?>" class="button" data-dbmanager-back="1" /></td>
-			</tr>
-		</table>
-	</div>
-</form>
-		<?php
+		self::render_table_screen(
+			'repair',
+			__( 'Repair Database', 'wp-dbmanager' ),
+			array( 'p' => __( 'Select the tables to repair, then choose Repair from the bulk actions.', 'wp-dbmanager' ) )
+		);
 	}
 
 	/**
@@ -793,108 +586,160 @@ class DBManager_Screens {
 	 * @return void
 	 */
 	public static function empty_tables() {
+		self::render_table_screen(
+			'empty',
+			__( 'Empty/Drop Tables', 'wp-dbmanager' ),
+			array(
+				'p'       => __( 'Select the tables, then choose Empty or Drop from the bulk actions.', 'wp-dbmanager' ),
+				'notes'   => array(
+					__( 'EMPTYING a table means all the rows in the table will be deleted. This action is not REVERSIBLE.', 'wp-dbmanager' ),
+					__( 'DROPPING a table means deleting the table. This action is not REVERSIBLE.', 'wp-dbmanager' ),
+				),
+				'confirm' => array(
+					'empty' => __( 'You Are About To Empty The Selected Tables.\nThis Action Is Not Reversible.\n\n Choose [Cancel] to stop, [Ok] to empty.', 'wp-dbmanager' ),
+					'drop'  => __( 'You Are About To Drop The Selected Tables.\nThis Action Is Not Reversible.\n\n Choose [Cancel] to stop, [Ok] to drop.', 'wp-dbmanager' ),
+				),
+			)
+		);
+	}
+
+	/**
+	 * Render one of the three table-operation screens.
+	 *
+	 * Optimize, Repair and Empty/Drop differ only in the bulk actions they
+	 * offer and the wording around the table, so they share this.
+	 *
+	 * @param string $mode  One of optimize, repair or empty.
+	 * @param string $title Screen heading.
+	 * @param array  $copy  Optional intro paragraph, footnotes and confirmations.
+	 * @return void
+	 */
+	protected static function render_table_screen( $mode, $title, array $copy = array() ) {
 		DBManager_Admin::check_capability();
+
+		$table  = new DBManager_Tables_Table( $mode );
+		$action = $table->current_action();
 
 		$messages = array();
 
-		$action = isset( $_POST['do'] ) ? sanitize_text_field( wp_unslash( $_POST['do'] ) ) : '';
+		if ( false !== $action ) {
+			check_admin_referer( DBManager_Tables_Table::nonce_action() );
 
-		if ( '' !== $action ) {
-			// Verified before any request data is read, not part way down the switch.
-			check_admin_referer( 'wp-dbmanager_empty' );
+			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Names are validated against SHOW TABLES by DBManager_Tables::filter().
+			$submitted = isset( $_POST['tables'] ) ? (array) wp_unslash( $_POST['tables'] ) : array();
 
-			if ( __( 'Empty/Drop', 'wp-dbmanager' ) === $action ) {
-				// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Keys are table names, validated against SHOW TABLES by filter().
-				$submitted = ! empty( $_POST['emptydrop'] ) ? wp_unslash( $_POST['emptydrop'] ) : array();
-
-				$empty_tables = DBManager_Tables::filter( $submitted, 'empty' );
-				$drop_tables  = DBManager_Tables::filter( $submitted, 'drop' );
-
-				if ( empty( $empty_tables ) && empty( $drop_tables ) ) {
-					$messages[] = array(
-						'type' => 'error',
-						'text' => __( 'No Tables Selected.', 'wp-dbmanager' ),
-					);
-				}
-
-				foreach ( $empty_tables as $empty_table ) {
-					DBManager_Tables::truncate( $empty_table );
-
-					$messages[] = array(
-						'type' => 'success',
-						/* translators: %s: table name. */
-						'text' => sprintf( __( 'Table \'%s\' Emptied', 'wp-dbmanager' ), $empty_table ),
-					);
-				}
-
-				if ( ! empty( $drop_tables ) ) {
-					DBManager_Tables::drop( $drop_tables );
-
-					$messages[] = array(
-						'type' => 'success',
-						/* translators: %s: comma separated table names. */
-						'text' => sprintf( __( 'Table(s) \'%s\' Dropped', 'wp-dbmanager' ), implode( ', ', $drop_tables ) ),
-					);
-				}
-			}
+			$messages = self::handle_table_action( $action, $submitted );
 		}
 
 		DBManager_Admin::render_messages( $messages );
 
-		$warning = __( 'You Are About To Empty Or Drop The Selected Databases.\nThis Action Is Not Reversible.\n\n Choose [Cancel] to stop, [Ok] to delete.', 'wp-dbmanager' );
+		$table->prepare_items();
+
+		$confirmations = isset( $copy['confirm'] ) ? wp_json_encode( $copy['confirm'] ) : '';
 		?>
-<!-- Empty/Drop Tables -->
-<form method="post" action="<?php echo esc_url( DBManager_Admin::page_url( 'empty' ) ); ?>">
-		<?php wp_nonce_field( 'wp-dbmanager_empty' ); ?>
-	<div class="wrap">
-		<h2><?php esc_html_e( 'Empty/Drop Tables', 'wp-dbmanager' ); ?></h2>
-		<br style="clear" />
-		<table class="widefat">
-			<thead>
-				<tr>
-					<th><?php esc_html_e( 'Tables', 'wp-dbmanager' ); ?></th>
-					<th><?php esc_html_e( 'Empty', 'wp-dbmanager' ); ?> <sup>1</sup></th>
-					<th><?php esc_html_e( 'Drop', 'wp-dbmanager' ); ?> <sup>2</sup></th>
-				</tr>
-			</thead>
-			<?php
-			$no = 0;
-
-			foreach ( DBManager_Tables::all() as $table_name ) {
-				$style = ( 0 === $no % 2 ) ? '' : 'alternate';
-				++$no;
-
-				printf(
-					'<tr class="%1$s"><th align="left" scope="row">%2$s</th>',
-					esc_attr( $style ),
-					esc_html( $table_name )
-				);
-				printf(
-					'<td><input type="radio" id="%1$s-empty" name="emptydrop[%1$s]" value="empty" />&nbsp;<label for="%1$s-empty">%2$s</label></td>',
-					esc_attr( $table_name ),
-					esc_html__( 'Empty', 'wp-dbmanager' )
-				);
-				printf(
-					'<td><input type="radio" id="%1$s-drop" name="emptydrop[%1$s]" value="drop" />&nbsp;<label for="%1$s-drop">%2$s</label></td></tr>',
-					esc_attr( $table_name ),
-					esc_html__( 'Drop', 'wp-dbmanager' )
-				);
-			}
-			?>
-			<tr>
-				<td colspan="3">
-					<?php esc_html_e( '1. EMPTYING a table means all the rows in the table will be deleted. This action is not REVERSIBLE.', 'wp-dbmanager' ); ?>
-					<br />
-					<?php esc_html_e( '2. DROPPING a table means deleting the table. This action is not REVERSIBLE.', 'wp-dbmanager' ); ?>
-				</td>
-			</tr>
-			<tr>
-				<td colspan="3" align="center"><input type="submit" name="do" value="<?php esc_attr_e( 'Empty/Drop', 'wp-dbmanager' ); ?>" class="button" data-dbmanager-confirm="<?php echo esc_attr( $warning ); ?>" />&nbsp;&nbsp;<input type="button" name="cancel" value="<?php esc_attr_e( 'Cancel', 'wp-dbmanager' ); ?>" class="button" data-dbmanager-back="1" /></td>
-			</tr>
-		</table>
-	</div>
-</form>
+<div class="wrap">
+	<h2><?php echo esc_html( $title ); ?></h2>
+		<?php if ( ! empty( $copy['p'] ) ) : ?>
+		<p><?php echo esc_html( $copy['p'] ); ?></p>
+	<?php endif; ?>
+	<form method="post" action="<?php echo esc_url( DBManager_Admin::page_url( 'empty' === $mode ? 'empty' : $mode ) ); ?>"<?php echo '' !== $confirmations ? ' data-dbmanager-confirm-actions="' . esc_attr( $confirmations ) . '"' : ''; ?>>
+		<?php $table->display(); ?>
+	</form>
+		<?php if ( ! empty( $copy['notes'] ) ) : ?>
+		<ol>
+			<?php foreach ( $copy['notes'] as $note ) : ?>
+				<li><?php echo esc_html( $note ); ?></li>
+			<?php endforeach; ?>
+		</ol>
+	<?php endif; ?>
+</div>
 		<?php
+	}
+
+	/**
+	 * Carry out a bulk action from one of the table screens.
+	 *
+	 * The submitted names are request *keys* turned into values by the
+	 * checkboxes, so they still cannot be sanitized into safety - they are
+	 * matched against SHOW TABLES and anything that does not appear there is
+	 * dropped before a query is built.
+	 *
+	 * @param string $action    Chosen action.
+	 * @param array  $submitted Submitted table names.
+	 * @return array Messages to render.
+	 */
+	protected static function handle_table_action( $action, array $submitted ) {
+		$wanted = array_fill_keys( array_map( 'strval', $submitted ), 'yes' );
+		$tables = DBManager_Tables::filter( $wanted, 'yes' );
+
+		if ( empty( $tables ) ) {
+			return array(
+				array(
+					'type' => 'error',
+					'text' => __( 'No Tables Selected', 'wp-dbmanager' ),
+				),
+			);
+		}
+
+		switch ( $action ) {
+			case 'optimize':
+				// Called once and held: inlining this into both branches of the
+				// ternary below would run OPTIMIZE TABLE twice.
+				$optimized = DBManager_Tables::optimize( $tables );
+
+				return array(
+					array(
+						'type' => $optimized ? 'success' : 'error',
+						'text' => $optimized
+							/* translators: %s: comma separated table names. */
+							? sprintf( __( 'Table(s) \'%s\' Optimized', 'wp-dbmanager' ), implode( ', ', $tables ) )
+							/* translators: %s: comma separated table names. */
+							: sprintf( __( 'Table(s) \'%s\' NOT Optimized', 'wp-dbmanager' ), implode( ', ', $tables ) ),
+					),
+				);
+
+			case 'repair':
+				$repaired = DBManager_Tables::repair( $tables );
+
+				return array(
+					array(
+						'type' => $repaired ? 'success' : 'error',
+						'text' => $repaired
+							/* translators: %s: comma separated table names. */
+							? sprintf( __( 'Table(s) \'%s\' Repaired', 'wp-dbmanager' ), implode( ', ', $tables ) )
+							/* translators: %s: comma separated table names. */
+							: sprintf( __( 'Table(s) \'%s\' NOT Repaired', 'wp-dbmanager' ), implode( ', ', $tables ) ),
+					),
+				);
+
+			case 'empty':
+				$messages = array();
+
+				foreach ( $tables as $table ) {
+					DBManager_Tables::truncate( $table );
+
+					$messages[] = array(
+						'type' => 'success',
+						/* translators: %s: table name. */
+						'text' => sprintf( __( 'Table \'%s\' Emptied', 'wp-dbmanager' ), $table ),
+					);
+				}
+
+				return $messages;
+
+			case 'drop':
+				DBManager_Tables::drop( $tables );
+
+				return array(
+					array(
+						'type' => 'success',
+						/* translators: %s: comma separated table names. */
+						'text' => sprintf( __( 'Table(s) \'%s\' Dropped', 'wp-dbmanager' ), implode( ', ', $tables ) ),
+					),
+				);
+		}
+
+		return array();
 	}
 
 	/**

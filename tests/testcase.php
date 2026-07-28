@@ -53,6 +53,17 @@ abstract class DBManager_TestCase extends WP_UnitTestCase {
 		// Rendering must not depend on whichever answer a previous test cached.
 		DBManager_Folder::flush();
 
+		// WP_List_Table resolves a screen in its constructor, so the list table
+		// screens need one to exist before they can be rendered at all.
+		//
+		// $hook_suffix has to be set by hand as well. wp-admin/admin.php always
+		// sets it before a page callback runs, so this only matters here - but
+		// WP_Screen::get() reads it unguarded on WordPress 6.0, and without it
+		// every list table test raises "Undefined index: hook_suffix" against
+		// the floor while passing happily on current WordPress.
+		$GLOBALS['hook_suffix'] = 'database_page_wp-dbmanager';
+		set_current_screen( 'database_page_wp-dbmanager' );
+
 		$this->notices = array();
 	}
 

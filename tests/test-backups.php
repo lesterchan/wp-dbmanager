@@ -283,13 +283,45 @@ class Test_DBManager_Backups extends DBManager_TestCase {
 		$_POST = array();
 		$this->assertNull( DBManager_Backups::maybe_download() );
 
-		$_POST = array( 'do' => 'Backup' );
+		$_POST = array( 'action' => 'delete' );
 		$this->assertNull( DBManager_Backups::maybe_download() );
 
-		$_POST = array( 'do' => 'Download' );
-		$this->assertNull( DBManager_Backups::maybe_download(), 'A Download with no file selected should fall through.' );
+		$_POST = array( 'action' => 'download' );
+		$this->assertNull( DBManager_Backups::maybe_download(), 'A download with nothing selected should fall through.' );
+
+		// Downloading sends one file, so a multiple selection falls through to
+		// the screen rather than being resolved to whichever came first.
+		$_POST = array(
+			'action'  => 'download',
+			'backups' => array( 'a_-_1700000000_-_db.sql', 'b_-_1700000000_-_db.sql' ),
+		);
+		$this->assertNull( DBManager_Backups::maybe_download() );
 
 		$_POST = array();
+	}
+
+	/**
+	 * The bulk dropdown at the bottom of the table works too.
+	 *
+	 * Core's list tables render one at each end, and whichever was not used is
+	 * left on "-1".
+	 */
+	public function test_download_reads_the_second_bulk_dropdown() {
+		wp_set_current_user( self::factory()->user->create( array( 'role' => 'subscriber' ) ) );
+
+		$_POST = array(
+			'action'  => '-1',
+			'action2' => 'download',
+			'backups' => array( 'a_-_1700000000_-_db.sql' ),
+		);
+
+		try {
+			// Getting as far as the capability check proves action2 was read.
+			$this->expectException( 'WPDieException' );
+			DBManager_Backups::maybe_download();
+		} finally {
+			$_POST = array();
+		}
 	}
 
 	/**
@@ -301,8 +333,8 @@ class Test_DBManager_Backups extends DBManager_TestCase {
 		wp_set_current_user( self::factory()->user->create( array( 'role' => 'subscriber' ) ) );
 
 		$_POST = array(
-			'do'            => 'Download',
-			'database_file' => 'a_-_1700000000_-_db.sql',
+			'action'  => 'download',
+			'backups' => array( 'a_-_1700000000_-_db.sql' ),
 		);
 
 		try {

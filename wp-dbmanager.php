@@ -46,6 +46,8 @@ require_once WP_DBMANAGER_DIR . 'includes/class-dbmanager-folder.php';
 require_once WP_DBMANAGER_DIR . 'includes/class-dbmanager-mailer.php';
 require_once WP_DBMANAGER_DIR . 'includes/class-dbmanager-cron.php';
 require_once WP_DBMANAGER_DIR . 'includes/class-dbmanager-admin.php';
+require_once WP_DBMANAGER_DIR . 'includes/class-dbmanager-backups-table.php';
+require_once WP_DBMANAGER_DIR . 'includes/class-dbmanager-tables-table.php';
 require_once WP_DBMANAGER_DIR . 'includes/class-dbmanager-screens.php';
 require_once WP_DBMANAGER_DIR . 'includes/class-dbmanager-settings.php';
 require_once WP_DBMANAGER_DIR . 'includes/class-dbmanager.php';

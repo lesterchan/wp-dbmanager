@@ -198,7 +198,7 @@ class Test_DBManager_Plugin extends DBManager_TestCase {
 	 */
 	public function test_directories_are_guarded() {
 		foreach ( array( '', 'includes/', 'tests/' ) as $dir ) {
-			$this->assertFileExists( WP_DBMANAGER_DIR . $dir . 'index.php', $dir ?: 'plugin root' );
+			$this->assertFileExists( WP_DBMANAGER_DIR . $dir . 'index.php', '' !== $dir ? $dir : 'plugin root' );
 		}
 	}
 
