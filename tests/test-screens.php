@@ -62,7 +62,7 @@ class Test_DBManager_Screens extends DBManager_TestCase {
 	/**
 	 * A completed save is confirmed on screen.
 	 *
-	 * options.php stores its "Settings saved." notice in a transient under the
+	 * Core stores its "Settings saved." notice in a transient under the
 	 * 'general' slug, not under the option being saved, so a settings_errors()
 	 * call scoped to the option name renders validation errors and drops the
 	 * confirmation. The screen then saves correctly and tells the user nothing,
@@ -180,6 +180,141 @@ class Test_DBManager_Screens extends DBManager_TestCase {
 				'0/1',
 			),
 		);
+	}
+
+	/**
+	 * The manage screen lists the backups that are there.
+	 */
+	public function test_the_manage_screen_lists_backups() {
+		$name = str_repeat( 'c', 32 ) . '_-_1700000000_-_sitedb.sql';
+		file_put_contents( $this->backup_dir . '/' . $name, 'SOME SQL' );
+
+		$html = $this->render( array( 'DBManager_Screens', 'manage' ) );
+
+		$this->assertScreenIsClean( $html );
+		$this->assertStringContainsString( str_repeat( 'c', 32 ), $html, 'The checksum column is empty.' );
+		$this->assertStringContainsString( 'sitedb.sql', $html );
+		$this->assertStringContainsString( '1 Backup File', $html );
+		$this->assertStringNotContainsString( 'There Are No Database Backup Files Available.', $html );
+	}
+
+	/**
+	 * An empty folder says so rather than rendering a bare table.
+	 */
+	public function test_the_manage_screen_reports_an_empty_folder() {
+		$html = $this->render( array( 'DBManager_Screens', 'manage' ) );
+
+		$this->assertStringContainsString( 'There Are No Database Backup Files Available.', $html );
+	}
+
+	/**
+	 * Deleting a selected backup removes it and says so.
+	 */
+	public function test_deleting_a_backup_removes_the_file() {
+		$name = str_repeat( 'd', 32 ) . '_-_1700000000_-_sitedb.sql';
+		$path = $this->backup_dir . '/' . $name;
+		file_put_contents( $path, 'SOME SQL' );
+
+		$html = $this->render(
+			array( 'DBManager_Screens', 'manage' ),
+			array(
+				'do'            => 'Delete',
+				'database_file' => $name,
+				'_wpnonce'      => wp_create_nonce( 'wp-dbmanager_manage' ),
+			)
+		);
+
+		$this->assertScreenIsClean( $html );
+		$this->assertStringContainsString( 'Deleted Successfully', $html );
+		$this->assertFileDoesNotExist( $path );
+	}
+
+	/**
+	 * Deleting something that is not there reports rather than pretending.
+	 */
+	public function test_deleting_a_missing_backup_reports_it() {
+		$html = $this->render(
+			array( 'DBManager_Screens', 'manage' ),
+			array(
+				'do'            => 'Delete',
+				'database_file' => 'nothing_-_1700000000_-_sitedb.sql',
+				'_wpnonce'      => wp_create_nonce( 'wp-dbmanager_manage' ),
+			)
+		);
+
+		$this->assertStringContainsString( 'Invalid Database Backup File', $html );
+	}
+
+	/**
+	 * E-mailing a selected backup reports where it went.
+	 */
+	public function test_emailing_a_backup_reports_the_recipient() {
+		add_filter( 'pre_wp_mail', '__return_true' );
+
+		$name = str_repeat( 'e', 32 ) . '_-_1700000000_-_sitedb.sql';
+		file_put_contents( $this->backup_dir . '/' . $name, 'SOME SQL' );
+
+		$html = $this->render(
+			array( 'DBManager_Screens', 'manage' ),
+			array(
+				'do'            => 'E-Mail',
+				'database_file' => $name,
+				'email_to'      => 'someone@example.com',
+				'_wpnonce'      => wp_create_nonce( 'wp-dbmanager_manage' ),
+			)
+		);
+
+		$this->assertScreenIsClean( $html );
+		$this->assertStringContainsString( 'someone@example.com', $html );
+		$this->assertStringContainsString( 'Successfully E-Mailed', $html );
+	}
+
+	/**
+	 * A submission without a valid nonce is refused.
+	 *
+	 * These screens drop tables and restore databases, so this matters.
+	 *
+	 * @dataProvider data_nonce_screens
+	 *
+	 * @param string $method Screen renderer.
+	 * @param array  $post   Request body carrying a wrong nonce.
+	 */
+	public function test_a_bad_nonce_is_refused( $method, $post ) {
+		$post['_wpnonce'] = 'not-a-real-nonce';
+
+		$this->expectException( 'WPDieException' );
+
+		$this->render( array( 'DBManager_Screens', $method ), $post );
+	}
+
+	/**
+	 * Screens whose POST handler must be nonce-protected.
+	 *
+	 * @return array
+	 */
+	public function data_nonce_screens() {
+		return array(
+			'manage'   => array( 'manage', array( 'do' => 'Delete' ) ),
+			'optimize' => array( 'optimize', array( 'do' => 'Optimize' ) ),
+			'repair'   => array( 'repair', array( 'do' => 'Repair' ) ),
+			'empty'    => array( 'empty_tables', array( 'do' => 'Empty/Drop' ) ),
+			'run'      => array( 'run', array( 'do' => 'Run' ) ),
+			'backup'   => array( 'backup', array( 'do' => 'Backup' ) ),
+		);
+	}
+
+	/**
+	 * The information screen lists the tables and totals them.
+	 */
+	public function test_the_information_screen_totals_the_tables() {
+		global $wpdb;
+
+		$html = $this->render( array( 'DBManager_Screens', 'manager' ) );
+
+		$this->assertStringContainsString( $wpdb->posts, $html );
+		$this->assertStringContainsString( 'Total:', $html );
+		$this->assertMatchesRegularExpression( '/[0-9,]+ Tables?/', $html );
+		$this->assertStringContainsString( DB_NAME, $html );
 	}
 
 	/**

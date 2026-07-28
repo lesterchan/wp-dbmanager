@@ -159,6 +159,119 @@ class Test_DBManager_Folder extends DBManager_TestCase {
 	}
 
 	/**
+	 * IIS is recognised, everything else is not.
+	 */
+	public function test_is_iis() {
+		$this->pretend_server( 'Microsoft-IIS/10.0' );
+		$this->assertTrue( DBManager_Folder::is_iis() );
+
+		$this->pretend_server( 'nginx/1.24.0' );
+		$this->assertFalse( DBManager_Folder::is_iis() );
+	}
+
+	/**
+	 * The probe asks for a real backup when there is one.
+	 *
+	 * That is the exact question worth answering: can somebody download the
+	 * dump? Asking for .htaccess instead reads as a false all-clear on the many
+	 * nginx configs that deny dotfiles while happily serving .sql.
+	 */
+	public function test_the_probe_prefers_a_real_backup() {
+		$method = new ReflectionMethod( 'DBManager_Folder', 'probe_target' );
+		$method->setAccessible( true );
+
+		// Nothing at all to ask for.
+		$this->assertSame( '', $method->invoke( null, $this->backup_dir ) );
+
+		// Only the silence guard.
+		file_put_contents( $this->backup_dir . '/index.php', '<?php' );
+		$this->assertSame( 'index.php', $method->invoke( null, $this->backup_dir ) );
+
+		// A real dump wins.
+		$name = str_repeat( 'f', 32 ) . '_-_1700000000_-_db.sql';
+		file_put_contents( $this->backup_dir . '/' . $name, 'SOME SQL' );
+		$this->assertSame( $name, $method->invoke( null, $this->backup_dir ) );
+	}
+
+	/**
+	 * The fix link ignores requests that are not asking for a fix.
+	 */
+	public function test_maybe_fix_ignores_other_requests() {
+		$_GET = array();
+		$this->assertNull( DBManager_Folder::maybe_fix() );
+
+		$_GET = array( 'try_fix' => '0' );
+		$this->assertNull( DBManager_Folder::maybe_fix() );
+
+		$_GET = array();
+	}
+
+	/**
+	 * The fix link needs the capability.
+	 */
+	public function test_maybe_fix_requires_the_capability() {
+		wp_set_current_user( self::factory()->user->create( array( 'role' => 'subscriber' ) ) );
+
+		$_GET = array( 'try_fix' => '1' );
+
+		try {
+			$this->expectException( 'WPDieException' );
+			DBManager_Folder::maybe_fix();
+		} finally {
+			$_GET = array();
+		}
+	}
+
+	/**
+	 * The fix link needs a valid nonce even from an administrator.
+	 */
+	public function test_maybe_fix_requires_a_nonce() {
+		$_GET = array(
+			'try_fix'  => '1',
+			'_wpnonce' => 'not-a-real-nonce',
+		);
+
+		try {
+			$this->expectException( 'WPDieException' );
+			DBManager_Folder::maybe_fix();
+		} finally {
+			$_GET = array();
+		}
+	}
+
+	/**
+	 * A proper request recreates the folder and forgets the cached verdict.
+	 */
+	public function test_maybe_fix_recreates_the_folder() {
+		$fresh = WP_CONTENT_DIR . '/wp-dbmanager-fix-' . wp_generate_password( 8, false );
+
+		$options         = DBManager_Options::get();
+		$options['path'] = $fresh;
+		update_option( DBManager_Options::OPTION, $options );
+
+		set_transient( DBManager_Folder::TRANSIENT, 'public', HOUR_IN_SECONDS );
+
+		$this->pretend_server( 'Apache/2.4.57' );
+
+		// check_admin_referer() reads the nonce out of $_REQUEST, not $_GET.
+		$_GET     = array(
+			'try_fix'  => '1',
+			'_wpnonce' => wp_create_nonce( 'wp-dbmanager_fix' ),
+		);
+		$_REQUEST = $_GET;
+
+		DBManager_Folder::maybe_fix();
+		$_GET     = array();
+		$_REQUEST = array();
+
+		$this->assertDirectoryExists( $fresh );
+		$this->assertFileExists( $fresh . '/index.php' );
+		$this->assertFalse( get_transient( DBManager_Folder::TRANSIENT ), 'The stale verdict survived the fix.' );
+
+		self::remove_directory( $fresh );
+	}
+
+	/**
 	 * On IIS the Web.config goes in instead of the .htaccess.
 	 */
 	public function test_create_uses_web_config_on_iis() {

@@ -38,11 +38,17 @@ class DBManager_Backups {
 	/**
 	 * The extension of a file name, without the dot.
 	 *
+	 * The false check is not decoration. strrchr() returns false for a name with
+	 * no dot in it, and substr( '', 1 ) then returns false on PHP 7.4 but '' on
+	 * PHP 8 - so without this the return type depended on the PHP version.
+	 *
 	 * @param string $file_name File name.
 	 * @return string
 	 */
 	public static function file_ext( $file_name ) {
-		return substr( strrchr( $file_name, '.' ), 1 );
+		$dot = strrchr( $file_name, '.' );
+
+		return false === $dot ? '' : substr( $dot, 1 );
 	}
 
 	/**

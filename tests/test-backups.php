@@ -221,6 +221,99 @@ class Test_DBManager_Backups extends DBManager_TestCase {
 	}
 
 	/**
+	 * Extensions are read off the end of the name.
+	 */
+	public function test_file_ext() {
+		$this->assertSame( 'sql', DBManager_Backups::file_ext( 'a_-_1700000000_-_db.sql' ) );
+		$this->assertSame( 'gz', DBManager_Backups::file_ext( 'a_-_1700000000_-_db.sql.gz' ) );
+		$this->assertSame( '', DBManager_Backups::file_ext( 'noextension' ) );
+	}
+
+	/**
+	 * Files sort by time, and ties break on the name so neither disappears.
+	 */
+	public function test_compare_orders_by_time_then_name() {
+		$older = array(
+			'name'  => 'z',
+			'mtime' => 100,
+		);
+		$newer = array(
+			'name'  => 'a',
+			'mtime' => 200,
+		);
+
+		$this->assertLessThan( 0, DBManager_Backups::compare( $older, $newer ) );
+		$this->assertGreaterThan( 0, DBManager_Backups::compare( $newer, $older ) );
+
+		$same_a = array(
+			'name'  => 'a',
+			'mtime' => 100,
+		);
+		$same_b = array(
+			'name'  => 'b',
+			'mtime' => 100,
+		);
+
+		$this->assertLessThan( 0, DBManager_Backups::compare( $same_a, $same_b ) );
+		$this->assertSame( 0, DBManager_Backups::compare( $same_a, $same_a ) );
+	}
+
+	/**
+	 * Parsing a file adds its size and location to the parsed name.
+	 */
+	public function test_parse_file_adds_size_and_path() {
+		$path = $this->make_backup( str_repeat( 'b', 32 ) . '_-_1700000000_-_db.sql', null, 'SOME SQL' );
+
+		$file = DBManager_Backups::parse_file( $path );
+
+		$this->assertSame( 8, $file['size'] );
+		$this->assertSame( $this->backup_dir, $file['path'] );
+		$this->assertStringContainsString( 'bytes', $file['formatted_size'] );
+		$this->assertSame( str_repeat( 'b', 32 ), $file['checksum'] );
+	}
+
+	/**
+	 * The download endpoint ignores requests that are not its own.
+	 *
+	 * The successful branch ends in exit(), which would take the runner with it,
+	 * so it is driven over HTTP by the golden-master harness instead. What is
+	 * checked here is everything that decides whether to get that far.
+	 */
+	public function test_download_ignores_other_requests() {
+		$_POST = array();
+		$this->assertNull( DBManager_Backups::maybe_download() );
+
+		$_POST = array( 'do' => 'Backup' );
+		$this->assertNull( DBManager_Backups::maybe_download() );
+
+		$_POST = array( 'do' => 'Download' );
+		$this->assertNull( DBManager_Backups::maybe_download(), 'A Download with no file selected should fall through.' );
+
+		$_POST = array();
+	}
+
+	/**
+	 * The download endpoint refuses a user without the capability.
+	 *
+	 * It is on init, so it answers before any admin screen has had a say.
+	 */
+	public function test_download_requires_the_capability() {
+		wp_set_current_user( self::factory()->user->create( array( 'role' => 'subscriber' ) ) );
+
+		$_POST = array(
+			'do'            => 'Download',
+			'database_file' => 'a_-_1700000000_-_db.sql',
+		);
+
+		try {
+			$this->expectException( 'WPDieException' );
+			DBManager_Backups::maybe_download();
+		} finally {
+			$_POST = array();
+		}
+	}
+
+	/**
 	 * An empty backup folder is still a valid one.
 	 *
 	 * The old check tried to reject it, which would have stopped scheduled

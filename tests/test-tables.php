@@ -156,6 +156,48 @@ class Test_DBManager_Tables extends DBManager_TestCase {
 	}
 
 	/**
+	 * Status rows carry the columns the information screen prints.
+	 *
+	 * These come back with MySQL's own capitalisation, which is why the plugin
+	 * cannot rename them to snake_case.
+	 */
+	public function test_status_returns_the_columns_the_screen_uses() {
+		$rows = DBManager_Tables::status();
+
+		$this->assertNotEmpty( $rows );
+
+		$row = $rows[0];
+
+		foreach ( array( 'Name', 'Rows', 'Data_length', 'Index_length', 'Data_free' ) as $column ) {
+			// property_exists() rather than assertObjectHasAttribute(), which is
+			// deprecated in PHPUnit 9.6 and gone in 10.
+			$this->assertTrue( property_exists( $row, $column ), $column );
+		}
+	}
+
+	/**
+	 * The server version is reported.
+	 */
+	public function test_version_is_reported() {
+		$version = DBManager_Tables::version();
+
+		$this->assertNotEmpty( $version );
+		$this->assertMatchesRegularExpression( '/^\d+\.\d+/', $version );
+	}
+
+	/**
+	 * The scratch table is among the tables listed.
+	 */
+	public function test_all_lists_the_real_tables() {
+		global $wpdb;
+
+		$tables = DBManager_Tables::all();
+
+		$this->assertContains( $this->scratch, $tables );
+		$this->assertContains( $wpdb->posts, $tables );
+	}
+
+	/**
 	 * The console classifies statements the way the screen reports them.
 	 *
 	 * @dataProvider data_statements

@@ -206,6 +206,158 @@ class Test_DBManager_Cron extends DBManager_TestCase {
 	}
 
 	/**
+	 * A disabled optimize job leaves the tables alone.
+	 */
+	public function test_a_disabled_optimize_job_does_nothing() {
+		$this->save( array( 'optimize_period' => 0 ) );
+
+		$ran = 0;
+		add_filter(
+			'query',
+			function ( $query ) use ( &$ran ) {
+				if ( 0 === stripos( $query, 'OPTIMIZE TABLE' ) ) {
+					++$ran;
+				}
+				return $query;
+			}
+		);
+
+		DBManager_Cron::optimize();
+
+		$this->assertSame( 0, $ran );
+	}
+
+	/**
+	 * An enabled optimize job runs against every table.
+	 */
+	public function test_an_enabled_optimize_job_runs() {
+		$this->save( array( 'optimize_period' => 3600 ) );
+
+		$seen = '';
+		add_filter(
+			'query',
+			function ( $query ) use ( &$seen ) {
+				if ( 0 === stripos( $query, 'OPTIMIZE TABLE' ) ) {
+					$seen = $query;
+				}
+				return $query;
+			}
+		);
+
+		DBManager_Cron::optimize();
+
+		$this->assertStringContainsString( 'OPTIMIZE TABLE', $seen );
+		$this->assertStringContainsString( $GLOBALS['wpdb']->posts, $seen );
+	}
+
+	/**
+	 * A disabled repair job leaves the tables alone.
+	 */
+	public function test_a_disabled_repair_job_does_nothing() {
+		$this->save( array( 'repair_period' => 0 ) );
+
+		$ran = 0;
+		add_filter(
+			'query',
+			function ( $query ) use ( &$ran ) {
+				if ( 0 === stripos( $query, 'REPAIR TABLE' ) ) {
+					++$ran;
+				}
+				return $query;
+			}
+		);
+
+		DBManager_Cron::repair();
+
+		$this->assertSame( 0, $ran );
+	}
+
+	/**
+	 * An enabled repair job runs against every table.
+	 */
+	public function test_an_enabled_repair_job_runs() {
+		$this->save( array( 'repair_period' => 604800 ) );
+
+		$seen = '';
+		add_filter(
+			'query',
+			function ( $query ) use ( &$seen ) {
+				if ( 0 === stripos( $query, 'REPAIR TABLE' ) ) {
+					$seen = $query;
+				}
+				return $query;
+			}
+		);
+
+		DBManager_Cron::repair();
+
+		$this->assertStringContainsString( 'REPAIR TABLE', $seen );
+	}
+
+	/**
+	 * A successful scheduled backup e-mails when an address is configured.
+	 *
+	 * @group requires-mysqldump
+	 */
+	public function test_a_successful_scheduled_backup_mails() {
+		if ( ! is_executable( $this->mysqldump_path() ) ) {
+			$this->markTestSkipped( 'mysqldump is not available in this environment.' );
+		}
+
+		$mails = 0;
+		add_filter(
+			'pre_wp_mail',
+			function () use ( &$mails ) {
+				++$mails;
+				return true;
+			}
+		);
+
+		$this->save(
+			array(
+				'backup_period' => 86400,
+				'backup_email'  => 'someone@example.com',
+			)
+		);
+
+		DBManager_Cron::backup();
+
+		$this->assertSame( 1, $mails );
+	}
+
+	/**
+	 * With no address configured, a successful backup is silent.
+	 *
+	 * @group requires-mysqldump
+	 */
+	public function test_a_successful_backup_without_an_address_is_silent() {
+		if ( ! is_executable( $this->mysqldump_path() ) ) {
+			$this->markTestSkipped( 'mysqldump is not available in this environment.' );
+		}
+
+		$mails = 0;
+		add_filter(
+			'pre_wp_mail',
+			function () use ( &$mails ) {
+				++$mails;
+				return true;
+			}
+		);
+
+		$this->save(
+			array(
+				'backup_period' => 86400,
+				'backup_email'  => '',
+			)
+		);
+
+		DBManager_Cron::backup();
+
+		$this->assertCount( 1, DBManager_Backups::all( $this->backup_dir ) );
+		$this->assertSame( 0, $mails );
+	}
+
+	/**
 	 * A failed scheduled backup sends no e-mail.
 	 *
 	 * The pre-3.0.0 job renamed and mailed whatever was on disk, so a dump that

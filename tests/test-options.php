@@ -82,6 +82,23 @@ class Test_DBManager_Options extends DBManager_TestCase {
 	}
 
 	/**
+	 * The backup path helper always hands back a string.
+	 *
+	 * Callers concatenate it straight into a file path, so a null from a
+	 * half-written option row would become "/index.php" at the filesystem root.
+	 */
+	public function test_backup_path_is_always_a_string() {
+		$this->assertIsString( DBManager_Options::backup_path() );
+		$this->assertSame( DBManager_Options::get( 'path' ), DBManager_Options::backup_path() );
+
+		update_option( DBManager_Options::OPTION, array( 'path' => '/somewhere/else' ) );
+		$this->assertSame( '/somewhere/else', DBManager_Options::backup_path() );
+
+		update_option( DBManager_Options::OPTION, 'not an array' );
+		$this->assertIsString( DBManager_Options::backup_path() );
+	}
+
+	/**
 	 * Writing and reading round-trips.
 	 */
 	public function test_update_round_trips() {

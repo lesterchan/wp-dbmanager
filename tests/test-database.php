@@ -295,6 +295,110 @@ class Test_DBManager_Database extends DBManager_TestCase {
 	}
 
 	/**
+	 * Detection returns both binaries without throwing.
+	 */
+	public function test_detect_binaries_returns_both_keys() {
+		$paths = DBManager_Database::detect_binaries();
+
+		$this->assertArrayHasKey( 'mysql', $paths );
+		$this->assertArrayHasKey( 'mysqldump', $paths );
+		$this->assertIsString( $paths['mysql'] );
+		$this->assertIsString( $paths['mysqldump'] );
+	}
+
+	/**
+	 * A function that exists is not reported as disabled.
+	 */
+	public function test_is_function_disabled() {
+		$this->assertFalse( DBManager_Database::is_function_disabled( 'strlen' ) );
+
+		$disabled = array_filter( array_map( 'trim', explode( ',', ini_get( 'disable_functions' ) ) ) );
+
+		if ( empty( $disabled ) ) {
+			$this->assertFalse( DBManager_Database::is_function_disabled( 'passthru' ) );
+			return;
+		}
+
+		$this->assertTrue( DBManager_Database::is_function_disabled( reset( $disabled ) ) );
+	}
+
+	/**
+	 * An empty gzip stream is recognised as containing nothing.
+	 *
+	 * gzip produces exactly this from a mysqldump that wrote nothing, and it is
+	 * a valid, non-empty file - which is how it used to get through.
+	 */
+	public function test_an_empty_gzip_stream_has_no_content() {
+		$path = $this->backup_dir . '/empty.sql.gz';
+		file_put_contents( $path, gzencode( '' ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents
+
+		$this->assertGreaterThan( 0, filesize( $path ), 'An empty gzip stream is still a non-empty file.' );
+
+		$method = new ReflectionMethod( 'DBManager_Database', 'dump_has_content' );
+		$method->setAccessible( true );
+
+		$this->assertFalse( $method->invoke( null, $path, true ) );
+	}
+
+	/**
+	 * A gzip stream with SQL in it is recognised as real.
+	 */
+	public function test_a_real_gzip_stream_has_content() {
+		$path = $this->backup_dir . '/real.sql.gz';
+		file_put_contents( $path, gzencode( "-- MariaDB dump\nCREATE TABLE x (id INT);\n" ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents
+
+		$method = new ReflectionMethod( 'DBManager_Database', 'dump_has_content' );
+		$method->setAccessible( true );
+
+		$this->assertTrue( $method->invoke( null, $path, true ) );
+	}
+
+	/**
+	 * Whitespace alone does not count as a dump.
+	 */
+	public function test_a_whitespace_only_dump_has_no_content() {
+		$path = $this->backup_dir . '/blank.sql.gz';
+		file_put_contents( $path, gzencode( "\n\n   \n" ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents
+
+		$method = new ReflectionMethod( 'DBManager_Database', 'dump_has_content' );
+		$method->setAccessible( true );
+
+		$this->assertFalse( $method->invoke( null, $path, true ) );
+	}
+
+	/**
+	 * The uncompressed case still goes on size, and a missing file is not one.
+	 */
+	public function test_plain_dump_content_is_judged_on_size() {
+		$method = new ReflectionMethod( 'DBManager_Database', 'dump_has_content' );
+		$method->setAccessible( true );
+
+		$empty = $this->backup_dir . '/empty.sql';
+		file_put_contents( $empty, '' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents
+		$this->assertFalse( $method->invoke( null, $empty, false ) );
+
+		$real = $this->backup_dir . '/real.sql';
+		file_put_contents( $real, 'CREATE TABLE x (id INT);' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents
+		$this->assertTrue( $method->invoke( null, $real, false ) );
+
+		$this->assertFalse( $method->invoke( null, $this->backup_dir . '/missing.sql', false ) );
+	}
+
+	/**
+	 * execute() refuses to run anything when a path is unusable.
+	 */
+	public function test_execute_refuses_an_invalid_configuration() {
+		$options                  = DBManager_Options::get();
+		$options['mysqldumppath'] = 'mysqldump; id';
+		update_option( DBManager_Options::OPTION, $options );
+
+		$result = DBManager_Database::execute( 'true' );
+
+		$this->assertIsString( $result, 'A path error should come back as a message, not an exit code.' );
+		$this->assertStringContainsString( 'not a valid mysqldump path', $result );
+	}
+
+	/**
 	 * A restore against an unusable path reports rather than pretending.
 	 */
 	public function test_restore_refuses_an_invalid_configuration() {
