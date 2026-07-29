@@ -22,7 +22,7 @@ class WP_DBManager_Folder {
 	/**
 	 * Transient holding the cached reachability answer.
 	 */
-	const TRANSIENT = 'dbmanager_backup_folder_public';
+	const TRANSIENT = 'wp_dbmanager_backup_folder_public';
 
 	/**
 	 * Identify the web server.

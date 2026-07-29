@@ -11,10 +11,84 @@
 class Test_DBManager_Options extends WP_DBManager_TestCase {
 
 	/**
-	 * The plugin owns exactly one row.
+	 * The plugin owns one settings row and one markers row, both prefixed.
 	 */
-	public function test_there_is_one_option_row() {
-		$this->assertSame( 'dbmanager_options', WP_DBManager_Options::OPTION );
+	public function test_the_two_row_names_are_prefixed() {
+		$this->assertSame( 'wp_dbmanager_options', WP_DBManager_Options::OPTION );
+		$this->assertSame( 'wp_dbmanager_version', WP_DBManager_Options::VERSION );
+	}
+
+	/**
+	 * The pre-4.0.0 settings row is folded into the new one and removed.
+	 */
+	public function test_the_legacy_settings_row_is_migrated_and_deleted() {
+		delete_option( WP_DBManager_Options::OPTION );
+		delete_option( WP_DBManager_Options::VERSION );
+
+		update_option( WP_DBManager_Options::LEGACY_OPTION, array( 'max_backup' => 17 ) );
+
+		WP_DBManager_Options::maybe_upgrade();
+
+		$this->assertFalse( get_option( WP_DBManager_Options::LEGACY_OPTION ), 'dbmanager_options must not survive the migration.' );
+		$this->assertSame( 17, WP_DBManager_Options::get( 'max_backup' ), 'The migrated value was lost.' );
+		$this->assertArrayHasKey( 'backup_period', get_option( WP_DBManager_Options::OPTION ), 'The migrated row must carry the defaults too.' );
+	}
+
+	/**
+	 * The migration records both markers and then stops doing any work.
+	 */
+	public function test_the_markers_are_written_once_and_then_left_alone() {
+		delete_option( WP_DBManager_Options::VERSION );
+
+		WP_DBManager_Options::maybe_upgrade();
+
+		$this->assertSame(
+			array(
+				'plugin' => WP_DBMANAGER_VERSION,
+				'db'     => WP_DBMANAGER_DB_VERSION,
+			),
+			get_option( WP_DBManager_Options::VERSION ),
+			'The markers row holds the running version and schema counter.'
+		);
+
+		update_option( WP_DBManager_Options::LEGACY_OPTION, array( 'max_backup' => 5 ) );
+
+		WP_DBManager_Options::maybe_upgrade();
+
+		$this->assertSame(
+			array( 'max_backup' => 5 ),
+			get_option( WP_DBManager_Options::LEGACY_OPTION ),
+			'A migration that has already run must not touch anything again.'
+		);
+
+		delete_option( WP_DBManager_Options::LEGACY_OPTION );
+	}
+
+	/**
+	 * A row already written under the new name is not overwritten by the old one.
+	 */
+	public function test_an_existing_new_row_wins_over_the_legacy_one() {
+		delete_option( WP_DBManager_Options::VERSION );
+
+		update_option( WP_DBManager_Options::OPTION, array( 'max_backup' => 8 ) );
+		update_option( WP_DBManager_Options::LEGACY_OPTION, array( 'max_backup' => 99 ) );
+
+		WP_DBManager_Options::maybe_upgrade();
+
+		$this->assertSame( 8, WP_DBManager_Options::get( 'max_backup' ) );
+		$this->assertFalse( get_option( WP_DBManager_Options::LEGACY_OPTION ) );
+	}
+
+	/**
+	 * The markers row never holds anything but the two markers.
+	 */
+	public function test_the_markers_row_holds_exactly_two_keys() {
+		WP_DBManager_Options::maybe_upgrade();
+
+		$keys = array_keys( WP_DBManager_Options::markers() );
+		sort( $keys );
+
+		$this->assertSame( array( 'db', 'plugin' ), $keys );
 	}
 
 	/**

@@ -24,7 +24,7 @@ class Test_DBManager_Uninstall extends WP_DBManager_TestCase {
 	}
 
 	/**
-	 * Make dbmanager_uninstall_site() available.
+	 * Make wp_dbmanager_uninstall_site() available.
 	 *
 	 * The uninstall script guards itself with a bare exit() when WP_UNINSTALL_PLUGIN
 	 * is not defined - which is correct, and which silently takes the whole test
@@ -85,20 +85,43 @@ class Test_DBManager_Uninstall extends WP_DBManager_TestCase {
 	}
 
 	/**
-	 * Uninstalling clears the option, the transient and the cron events.
+	 * Uninstalling clears both rows, the transient and the cron events.
 	 */
 	public function test_uninstall_clears_everything_it_owns() {
 		$this->load_uninstall();
 
 		update_option( WP_DBManager_Options::OPTION, WP_DBManager_Options::defaults() );
+		update_option( WP_DBManager_Options::VERSION, array( 'plugin' => '4.0.0' ) );
 		set_transient( WP_DBManager_Folder::TRANSIENT, 'protected', HOUR_IN_SECONDS );
-		wp_schedule_event( time(), 'daily', 'dbmanager_cron_backup' );
+		wp_schedule_event( time(), 'daily', 'wp_dbmanager_cron_backup' );
 
-		dbmanager_uninstall_site();
+		wp_dbmanager_uninstall_site();
 
 		$this->assertFalse( get_option( WP_DBManager_Options::OPTION ) );
+		$this->assertFalse( get_option( WP_DBManager_Options::VERSION ) );
 		$this->assertFalse( get_transient( WP_DBManager_Folder::TRANSIENT ) );
-		$this->assertFalse( wp_next_scheduled( 'dbmanager_cron_backup' ) );
+		$this->assertFalse( wp_next_scheduled( 'wp_dbmanager_cron_backup' ) );
+	}
+
+	/**
+	 * The rows a pre-4.0.0 install left behind are removed as well.
+	 *
+	 * A site that upgraded and was deleted without the plugin ever loading again
+	 * never got the chance to run the migration, so the old names are still
+	 * uninstall.php's problem.
+	 */
+	public function test_uninstall_clears_the_pre_4_0_0_names_too() {
+		$this->load_uninstall();
+
+		update_option( 'dbmanager_options', array( 'max_backup' => 3 ) );
+		set_transient( 'dbmanager_backup_folder_public', 'protected', HOUR_IN_SECONDS );
+		wp_schedule_event( time(), 'daily', 'dbmanager_cron_repair' );
+
+		wp_dbmanager_uninstall_site();
+
+		$this->assertFalse( get_option( 'dbmanager_options' ) );
+		$this->assertFalse( get_transient( 'dbmanager_backup_folder_public' ) );
+		$this->assertFalse( wp_next_scheduled( 'dbmanager_cron_repair' ) );
 	}
 
 	/**
@@ -113,7 +136,7 @@ class Test_DBManager_Uninstall extends WP_DBManager_TestCase {
 		$backup = $this->backup_dir . '/a_-_1700000000_-_db.sql';
 		file_put_contents( $backup, 'dump' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents
 
-		dbmanager_uninstall_site();
+		wp_dbmanager_uninstall_site();
 
 		$this->assertFileExists( $backup );
 	}

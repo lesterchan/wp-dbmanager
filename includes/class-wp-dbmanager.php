@@ -53,6 +53,12 @@ class WP_DBManager {
 	 * @return void
 	 */
 	public function add_hooks() {
+		// Before anything reads the settings. An activation hook would not do:
+		// it does not run for a plugin that was network-activated before this
+		// version, nor for one dropped into mu-plugins, and once the markers
+		// agree the check costs a single autoloaded read.
+		WP_DBManager_Options::maybe_upgrade();
+
 		WP_DBManager_Cron::init();
 
 		add_filter( 'upload_mimes', array( $this, 'upload_mimes' ) );
@@ -112,6 +118,11 @@ class WP_DBManager {
 
 		$defaults['mysqldumppath'] = $binaries['mysqldump'];
 		$defaults['mysqlpath']     = $binaries['mysql'];
+
+		// Folds in and removes a pre-4.0.0 dbmanager_options row if there is one,
+		// so the add_option() below cannot half-shadow it, and records the
+		// markers whether or not there was anything to migrate.
+		WP_DBManager_Options::maybe_upgrade();
 
 		add_option( WP_DBManager_Options::OPTION, $defaults );
 
