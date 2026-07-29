@@ -107,6 +107,56 @@ class Test_DBManager_Admin extends WP_DBManager_TestCase {
 	}
 
 	/**
+	 * The capability is install_plugins and reaches every check through one filter.
+	 *
+	 * Section 2.7 keeps this plugin's custom capability rather than downgrading it
+	 * to manage_options: these screens restore, empty and drop tables.
+	 */
+	public function test_the_capability_is_filterable_and_defaults_to_install_plugins() {
+		$this->assertSame( 'install_plugins', WP_DBManager_Admin::CAPABILITY );
+		$this->assertSame( 'install_plugins', WP_DBManager_Admin::capability( 'manage' ) );
+
+		$seen = array();
+
+		add_filter(
+			'wp_dbmanager_capability',
+			function ( $capability, $context ) use ( &$seen ) {
+				$seen[] = $context;
+
+				return 'manage_options';
+			},
+			10,
+			2
+		);
+
+		$this->assertSame( 'manage_options', WP_DBManager_Admin::capability( 'download' ) );
+		$this->assertSame( array( 'download' ), $seen, 'The filter is handed the context it is gating.' );
+	}
+
+	/**
+	 * The menu itself asks the filter rather than the constant.
+	 */
+	public function test_the_menu_honours_the_capability_filter() {
+		global $submenu, $menu;
+
+		$menu    = array();
+		$submenu = array();
+
+		add_filter(
+			'wp_dbmanager_capability',
+			static function () {
+				return 'edit_posts';
+			}
+		);
+
+		WP_DBManager_Admin::menu();
+
+		foreach ( $submenu[ WP_DBManager_Admin::pages()['manager'] ] as $entry ) {
+			$this->assertSame( 'edit_posts', $entry[1] );
+		}
+	}
+
+	/**
 	 * The script loads on the plugin's screens and nowhere else.
 	 */
 	public function test_the_script_loads_only_on_our_screens() {

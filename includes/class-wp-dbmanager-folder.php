@@ -250,9 +250,7 @@ class WP_DBManager_Folder {
 			return;
 		}
 
-		if ( ! current_user_can( 'install_plugins' ) ) {
-			wp_die( esc_html__( 'Access Denied', 'wp-dbmanager' ) );
-		}
+		WP_DBManager_Admin::check_capability( 'fix' );
 
 		check_admin_referer( 'wp-dbmanager_fix' );
 

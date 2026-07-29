@@ -26,7 +26,7 @@ class WP_DBManager_Screens {
 	 * @return void
 	 */
 	public static function manager() {
-		WP_DBManager_Admin::check_capability();
+		WP_DBManager_Admin::check_capability( 'manager' );
 
 		$version = WP_DBManager_Tables::version();
 		?>
@@ -84,7 +84,7 @@ class WP_DBManager_Screens {
 	 * @return void
 	 */
 	public static function backup() {
-		WP_DBManager_Admin::check_capability();
+		WP_DBManager_Admin::check_capability( 'backup' );
 
 		$options      = WP_DBManager_Options::get();
 		$current_date = WP_DBManager::format_timestamp( time() );
@@ -373,7 +373,7 @@ class WP_DBManager_Screens {
 	 * @return void
 	 */
 	public static function manage() {
-		WP_DBManager_Admin::check_capability();
+		WP_DBManager_Admin::check_capability( 'manage' );
 
 		$options  = WP_DBManager_Options::get();
 		$messages = array();
@@ -615,7 +615,7 @@ class WP_DBManager_Screens {
 	 * @return void
 	 */
 	protected static function render_table_screen( $mode, $title, array $copy = array() ) {
-		WP_DBManager_Admin::check_capability();
+		WP_DBManager_Admin::check_capability( $mode );
 
 		$table  = new WP_DBManager_Tables_Table( $mode );
 		$action = $table->current_action();
@@ -748,7 +748,7 @@ class WP_DBManager_Screens {
 	 * @return void
 	 */
 	public static function run() {
-		WP_DBManager_Admin::check_capability();
+		WP_DBManager_Admin::check_capability( 'run' );
 
 		$messages = array();
 

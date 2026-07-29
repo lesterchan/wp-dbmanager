@@ -233,3 +233,20 @@ The `Backup DB` page requests a file from the folder and reports what the server
 * The most reliable fix on any server is to move the folder outside your web root — set `Path To Backup` under `WP-Admin -> Database -> DB Options` to something like `/var/www/example.com/backup-db`. Nothing is served, so there is nothing to protect.
 * If it has to stay inside the web root, see *Securing The Backup Folder* above. On nginx the bundled `.htaccess` does nothing at all; you need a `location` block.
 * The `Backup DB` page requests a file from the folder and reports what your server actually returned, so it is telling you what a visitor would get rather than guessing. If you have verified it yourself and want the notice gone anyway, set `Hide Admin Notices` to `Yes` under `DB Options`.
+
+## Upgrade Notice
+
+### 4.0.0
+Everything the plugin fires or schedules is now prefixed `wp_dbmanager_`, so that nothing it owns can collide with another plugin.
+
+**The three scheduled jobs have new hook names.** `dbmanager_cron_backup`, `dbmanager_cron_optimize` and `dbmanager_cron_repair` are now `wp_dbmanager_cron_backup`, `wp_dbmanager_cron_optimize` and `wp_dbmanager_cron_repair`, and the recurrences behind them, `dbmanager_backup`, `dbmanager_optimize` and `dbmanager_repair`, are now `wp_dbmanager_backup`, `wp_dbmanager_optimize` and `wp_dbmanager_repair`. You do not have to do anything: the first time the plugin loads after the update it clears the old events and rebuilds the schedule from your `DB Options` settings. Check `WP-Admin -> Database -> DB Options` afterwards and confirm the three "Next ... date" lines look right. If you had `wp_schedule_event()` or a WP-CLI cron entry of your own hanging off the old names, point it at the new ones.
+
+**The `wp_dbmanager_before_escapeshellcmd` action is unchanged.** It was already prefixed and keeps its name.
+
+**There is a new `wp_dbmanager_capability` filter.** WP-DBManager has required the `install_plugins` capability since 2.80.7 and still does — these screens restore, empty and drop tables, so the gate is deliberately as high as installing code. If you need to hand the Database menu to somebody else, filter it in one place rather than editing the plugin:
+
+```php
+add_filter( 'wp_dbmanager_capability', function ( $capability, $context ) {
+	return 'manage_database';
+}, 10, 2 );
+```

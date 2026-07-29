@@ -203,6 +203,8 @@ class WP_DBManager_Database {
 		 *
 		 * Kept from 2.76, where it existed so a site could adjust the
 		 * environment (locale, PATH) that the command inherits.
+		 *
+		 * @since 2.76
 		 */
 		do_action( 'wp_dbmanager_before_escapeshellcmd' );
 

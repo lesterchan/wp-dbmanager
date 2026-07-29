@@ -188,6 +188,10 @@ class WP_DBManager_Options {
 		// prefixed one starts empty rather than inheriting a stale answer.
 		delete_transient( 'dbmanager_backup_folder_public' );
 
+		// The three cron events moved with the hooks, and an event cannot be
+		// renamed in place.
+		WP_DBManager_Cron::migrate();
+
 		update_option(
 			self::VERSION,
 			array(

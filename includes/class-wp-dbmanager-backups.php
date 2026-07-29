@@ -268,9 +268,7 @@ class WP_DBManager_Backups {
 			return;
 		}
 
-		if ( ! current_user_can( 'install_plugins' ) ) {
-			wp_die( esc_html__( 'Access Denied', 'wp-dbmanager' ) );
-		}
+		WP_DBManager_Admin::check_capability( 'download' );
 
 		check_admin_referer( WP_DBManager_Backups_Table::nonce_action() );
 

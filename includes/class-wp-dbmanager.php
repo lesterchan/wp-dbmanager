@@ -53,13 +53,16 @@ class WP_DBManager {
 	 * @return void
 	 */
 	public function add_hooks() {
-		// Before anything reads the settings. An activation hook would not do:
-		// it does not run for a plugin that was network-activated before this
-		// version, nor for one dropped into mu-plugins, and once the markers
-		// agree the check costs a single autoloaded read.
-		WP_DBManager_Options::maybe_upgrade();
-
+		// Cron first: the migration reschedules the three events, and
+		// wp_schedule_event() will not accept a recurrence that is not registered
+		// by the time it is called.
 		WP_DBManager_Cron::init();
+
+		// An activation hook would not do on its own: it does not run for a
+		// plugin that was network-activated before this version, nor for one
+		// dropped into mu-plugins, and once the markers agree the check costs a
+		// single autoloaded read.
+		WP_DBManager_Options::maybe_upgrade();
 
 		add_filter( 'upload_mimes', array( $this, 'upload_mimes' ) );
 

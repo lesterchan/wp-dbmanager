@@ -90,7 +90,7 @@ class WP_DBManager_Admin {
 	 */
 	public static function menu() {
 		$pages = self::pages();
-		$cap   = self::CAPABILITY;
+		$cap   = self::capability( 'menu' );
 
 		add_menu_page(
 			__( 'Database', 'wp-dbmanager' ),
@@ -205,12 +205,50 @@ class WP_DBManager_Admin {
 	}
 
 	/**
+	 * The capability required for one of the plugin's actions.
+	 *
+	 * Every check in the plugin goes through here, so a site that wants to hand
+	 * the Database screens to somebody who is not an administrator has one place
+	 * to say so, and cannot accidentally loosen one entry point while leaving
+	 * another shut.
+	 *
+	 * @param string $context What is being gated: a page key from pages(), or
+	 *                        one of 'notice', 'download' or 'fix'.
+	 * @return string
+	 */
+	public static function capability( $context = '' ) {
+		/**
+		 * Filters the capability required to reach WP-DBManager.
+		 *
+		 * The default is install_plugins rather than manage_options because
+		 * these screens restore, empty and drop tables.
+		 *
+		 * @since 4.0.0
+		 *
+		 * @param string $capability Capability required.
+		 * @param string $context    What is being gated.
+		 */
+		return apply_filters( 'wp_dbmanager_capability', self::CAPABILITY, $context );
+	}
+
+	/**
+	 * Whether the current user may carry out one of the plugin's actions.
+	 *
+	 * @param string $context What is being gated.
+	 * @return bool
+	 */
+	public static function current_user_can( $context = '' ) {
+		return current_user_can( self::capability( $context ) );
+	}
+
+	/**
 	 * Stop a screen dead unless the current user may be there.
 	 *
+	 * @param string $context Page key from pages().
 	 * @return void
 	 */
-	public static function check_capability() {
-		if ( ! current_user_can( self::CAPABILITY ) ) {
+	public static function check_capability( $context = '' ) {
+		if ( ! self::current_user_can( $context ) ) {
 			wp_die( esc_html__( 'Access Denied', 'wp-dbmanager' ) );
 		}
 	}
@@ -223,7 +261,7 @@ class WP_DBManager_Admin {
 	public static function notices() {
 		// The notice names the backup folder and links to a screen only these
 		// users can reach.
-		if ( ! current_user_can( self::CAPABILITY ) ) {
+		if ( ! self::current_user_can( 'notice' ) ) {
 			return;
 		}
 

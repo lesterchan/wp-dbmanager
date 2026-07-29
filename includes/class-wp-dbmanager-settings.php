@@ -212,7 +212,7 @@ class WP_DBManager_Settings {
 	 * @return void
 	 */
 	public static function render() {
-		WP_DBManager_Admin::check_capability();
+		WP_DBManager_Admin::check_capability( 'options' );
 
 		$option = WP_DBManager_Options::OPTION;
 		$values = WP_DBManager_Options::get();
@@ -293,7 +293,7 @@ class WP_DBManager_Settings {
 				<td>
 					<?php
 					esc_html_e( 'Next backup date: ', 'wp-dbmanager' );
-					self::render_next_run( 'dbmanager_cron_backup' );
+					self::render_next_run( 'wp_dbmanager_cron_backup' );
 					?>
 					<p>
 						<?php self::render_schedule( 'backup', $values ); ?>&nbsp;&nbsp;&nbsp;
@@ -311,7 +311,7 @@ class WP_DBManager_Settings {
 				<td>
 					<?php
 					esc_html_e( 'Next optimize date: ', 'wp-dbmanager' );
-					self::render_next_run( 'dbmanager_cron_optimize' );
+					self::render_next_run( 'wp_dbmanager_cron_optimize' );
 					?>
 					<p><?php self::render_schedule( 'optimize', $values ); ?></p>
 					<p><?php esc_html_e( 'WP-DBManager can automatically optimize your database after a certain period.', 'wp-dbmanager' ); ?></p>
@@ -322,7 +322,7 @@ class WP_DBManager_Settings {
 				<td>
 					<?php
 					esc_html_e( 'Next repair date: ', 'wp-dbmanager' );
-					self::render_next_run( 'dbmanager_cron_repair' );
+					self::render_next_run( 'wp_dbmanager_cron_repair' );
 					?>
 					<p><?php self::render_schedule( 'repair', $values ); ?></p>
 					<p><?php esc_html_e( 'WP-DBManager can automatically repair your database after a certain period.', 'wp-dbmanager' ); ?></p>

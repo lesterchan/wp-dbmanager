@@ -48,9 +48,9 @@ class Test_DBManager_Cron extends WP_DBManager_TestCase {
 
 		$schedules = WP_DBManager_Cron::schedules( array() );
 
-		$this->assertSame( 2 * 86400, $schedules['dbmanager_backup']['interval'] );
-		$this->assertSame( 5 * 3600, $schedules['dbmanager_optimize']['interval'] );
-		$this->assertSame( 4 * 604800, $schedules['dbmanager_repair']['interval'] );
+		$this->assertSame( 2 * 86400, $schedules['wp_dbmanager_backup']['interval'] );
+		$this->assertSame( 5 * 3600, $schedules['wp_dbmanager_optimize']['interval'] );
+		$this->assertSame( 4 * 604800, $schedules['wp_dbmanager_repair']['interval'] );
 	}
 
 	/**
@@ -64,8 +64,8 @@ class Test_DBManager_Cron extends WP_DBManager_TestCase {
 
 		$schedules = WP_DBManager_Cron::schedules( array() );
 
-		$this->assertArrayHasKey( 'dbmanager_backup', $schedules );
-		$this->assertSame( YEAR_IN_SECONDS, $schedules['dbmanager_backup']['interval'] );
+		$this->assertArrayHasKey( 'wp_dbmanager_backup', $schedules );
+		$this->assertSame( YEAR_IN_SECONDS, $schedules['wp_dbmanager_backup']['interval'] );
 	}
 
 	/**
@@ -89,9 +89,9 @@ class Test_DBManager_Cron extends WP_DBManager_TestCase {
 			)
 		);
 
-		$this->assertNotFalse( wp_next_scheduled( 'dbmanager_cron_backup' ) );
-		$this->assertNotFalse( wp_next_scheduled( 'dbmanager_cron_optimize' ) );
-		$this->assertNotFalse( wp_next_scheduled( 'dbmanager_cron_repair' ) );
+		$this->assertNotFalse( wp_next_scheduled( 'wp_dbmanager_cron_backup' ) );
+		$this->assertNotFalse( wp_next_scheduled( 'wp_dbmanager_cron_optimize' ) );
+		$this->assertNotFalse( wp_next_scheduled( 'wp_dbmanager_cron_repair' ) );
 	}
 
 	/**
@@ -99,10 +99,10 @@ class Test_DBManager_Cron extends WP_DBManager_TestCase {
 	 */
 	public function test_disabling_a_job_unschedules_it() {
 		$this->save( array( 'backup_period' => 86400 ) );
-		$this->assertNotFalse( wp_next_scheduled( 'dbmanager_cron_backup' ) );
+		$this->assertNotFalse( wp_next_scheduled( 'wp_dbmanager_cron_backup' ) );
 
 		$this->save( array( 'backup_period' => 0 ) );
-		$this->assertFalse( wp_next_scheduled( 'dbmanager_cron_backup' ) );
+		$this->assertFalse( wp_next_scheduled( 'wp_dbmanager_cron_backup' ) );
 	}
 
 	/**
@@ -113,13 +113,13 @@ class Test_DBManager_Cron extends WP_DBManager_TestCase {
 	 */
 	public function test_a_programmatic_write_reschedules() {
 		$this->save( array( 'optimize_period' => 3600 ) );
-		$first = wp_next_scheduled( 'dbmanager_cron_optimize' );
+		$first = wp_next_scheduled( 'wp_dbmanager_cron_optimize' );
 
 		$this->assertNotFalse( $first );
 
 		$this->save( array( 'optimize_period' => 0 ) );
 
-		$this->assertFalse( wp_next_scheduled( 'dbmanager_cron_optimize' ) );
+		$this->assertFalse( wp_next_scheduled( 'wp_dbmanager_cron_optimize' ) );
 	}
 
 	/**
@@ -134,8 +134,8 @@ class Test_DBManager_Cron extends WP_DBManager_TestCase {
 		$count = 0;
 
 		foreach ( $crons as $events ) {
-			if ( isset( $events['dbmanager_cron_backup'] ) ) {
-				$count += count( $events['dbmanager_cron_backup'] );
+			if ( isset( $events['wp_dbmanager_cron_backup'] ) ) {
+				$count += count( $events['wp_dbmanager_cron_backup'] );
 			}
 		}
 
@@ -159,6 +159,46 @@ class Test_DBManager_Cron extends WP_DBManager_TestCase {
 		foreach ( WP_DBManager_Cron::jobs() as $hook ) {
 			$this->assertFalse( wp_next_scheduled( $hook ), $hook );
 		}
+	}
+
+	/**
+	 * The pre-4.0.0 events are cleared and rebuilt under the prefixed hooks.
+	 *
+	 * An event cannot be renamed in place, so a site upgrading from 3.0.0 would
+	 * otherwise be left with three orphans firing hooks nothing listens to and
+	 * no scheduled backups at all.
+	 */
+	public function test_migrating_moves_the_events_onto_the_prefixed_hooks() {
+		$this->save( array( 'backup_period' => 86400 ) );
+
+		WP_DBManager_Cron::clear();
+		wp_schedule_event( time(), 'hourly', 'dbmanager_cron_backup' );
+
+		WP_DBManager_Cron::migrate();
+
+		$this->assertFalse( wp_next_scheduled( 'dbmanager_cron_backup' ), 'The unprefixed event must be cleared.' );
+		$this->assertNotFalse( wp_next_scheduled( 'wp_dbmanager_cron_backup' ), 'The prefixed event must take its place.' );
+	}
+
+	/**
+	 * Migrating twice does not stack a second event.
+	 */
+	public function test_migrating_twice_leaves_one_event() {
+		$this->save( array( 'backup_period' => 86400 ) );
+
+		WP_DBManager_Cron::migrate();
+		WP_DBManager_Cron::migrate();
+
+		$crons = _get_cron_array();
+		$count = 0;
+
+		foreach ( $crons as $events ) {
+			if ( isset( $events['wp_dbmanager_cron_backup'] ) ) {
+				$count += count( $events['wp_dbmanager_cron_backup'] );
+			}
+		}
+
+		$this->assertSame( 1, $count );
 	}
 
 	/**
