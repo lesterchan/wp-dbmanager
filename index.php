@@ -4,5 +4,3 @@
  *
  * @package WP-DBManager
  */
-
-// Silence is golden.
