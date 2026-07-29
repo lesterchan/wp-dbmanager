@@ -167,10 +167,8 @@ class WP_DBManager_Tables_Table extends WP_List_Table {
 			$items[] = $item;
 		}
 
-		// phpcs:disable WordPress.Security.NonceVerification.Recommended -- Read-only sorting of an admin screen.
-		$orderby = isset( $_GET['orderby'] ) ? sanitize_key( wp_unslash( $_GET['orderby'] ) ) : 'name';
-		$order   = isset( $_GET['order'] ) && 'desc' === strtolower( sanitize_key( wp_unslash( $_GET['order'] ) ) ) ? 'desc' : 'asc';
-		// phpcs:enable WordPress.Security.NonceVerification.Recommended
+		$orderby = WP_DBManager_Admin::sort_arg( 'orderby', 'name' );
+		$order   = 'desc' === WP_DBManager_Admin::sort_arg( 'order', 'asc' ) ? 'desc' : 'asc';
 
 		if ( ! array_key_exists( $orderby, $this->get_sortable_columns() ) ) {
 			$orderby = 'name';
@@ -261,10 +259,8 @@ class WP_DBManager_Tables_Table extends WP_List_Table {
 			return;
 		}
 
-		$columns = count( $this->get_columns() );
-
 		printf(
-			'<tr class="thead"><th>%1$s</th><th>%2$s</th><th>%3$s</th><th>%4$s</th><th>%5$s</th></tr>',
+			'<tr class="thead"><th scope="row">%1$s</th><th>%2$s</th><th>%3$s</th><th>%4$s</th><th>%5$s</th></tr>',
 			esc_html(
 				sprintf(
 					/* translators: %s: number of tables. */
@@ -283,7 +279,5 @@ class WP_DBManager_Tables_Table extends WP_List_Table {
 			esc_html( WP_DBManager_Backups::format_size( $this->totals['index'] ) ),
 			esc_html( WP_DBManager_Backups::format_size( $this->totals['overhead'] ) )
 		);
-
-		unset( $columns );
 	}
 }

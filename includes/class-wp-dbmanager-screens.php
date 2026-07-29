@@ -29,46 +29,37 @@ class WP_DBManager_Screens {
 		WP_DBManager_Admin::check_capability( 'manager' );
 
 		$version = WP_DBManager_Tables::version();
+
+		$information = array(
+			__( 'Database Host', 'wp-dbmanager' )    => DB_HOST,
+			__( 'Database Name', 'wp-dbmanager' )    => DB_NAME,
+			__( 'Database User', 'wp-dbmanager' )    => DB_USER,
+			__( 'Database Type', 'wp-dbmanager' )    => 'MYSQL',
+			__( 'Database Version', 'wp-dbmanager' ) => 'v' . $version,
+		);
 		?>
-<!-- Database Information -->
 <div class="wrap">
-	<h2><?php esc_html_e( 'Database', 'wp-dbmanager' ); ?></h2>
-	<h3><?php esc_html_e( 'Database Information', 'wp-dbmanager' ); ?></h3>
-	<br style="clear" />
-	<table class="widefat">
+	<h1><?php esc_html_e( 'Database', 'wp-dbmanager' ); ?></h1>
+
+	<h2><?php esc_html_e( 'Database Information', 'wp-dbmanager' ); ?></h2>
+	<table class="widefat striped">
 		<thead>
 			<tr>
-				<th><?php esc_html_e( 'Setting', 'wp-dbmanager' ); ?></th>
-				<th><?php esc_html_e( 'Value', 'wp-dbmanager' ); ?></th>
+				<th scope="col"><?php esc_html_e( 'Setting', 'wp-dbmanager' ); ?></th>
+				<th scope="col"><?php esc_html_e( 'Value', 'wp-dbmanager' ); ?></th>
 			</tr>
 		</thead>
-		<tr>
-			<td><?php esc_html_e( 'Database Host', 'wp-dbmanager' ); ?></td>
-			<td><?php echo esc_html( DB_HOST ); ?></td>
-		</tr>
-		<tr class="alternate">
-			<td><?php esc_html_e( 'Database Name', 'wp-dbmanager' ); ?></td>
-			<td><?php echo esc_html( DB_NAME ); ?></td>
-		</tr>
-		<tr>
-			<td><?php esc_html_e( 'Database User', 'wp-dbmanager' ); ?></td>
-			<td><?php echo esc_html( DB_USER ); ?></td>
-		</tr>
-		<tr class="alternate">
-			<td><?php esc_html_e( 'Database Type', 'wp-dbmanager' ); ?></td>
-			<td>MYSQL</td>
-		</tr>
-		<tr>
-			<td><?php esc_html_e( 'Database Version', 'wp-dbmanager' ); ?></td>
-			<td>v<?php echo esc_html( $version ); ?></td>
-		</tr>
+		<tbody>
+			<?php foreach ( $information as $label => $value ) : ?>
+			<tr>
+				<td><?php echo esc_html( $label ); ?></td>
+				<td><?php echo esc_html( $value ); ?></td>
+			</tr>
+			<?php endforeach; ?>
+		</tbody>
 	</table>
-</div>
-<p>&nbsp;</p>
 
-<div class="wrap">
-	<h3><?php esc_html_e( 'Tables Information', 'wp-dbmanager' ); ?></h3>
-	<br style="clear" />
+	<h2><?php esc_html_e( 'Tables Information', 'wp-dbmanager' ); ?></h2>
 		<?php
 		$tables = new WP_DBManager_Tables_Table( 'info' );
 		$tables->prepare_items();
@@ -135,13 +126,12 @@ class WP_DBManager_Screens {
 		$has_error         = false;
 		$disabled_function = false;
 
-		WP_DBManager_Admin::render_messages( $messages );
 		?>
-<!-- Checking Backup Status -->
 <div class="wrap">
-	<h2><?php esc_html_e( 'Backup Database', 'wp-dbmanager' ); ?></h2>
-	<h3><?php esc_html_e( 'Checking Security Status', 'wp-dbmanager' ); ?></h3>
-	<p>
+	<h1><?php esc_html_e( 'Backup Database', 'wp-dbmanager' ); ?></h1>
+		<?php WP_DBManager_Admin::render_messages( $messages ); ?>
+
+	<h2><?php esc_html_e( 'Checking Security Status', 'wp-dbmanager' ); ?></h2>
 		<?php
 		$server_type = WP_DBManager_Folder::server_type();
 		$backup_url  = WP_DBManager_Folder::url();
@@ -151,7 +141,7 @@ class WP_DBManager_Screens {
 		$is_public = WP_DBManager_Folder::is_public();
 
 		if ( false === $backup_url ) {
-			printf( '<p style="color: green;">%s</p>', esc_html__( 'Your backup folder is outside the web root, so it cannot be downloaded over HTTP.', 'wp-dbmanager' ) );
+			WP_DBManager_Admin::render_status( 'success', __( 'Your backup folder is outside the web root, so it cannot be downloaded over HTTP.', 'wp-dbmanager' ) );
 		} else {
 			printf(
 				'<p>%s</p>',
@@ -163,207 +153,198 @@ class WP_DBManager_Screens {
 			);
 
 			if ( true === $is_public ) {
-				printf( '<p style="color: red; font-weight: bold;">%s</p>', esc_html__( 'The backup folder responds over HTTP. Anyone who guesses a backup file name can download your entire database.', 'wp-dbmanager' ) );
+				WP_DBManager_Admin::render_status( 'error', __( 'The backup folder responds over HTTP. Anyone who guesses a backup file name can download your entire database.', 'wp-dbmanager' ) );
 				$has_error = true;
 			} elseif ( false === $is_public ) {
-				printf( '<p style="color: green;">%s</p>', esc_html__( 'The backup folder does not respond over HTTP.', 'wp-dbmanager' ) );
+				WP_DBManager_Admin::render_status( 'success', __( 'The backup folder does not respond over HTTP.', 'wp-dbmanager' ) );
 			} else {
-				printf( '<p style="color: red;">%s</p>', esc_html__( 'Could not determine whether the backup folder responds over HTTP. Check it yourself, or move the folder outside the web root.', 'wp-dbmanager' ) );
+				WP_DBManager_Admin::render_status( 'warning', __( 'Could not determine whether the backup folder responds over HTTP. Check it yourself, or move the folder outside the web root.', 'wp-dbmanager' ) );
 				$has_error = true;
 			}
 
 			if ( 'nginx' === $server_type ) {
-				printf( '<p style="color: red;">%s</p>', esc_html__( 'This site runs on nginx, which ignores .htaccess files. No file placed in the backup folder can protect it.', 'wp-dbmanager' ) );
+				WP_DBManager_Admin::render_status( 'error', __( 'This site runs on nginx, which ignores .htaccess files. No file placed in the backup folder can protect it.', 'wp-dbmanager' ) );
 				printf( '<p>%s</p>', esc_html__( 'Move the backup folder outside your web root under DB Options, or add this to your nginx server block:', 'wp-dbmanager' ) );
 				$backup_uri = wp_parse_url( $backup_url, PHP_URL_PATH );
-				echo '<pre style="background: #f6f7f7; border: 1px solid #dcdcde; padding: 8px; display: inline-block;" dir="ltr">location ^~ ' . esc_html( trailingslashit( $backup_uri ) ) . ' { deny all; }</pre>';
+				echo '<pre dir="ltr"><code>location ^~ ' . esc_html( trailingslashit( $backup_uri ) ) . ' { deny all; }</code></pre>';
 			}
 
 			if ( 'iis' === $server_type ) {
-				if ( ! is_file( $backup_path . '/Web.config' ) ) {
+				if ( is_file( $backup_path . '/Web.config' ) ) {
 					/* translators: %s: backup folder path. */
-					printf( '<p style="color: red;">%s</p>', esc_html( sprintf( __( 'Web.config is missing from %s', 'wp-dbmanager' ), $backup_path ) ) );
-					$has_error = true;
+					WP_DBManager_Admin::render_status( 'success', sprintf( __( 'Web.config is present in %s', 'wp-dbmanager' ), $backup_path ) );
 				} else {
 					/* translators: %s: backup folder path. */
-					printf( '<p style="color: green;">%s</p>', esc_html( sprintf( __( 'Web.config is present in %s', 'wp-dbmanager' ), $backup_path ) ) );
+					WP_DBManager_Admin::render_status( 'error', sprintf( __( 'Web.config is missing from %s', 'wp-dbmanager' ), $backup_path ) );
+					$has_error = true;
 				}
 			} elseif ( 'apache' === $server_type ) {
-				if ( ! is_file( $backup_path . '/.htaccess' ) ) {
+				if ( is_file( $backup_path . '/.htaccess' ) ) {
 					/* translators: %s: backup folder path. */
-					printf( '<p style="color: red;">%s</p>', esc_html( sprintf( __( '.htaccess is missing from %s', 'wp-dbmanager' ), $backup_path ) ) );
-					$has_error = true;
+					WP_DBManager_Admin::render_status( 'success', sprintf( __( '.htaccess is present in %s', 'wp-dbmanager' ), $backup_path ) );
 				} else {
 					/* translators: %s: backup folder path. */
-					printf( '<p style="color: green;">%s</p>', esc_html( sprintf( __( '.htaccess is present in %s', 'wp-dbmanager' ), $backup_path ) ) );
+					WP_DBManager_Admin::render_status( 'error', sprintf( __( '.htaccess is missing from %s', 'wp-dbmanager' ), $backup_path ) );
+					$has_error = true;
 				}
 			}
 		}
 
-		if ( ! is_file( $backup_path . '/index.php' ) ) {
+		if ( is_file( $backup_path . '/index.php' ) ) {
 			/* translators: %s: backup folder path. */
-			printf( '<p style="color: red;">%s</p>', esc_html( sprintf( __( 'index.php is missing from %s', 'wp-dbmanager' ), $backup_path ) ) );
-			$has_error = true;
+			WP_DBManager_Admin::render_status( 'success', sprintf( __( 'index.php is present in %s', 'wp-dbmanager' ), $backup_path ) );
 		} else {
 			/* translators: %s: backup folder path. */
-			printf( '<p style="color: green;">%s</p>', esc_html( sprintf( __( 'index.php is present in %s', 'wp-dbmanager' ), $backup_path ) ) );
+			WP_DBManager_Admin::render_status( 'error', sprintf( __( 'index.php is missing from %s', 'wp-dbmanager' ), $backup_path ) );
+			$has_error = true;
 		}
 		?>
-	</p>
-	<h3><?php esc_html_e( 'Checking Backup Status', 'wp-dbmanager' ); ?></h3>
+
+	<h2><?php esc_html_e( 'Checking Backup Status', 'wp-dbmanager' ); ?></h2>
 	<p>
-		<?php esc_html_e( 'Checking Backup Folder', 'wp-dbmanager' ); ?> <span dir="ltr">(<strong><?php echo esc_html( $backup_path ); ?></strong>)</span> ...<br />
+		<?php esc_html_e( 'Checking Backup Folder', 'wp-dbmanager' ); ?> <span dir="ltr">(<strong><?php echo esc_html( $backup_path ); ?></strong>)</span>
+	</p>
 		<?php
 		if ( realpath( $backup_path ) === false ) {
 			/* translators: %s: configured backup folder path. */
-			printf( '<p style="color: red;">%s</p>', esc_html( sprintf( __( '%s is not a valid backup path', 'wp-dbmanager' ), $backup_path ) ) );
+			WP_DBManager_Admin::render_status( 'error', sprintf( __( '%s is not a valid backup path', 'wp-dbmanager' ), $backup_path ) );
 			$has_error = true;
 		} else {
-			if ( @is_dir( $backup_path ) ) {
-				printf( '<p style="color: green;">%s</p>', esc_html__( 'Backup folder exists', 'wp-dbmanager' ) );
+			if ( is_dir( $backup_path ) ) {
+				WP_DBManager_Admin::render_status( 'success', __( 'Backup folder exists', 'wp-dbmanager' ) );
 			} else {
 				/* translators: %s: wp-content directory path. */
-				printf( '<p style="color: red;">%s</p>', esc_html( sprintf( __( 'Backup folder does NOT exist. Please create \'backup-db\' folder in \'%s\' folder and CHMOD it to \'777\' or change the location of the backup folder under DB Option.', 'wp-dbmanager' ), WP_CONTENT_DIR ) ) );
+				WP_DBManager_Admin::render_status( 'error', sprintf( __( 'Backup folder does NOT exist. Please create \'backup-db\' folder in \'%s\' folder and CHMOD it to \'777\' or change the location of the backup folder under DB Option.', 'wp-dbmanager' ), WP_CONTENT_DIR ) );
 				$has_error = true;
 			}
 
-			if ( @is_writable( $backup_path ) ) {
-				printf( '<p style="color: green;">%s</p>', esc_html__( 'Backup folder is writable', 'wp-dbmanager' ) );
+			if ( wp_is_writable( $backup_path ) ) {
+				WP_DBManager_Admin::render_status( 'success', __( 'Backup folder is writable', 'wp-dbmanager' ) );
 			} else {
-				printf( '<p style="color: red;">%s</p>', esc_html__( 'Backup folder is NOT writable. Please CHMOD it to \'777\'.', 'wp-dbmanager' ) );
+				WP_DBManager_Admin::render_status( 'error', __( 'Backup folder is NOT writable. Please CHMOD it to \'777\'.', 'wp-dbmanager' ) );
+				$has_error = true;
+			}
+		}
+
+		if ( WP_DBManager_Database::is_valid_path( $options['mysqldumppath'] ) === 0 ) {
+			/* translators: %s: configured mysqldump path. */
+			WP_DBManager_Admin::render_status( 'error', sprintf( __( '%s is not a valid backup mysqldump path', 'wp-dbmanager' ), $options['mysqldumppath'] ) );
+			$has_error = true;
+		} else {
+			printf(
+				'<p>%1$s <span dir="ltr">(<strong>%2$s</strong>)</span></p>',
+				esc_html__( 'Checking MYSQL Dump Path', 'wp-dbmanager' ),
+				esc_html( $options['mysqldumppath'] )
+			);
+
+			if ( file_exists( $options['mysqldumppath'] ) ) {
+				WP_DBManager_Admin::render_status( 'success', __( 'MYSQL dump path exists.', 'wp-dbmanager' ) );
+			} else {
+				WP_DBManager_Admin::render_status( 'error', __( 'MYSQL dump path does NOT exist. Please check your mysqldump path under DB Options. If uncertain, contact your server administrator.', 'wp-dbmanager' ) );
+				$has_error = true;
+			}
+		}
+
+		if ( WP_DBManager_Database::is_valid_path( $options['mysqlpath'] ) === 0 ) {
+			/* translators: %s: configured mysql path. */
+			WP_DBManager_Admin::render_status( 'error', sprintf( __( '%s is not a valid backup mysql path', 'wp-dbmanager' ), $options['mysqlpath'] ) );
+			$has_error = true;
+		} else {
+			printf(
+				'<p>%1$s <span dir="ltr">(<strong>%2$s</strong>)</span></p>',
+				esc_html__( 'Checking MYSQL Path', 'wp-dbmanager' ),
+				esc_html( $options['mysqlpath'] )
+			);
+
+			if ( file_exists( $options['mysqlpath'] ) ) {
+				WP_DBManager_Admin::render_status( 'success', __( 'MYSQL path exists.', 'wp-dbmanager' ) );
+			} else {
+				WP_DBManager_Admin::render_status( 'error', __( 'MYSQL path does NOT exist. Please check your mysql path under DB Options. If uncertain, contact your server administrator.', 'wp-dbmanager' ) );
 				$has_error = true;
 			}
 		}
 		?>
-	</p>
 	<p>
-		<?php
-		if ( WP_DBManager_Database::is_valid_path( $options['mysqldumppath'] ) === 0 ) {
-			/* translators: %s: configured mysqldump path. */
-			printf( '<p style="color: red;">%s</p>', esc_html( sprintf( __( '%s is not a valid backup mysqldump path', 'wp-dbmanager' ), $options['mysqldumppath'] ) ) );
-			$has_error = true;
-		} elseif ( @file_exists( $options['mysqldumppath'] ) ) {
-			printf(
-				'%1$s <span dir="ltr">(<strong>%2$s</strong>)</span> ...<br />',
-				esc_html__( 'Checking MYSQL Dump Path', 'wp-dbmanager' ),
-				esc_html( $options['mysqldumppath'] )
-			);
-			printf( '<p style="color: green;">%s</p>', esc_html__( 'MYSQL dump path exists.', 'wp-dbmanager' ) );
-		} else {
-			printf( '%s ...<br />', esc_html__( 'Checking MYSQL Dump Path', 'wp-dbmanager' ) );
-			printf( '<p style="color: red;">%s</p>', esc_html__( 'MYSQL dump path does NOT exist. Please check your mysqldump path under DB Options. If uncertain, contact your server administrator.', 'wp-dbmanager' ) );
-			$has_error = true;
-		}
-		?>
+		<?php esc_html_e( 'Checking PHP Functions', 'wp-dbmanager' ); ?> <span dir="ltr">(<strong>passthru()</strong>, <strong>system()</strong> <?php esc_html_e( 'and', 'wp-dbmanager' ); ?> <strong>exec()</strong>)</span>
 	</p>
-	<p>
-		<?php
-		if ( WP_DBManager_Database::is_valid_path( $options['mysqlpath'] ) === 0 ) {
-			/* translators: %s: configured mysql path. */
-			printf( '<p style="color: red;">%s</p>', esc_html( sprintf( __( '%s is not a valid backup mysql path', 'wp-dbmanager' ), $options['mysqlpath'] ) ) );
-			$has_error = true;
-		} elseif ( @file_exists( $options['mysqlpath'] ) ) {
-			printf(
-				'%1$s <span dir="ltr">(<strong>%2$s</strong>)</span> ...<br />',
-				esc_html__( 'Checking MYSQL Path', 'wp-dbmanager' ),
-				esc_html( $options['mysqlpath'] )
-			);
-			printf( '<p style="color: green;">%s</p>', esc_html__( 'MYSQL path exists.', 'wp-dbmanager' ) );
-		} else {
-			printf( '%s ...<br />', esc_html__( 'Checking MYSQL Path', 'wp-dbmanager' ) );
-			printf( '<p style="color: red;">%s</p>', esc_html__( 'MYSQL path does NOT exist. Please check your mysql path under DB Options. If uncertain, contact your server administrator.', 'wp-dbmanager' ) );
-			$has_error = true;
-		}
-		?>
-	</p>
-	<p>
-		<?php esc_html_e( 'Checking PHP Functions', 'wp-dbmanager' ); ?> <span dir="ltr">(<strong>passthru()</strong>, <strong>system()</strong> <?php esc_html_e( 'and', 'wp-dbmanager' ); ?> <strong>exec()</strong>)</span> ...<br />
 		<?php
 		foreach ( array( 'passthru', 'system', 'exec' ) as $function_name ) {
 			if ( WP_DBManager_Database::is_function_disabled( $function_name ) ) {
-				printf(
-					'<p style="color: red;"><span dir="ltr">%1$s()</span> %2$s.</p>',
-					esc_html( $function_name ),
-					esc_html__( 'disabled', 'wp-dbmanager' )
-				);
+				/* translators: %s: PHP function name. */
+				WP_DBManager_Admin::render_status( 'error', sprintf( __( '%s() disabled.', 'wp-dbmanager' ), $function_name ) );
 				$disabled_function = true;
 			} elseif ( ! function_exists( $function_name ) ) {
-				printf(
-					'<p style="color: red;"><span dir="ltr">%1$s()</span> %2$s.</p>',
-					esc_html( $function_name ),
-					esc_html__( 'missing', 'wp-dbmanager' )
-				);
+				/* translators: %s: PHP function name. */
+				WP_DBManager_Admin::render_status( 'error', sprintf( __( '%s() missing.', 'wp-dbmanager' ), $function_name ) );
 				$disabled_function = true;
 			} else {
-				printf(
-					'<p style="color: green;"><span dir="ltr">%1$s()</span> %2$s.</p>',
-					esc_html( $function_name ),
-					esc_html__( 'enabled', 'wp-dbmanager' )
-				);
+				/* translators: %s: PHP function name. */
+				WP_DBManager_Admin::render_status( 'success', sprintf( __( '%s() enabled.', 'wp-dbmanager' ), $function_name ) );
 			}
 		}
-		?>
-	</p>
-	<p>
-		<?php
+
 		if ( $disabled_function ) {
-			printf( '<strong><p style="color: red;">%s</p></strong>', esc_html__( 'I\'m sorry, your server administrator has disabled passthru(), system() and/or exec(), thus you cannot use this plugin. Please find an alternative plugin.', 'wp-dbmanager' ) );
-		} elseif ( ! $has_error ) {
-			printf( '<strong><p style="color: green;">%s</p></strong>', esc_html__( 'Excellent. You Are Good To Go.', 'wp-dbmanager' ) );
+			WP_DBManager_Admin::render_status( 'error', __( 'I\'m sorry, your server administrator has disabled passthru(), system() and/or exec(), thus you cannot use this plugin. Please find an alternative plugin.', 'wp-dbmanager' ) );
+		} elseif ( $has_error ) {
+			WP_DBManager_Admin::render_status( 'error', __( 'Please Rectify The Errors Above Before Proceeding On.', 'wp-dbmanager' ) );
 		} else {
-			printf( '<strong><p style="color: red;">%s</p></strong>', esc_html__( 'Please Rectify The Error Highlighted In Red Before Proceeding On.', 'wp-dbmanager' ) );
+			WP_DBManager_Admin::render_status( 'success', __( 'Excellent. You Are Good To Go.', 'wp-dbmanager' ) );
 		}
 		?>
-	</p>
-	<p><i><?php esc_html_e( 'Note: The checking of backup status is still undergoing testing, it may not be accurate.', 'wp-dbmanager' ); ?></i></p>
-</div>
-<!-- Backup Database -->
-<form method="post" action="<?php echo esc_url( WP_DBManager_Admin::page_url( 'backup' ) ); ?>">
+	<p><em><?php esc_html_e( 'Note: The checking of backup status is still undergoing testing, it may not be accurate.', 'wp-dbmanager' ); ?></em></p>
+
+	<h2><?php esc_html_e( 'Backup Database', 'wp-dbmanager' ); ?></h2>
+	<form method="post" action="<?php echo esc_url( WP_DBManager_Admin::page_url( 'backup' ) ); ?>">
 		<?php wp_nonce_field( 'wp-dbmanager_backup' ); ?>
-	<div class="wrap">
-		<h3><?php esc_html_e( 'Backup Database', 'wp-dbmanager' ); ?></h3>
-		<br style="clear" />
-		<table class="widefat">
+		<table class="widefat striped">
 			<thead>
 				<tr>
-					<th><?php esc_html_e( 'Option', 'wp-dbmanager' ); ?></th>
-					<th><?php esc_html_e( 'Value', 'wp-dbmanager' ); ?></th>
+					<th scope="col"><?php esc_html_e( 'Option', 'wp-dbmanager' ); ?></th>
+					<th scope="col"><?php esc_html_e( 'Value', 'wp-dbmanager' ); ?></th>
 				</tr>
 			</thead>
-			<tr>
-				<th><?php esc_html_e( 'Database Name:', 'wp-dbmanager' ); ?></th>
-				<td><?php echo esc_html( DB_NAME ); ?></td>
-			</tr>
-			<tr style="background-color: #eee;">
-				<th><?php esc_html_e( 'Database Backup To:', 'wp-dbmanager' ); ?></th>
-				<td><span dir="ltr"><?php echo esc_html( $backup_path ); ?></span></td>
-			</tr>
-			<tr>
-				<th><?php esc_html_e( 'Database Backup Date:', 'wp-dbmanager' ); ?></th>
-				<td><?php echo esc_html( WP_DBManager::format_timestamp( $backup_date ) ); ?></td>
-			</tr>
-			<tr style="background-color: #eee;">
-				<th><?php esc_html_e( 'Database Backup File Name:', 'wp-dbmanager' ); ?></th>
-				<td><span dir="ltr"><?php echo esc_html( $backup_filename ); ?></span></td>
-			</tr>
-			<tr>
-				<th><?php esc_html_e( 'Database Backup Type:', 'wp-dbmanager' ); ?></th>
-				<td><?php esc_html_e( 'Full (Structure and Data)', 'wp-dbmanager' ); ?></td>
-			</tr>
-			<tr style="background-color: #eee;">
-				<th><?php esc_html_e( 'MYSQL Dump Location:', 'wp-dbmanager' ); ?></th>
-				<td><span dir="ltr"><?php echo esc_html( $options['mysqldumppath'] ); ?></span></td>
-			</tr>
-			<tr>
-				<th><?php esc_html_e( 'GZIP Database Backup File?', 'wp-dbmanager' ); ?></th>
-				<td><input type="radio" id="gzip-yes" name="gzip" value="1"<?php checked( 1, $backup_gzip ); ?> />&nbsp;<label for="gzip-yes"><?php esc_html_e( 'Yes', 'wp-dbmanager' ); ?></label>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<input type="radio" id="gzip-no" name="gzip" value="0"<?php checked( 0, $backup_gzip ); ?> />&nbsp;<label for="gzip-no"><?php esc_html_e( 'No', 'wp-dbmanager' ); ?></label></td>
-			</tr>
-			<tr>
-				<td colspan="2" align="center"><input type="submit" name="do" value="<?php esc_attr_e( 'Backup', 'wp-dbmanager' ); ?>" class="button" />&nbsp;&nbsp;<input type="button" name="cancel" value="<?php esc_attr_e( 'Cancel', 'wp-dbmanager' ); ?>" class="button" data-dbmanager-back="1" /></td>
-			</tr>
+			<tbody>
+				<tr>
+					<th scope="row"><?php esc_html_e( 'Database Name:', 'wp-dbmanager' ); ?></th>
+					<td><?php echo esc_html( DB_NAME ); ?></td>
+				</tr>
+				<tr>
+					<th scope="row"><?php esc_html_e( 'Database Backup To:', 'wp-dbmanager' ); ?></th>
+					<td><span dir="ltr"><?php echo esc_html( $backup_path ); ?></span></td>
+				</tr>
+				<tr>
+					<th scope="row"><?php esc_html_e( 'Database Backup Date:', 'wp-dbmanager' ); ?></th>
+					<td><?php echo esc_html( WP_DBManager::format_timestamp( $backup_date ) ); ?></td>
+				</tr>
+				<tr>
+					<th scope="row"><?php esc_html_e( 'Database Backup File Name:', 'wp-dbmanager' ); ?></th>
+					<td><span dir="ltr"><?php echo esc_html( $backup_filename ); ?></span></td>
+				</tr>
+				<tr>
+					<th scope="row"><?php esc_html_e( 'Database Backup Type:', 'wp-dbmanager' ); ?></th>
+					<td><?php esc_html_e( 'Full (Structure and Data)', 'wp-dbmanager' ); ?></td>
+				</tr>
+				<tr>
+					<th scope="row"><?php esc_html_e( 'MYSQL Dump Location:', 'wp-dbmanager' ); ?></th>
+					<td><span dir="ltr"><?php echo esc_html( $options['mysqldumppath'] ); ?></span></td>
+				</tr>
+				<tr>
+					<th scope="row"><?php esc_html_e( 'GZIP Database Backup File?', 'wp-dbmanager' ); ?></th>
+					<td>
+						<fieldset>
+							<label for="gzip-yes"><input type="radio" id="gzip-yes" name="gzip" value="1"<?php checked( 1, $backup_gzip ); ?> /> <?php esc_html_e( 'Yes', 'wp-dbmanager' ); ?></label>
+							<label for="gzip-no"><input type="radio" id="gzip-no" name="gzip" value="0"<?php checked( 0, $backup_gzip ); ?> /> <?php esc_html_e( 'No', 'wp-dbmanager' ); ?></label>
+						</fieldset>
+					</td>
+				</tr>
+			</tbody>
 		</table>
-	</div>
-</form>
+		<p class="submit">
+			<input type="submit" name="do" value="<?php esc_attr_e( 'Backup', 'wp-dbmanager' ); ?>" class="button button-primary" />
+			<button type="button" class="button" data-dbmanager-back="1"><?php esc_html_e( 'Cancel', 'wp-dbmanager' ); ?></button>
+		</p>
+	</form>
+</div>
 		<?php
 	}
 
@@ -393,8 +374,6 @@ class WP_DBManager_Screens {
 			$messages = self::handle_backup_action( $action, $selected, $options );
 		}
 
-		WP_DBManager_Admin::render_messages( $messages );
-
 		$table->prepare_items();
 
 		$restore_warning = __( 'You Are About To Restore A Database.\nThis Action Is Not Reversible.\nAny Data Inserted After The Backup Date Will Be Gone.\n\n Choose [Cancel] to stop, [Ok] to restore.', 'wp-dbmanager' );
@@ -408,12 +387,13 @@ class WP_DBManager_Screens {
 		);
 		?>
 <div class="wrap">
-	<h2><?php esc_html_e( 'Manage Backup Database', 'wp-dbmanager' ); ?></h2>
+	<h1><?php esc_html_e( 'Manage Backup Database', 'wp-dbmanager' ); ?></h1>
+		<?php WP_DBManager_Admin::render_messages( $messages ); ?>
 	<p><?php esc_html_e( 'Choose A Backup To E-Mail, Restore, Download Or Delete. Restore and Download act on one backup at a time.', 'wp-dbmanager' ); ?></p>
 	<form method="post" action="<?php echo esc_url( WP_DBManager_Admin::page_url( 'manage' ) ); ?>" data-dbmanager-confirm-actions="<?php echo esc_attr( $confirmations ); ?>">
 		<p>
 			<label for="email_to"><?php esc_html_e( 'E-mail database backup file to:', 'wp-dbmanager' ); ?></label>
-			<input type="text" id="email_to" name="email_to" size="30" maxlength="50" value="<?php echo esc_attr( get_option( 'admin_email' ) ); ?>" dir="ltr" />
+			<input type="email" id="email_to" name="email_to" class="regular-text" maxlength="50" value="<?php echo esc_attr( get_option( 'admin_email' ) ); ?>" dir="ltr" />
 		</p>
 		<?php $table->display(); ?>
 		<p>
@@ -631,14 +611,13 @@ class WP_DBManager_Screens {
 			$messages = self::handle_table_action( $action, $submitted );
 		}
 
-		WP_DBManager_Admin::render_messages( $messages );
-
 		$table->prepare_items();
 
 		$confirmations = isset( $copy['confirm'] ) ? wp_json_encode( $copy['confirm'] ) : '';
 		?>
 <div class="wrap">
-	<h2><?php echo esc_html( $title ); ?></h2>
+	<h1><?php echo esc_html( $title ); ?></h1>
+		<?php WP_DBManager_Admin::render_messages( $messages ); ?>
 		<?php if ( ! empty( $copy['p'] ) ) : ?>
 		<p><?php echo esc_html( $copy['p'] ); ?></p>
 	<?php endif; ?>
@@ -802,33 +781,30 @@ class WP_DBManager_Screens {
 			}
 		}
 
-		WP_DBManager_Admin::render_messages( $messages );
 		?>
-<!-- Run SQL Query -->
-<form method="post" action="<?php echo esc_url( WP_DBManager_Admin::page_url( 'run' ) ); ?>">
+<div class="wrap">
+	<h1><?php esc_html_e( 'Run SQL Query', 'wp-dbmanager' ); ?></h1>
+		<?php WP_DBManager_Admin::render_messages( $messages ); ?>
+	<form method="post" action="<?php echo esc_url( WP_DBManager_Admin::page_url( 'run' ) ); ?>">
 		<?php wp_nonce_field( 'wp-dbmanager_run' ); ?>
-	<div class="wrap">
-		<h2><?php esc_html_e( 'Run SQL Query', 'wp-dbmanager' ); ?></h2>
-		<br style="clear" />
-		<div>
-			<strong><?php esc_html_e( 'Separate Multiple Queries With A New Line', 'wp-dbmanager' ); ?></strong><br />
-			<p style="color: green;"><?php esc_html_e( 'Use Only INSERT, UPDATE, REPLACE, DELETE, CREATE and ALTER statements.', 'wp-dbmanager' ); ?></p>
-		</div>
-		<table class="form-table">
-			<tr>
-				<td align="center"><textarea cols="120" rows="30" name="sql_query" style="width: 99%;" dir="ltr" ></textarea></td>
-			</tr>
-			<tr>
-				<td align="center"><input type="submit" name="do" value="<?php esc_attr_e( 'Run', 'wp-dbmanager' ); ?>" class="button" />&nbsp;&nbsp;<input type="button" name="cancel" value="<?php esc_attr_e( 'Cancel', 'wp-dbmanager' ); ?>" class="button" data-dbmanager-back="1" /></td>
-			</tr>
-		</table>
 		<p>
-			<?php esc_html_e( '1. CREATE statement will return an error, which is perfectly normal due to the database class. To confirm that your table has been created check the Manage Database page.', 'wp-dbmanager' ); ?><br />
-			<?php esc_html_e( '2. UPDATE statement may return an error sometimes due to the newly updated value being the same as the previous value.', 'wp-dbmanager' ); ?><br />
-			<?php esc_html_e( '3. ALTER statement will return an error because there is no value returned.', 'wp-dbmanager' ); ?>
+			<label for="sql_query"><strong><?php esc_html_e( 'Separate Multiple Queries With A New Line', 'wp-dbmanager' ); ?></strong></label>
 		</p>
-	</div>
-</form>
+		<p class="description"><?php esc_html_e( 'Use Only INSERT, UPDATE, REPLACE, DELETE, CREATE and ALTER statements.', 'wp-dbmanager' ); ?></p>
+		<p>
+			<textarea id="sql_query" name="sql_query" class="large-text code" rows="20" dir="ltr"></textarea>
+		</p>
+		<p class="submit">
+			<input type="submit" name="do" value="<?php esc_attr_e( 'Run', 'wp-dbmanager' ); ?>" class="button button-primary" />
+			<button type="button" class="button" data-dbmanager-back="1"><?php esc_html_e( 'Cancel', 'wp-dbmanager' ); ?></button>
+		</p>
+	</form>
+	<ol>
+		<li><?php esc_html_e( 'CREATE statement will return an error, which is perfectly normal due to the database class. To confirm that your table has been created check the Manage Database page.', 'wp-dbmanager' ); ?></li>
+		<li><?php esc_html_e( 'UPDATE statement may return an error sometimes due to the newly updated value being the same as the previous value.', 'wp-dbmanager' ); ?></li>
+		<li><?php esc_html_e( 'ALTER statement will return an error because there is no value returned.', 'wp-dbmanager' ); ?></li>
+	</ol>
+</div>
 		<?php
 	}
 }

@@ -131,10 +131,8 @@ class WP_DBManager_Backups_Table extends WP_List_Table {
 			$this->total_size += (int) $file['size'];
 		}
 
-		// phpcs:disable WordPress.Security.NonceVerification.Recommended -- Read-only sorting of an admin screen.
-		$orderby = isset( $_GET['orderby'] ) ? sanitize_key( wp_unslash( $_GET['orderby'] ) ) : 'date';
-		$order   = isset( $_GET['order'] ) ? strtolower( sanitize_key( wp_unslash( $_GET['order'] ) ) ) : 'desc';
-		// phpcs:enable WordPress.Security.NonceVerification.Recommended
+		$orderby = WP_DBManager_Admin::sort_arg( 'orderby', 'date' );
+		$order   = WP_DBManager_Admin::sort_arg( 'order', 'desc' );
 
 		if ( ! array_key_exists( $orderby, $this->get_sortable_columns() ) ) {
 			$orderby = 'date';

@@ -15,6 +15,21 @@
 class Test_DBManager_Screens extends WP_DBManager_TestCase {
 
 	/**
+	 * Set up.
+	 *
+	 * The settings screen is sections and fields now, and wp-admin registers
+	 * those on admin_init before any page callback runs. Nothing fires admin_init
+	 * in a test, so the suite has to stand in for it or do_settings_sections()
+	 * would render an empty screen and every assertion below would be about
+	 * nothing.
+	 */
+	public function set_up() {
+		parent::set_up();
+
+		WP_DBManager_Settings::register();
+	}
+
+	/**
 	 * Every screen's default view renders cleanly.
 	 *
 	 * @dataProvider data_screens

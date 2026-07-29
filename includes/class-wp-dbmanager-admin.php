@@ -22,11 +22,11 @@ class WP_DBManager_Admin {
 	/**
 	 * Capability required for every screen this plugin owns.
 	 *
-	 * install_plugins rather than the manage_options of a settings-only plugin,
-	 * and deliberately so: these screens restore, empty and drop tables, so
-	 * reaching them is as consequential as installing code. Section 2.7 keeps a
-	 * plugin's existing custom capability for its data screens, and this one is
-	 * the reason that clause exists.
+	 * Deliberately install_plugins rather than the manage_options a settings-only
+	 * plugin would use: these screens restore, empty and drop tables, so reaching
+	 * them is as consequential as installing code. Section 2.7 keeps a plugin's
+	 * existing custom capability for its data screens, and this one is the reason
+	 * that clause exists.
 	 */
 	const CAPABILITY = 'install_plugins';
 
@@ -173,35 +173,63 @@ class WP_DBManager_Admin {
 	}
 
 	/**
+	 * A sorting argument from the query string.
+	 *
+	 * Both list tables need this and both used to read $_GET for themselves,
+	 * which meant the same "a sort is not a state change" justification written
+	 * out twice, in two files. It lives here once instead. The value is only
+	 * ever a column name, and each caller checks it against its own
+	 * get_sortable_columns() before anything is sorted by it.
+	 *
+	 * @param string $key      Query argument, one of orderby or order.
+	 * @param string $fallback Value to use when the argument is absent.
+	 * @return string
+	 */
+	public static function sort_arg( $key, $fallback ) {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- The sniff asks for a nonce before request data is read, which is about state-changing requests. This chooses which column an already-rendered admin screen is sorted by, writes nothing, and is validated against that table's sortable columns by the caller.
+		$value = isset( $_GET[ $key ] ) ? sanitize_key( wp_unslash( $_GET[ $key ] ) ) : '';
+
+		return '' !== $value ? $value : $fallback;
+	}
+
+	/**
+	 * Render one line of status as a core notice.
+	 *
+	 * The screens used to colour these by hand with inline style attributes,
+	 * which meant green and red and nothing else - no icon, no dark mode, and
+	 * nothing a screen reader could make anything of. Core's notice classes
+	 * carry the same meaning and are the only ones section 4.4 allows.
+	 *
+	 * @param string $type One of success, error, warning or info.
+	 * @param string $text Plain text, escaped here at the point of output.
+	 * @return void
+	 */
+	public static function render_status( $type, $text ) {
+		$allowed = array( 'success', 'error', 'warning', 'info' );
+
+		printf(
+			'<div class="notice notice-%1$s inline"><p>%2$s</p></div>',
+			esc_attr( in_array( $type, $allowed, true ) ? $type : 'error' ),
+			esc_html( $text )
+		);
+	}
+
+	/**
 	 * Render the result messages for an admin screen.
 	 *
-	 * Messages are collected as plain text and escaped here, at the point of
-	 * output, rather than being assembled into HTML by each caller.
+	 * Messages are collected as plain text and escaped at the point of output,
+	 * rather than being assembled into HTML by each caller.
 	 *
 	 * @param array $messages List of arrays with a type of success, info or error, and a text key.
 	 * @return void
 	 */
 	public static function render_messages( $messages ) {
-		if ( empty( $messages ) ) {
-			return;
+		foreach ( (array) $messages as $message ) {
+			self::render_status(
+				isset( $message['type'] ) ? $message['type'] : 'error',
+				isset( $message['text'] ) ? $message['text'] : ''
+			);
 		}
-
-		$colors = array(
-			'success' => 'green',
-			'info'    => 'blue',
-			'error'   => 'red',
-		);
-
-		echo '<div id="message" class="updated fade">';
-
-		foreach ( $messages as $message ) {
-			$type  = isset( $message['type'] ) ? $message['type'] : 'error';
-			$color = isset( $colors[ $type ] ) ? $colors[ $type ] : 'red';
-
-			printf( '<p style="color: %1$s;">%2$s</p>', esc_attr( $color ), esc_html( $message['text'] ) );
-		}
-
-		echo '</div>';
 	}
 
 	/**
@@ -286,10 +314,10 @@ class WP_DBManager_Admin {
 			return;
 		}
 
-		echo '<div class="error">';
+		echo '<div class="notice notice-error">';
 
 		if ( ! $writable ) {
-			echo '<p style="font-weight: bold;">' . esc_html__( 'Your backup folder is NOT writable', 'wp-dbmanager' ) . '</p>';
+			echo '<p><strong>' . esc_html__( 'Your backup folder is NOT writable', 'wp-dbmanager' ) . '</strong></p>';
 			echo '<p>';
 			printf(
 				/* translators: %s: backup folder path. */
@@ -300,7 +328,7 @@ class WP_DBManager_Admin {
 		}
 
 		if ( true === $is_public ) {
-			echo '<p style="font-weight: bold;">' . esc_html__( 'Your backup folder is visible to the public', 'wp-dbmanager' ) . '</p>';
+			echo '<p><strong>' . esc_html__( 'Your backup folder is visible to the public', 'wp-dbmanager' ) . '</strong></p>';
 			echo '<p>' . esc_html__( 'Anyone who guesses a backup file name can download your entire database. Move the backup folder outside your web root under DB Options.', 'wp-dbmanager' ) . '</p>';
 		}
 
