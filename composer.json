@@ -1,6 +1,6 @@
 {
 	"name": "lesterchan/wp-dbmanager",
-	"description": "Manages your WordPress database.",
+	"description": "Manages your WordPress database. Allows you to optimize database, repair database, backup database, restore database, delete backup database , drop/empty tables and run selected queries. Supports automatic scheduling of backing up, optimizing and repairing of database.",
 	"type": "wordpress-plugin",
 	"homepage": "https://wordpress.org/plugins/wp-dbmanager/",
 	"license": "GPL-2.0-or-later",
@@ -11,7 +11,7 @@
 		}
 	],
 	"require": {
-		"php": ">=7.4"
+		"php": ">=8.2"
 	},
 	"require-dev": {
 		"phpunit/phpunit": "^9.6",

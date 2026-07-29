@@ -26,4 +26,12 @@ export default [
 			react: { version: '18.0' },
 		},
 	},
+	{
+		files: [ 'tests/js/**/*.test.js' ],
+		languageOptions: {
+			globals: {
+				...globals.node,
+			},
+		},
+	},
 ];

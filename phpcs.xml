@@ -3,111 +3,96 @@
 	<description>WordPress Coding Standards for WP-DBManager.</description>
 
 	<file>.</file>
-	<exclude-pattern>*/.idea/*</exclude-pattern>
 
-	<!--
-		Scanning either of these walks thousands of third party files and the
-		runner dies with "ran out of memory". Neither ships.
-	-->
-	<exclude-pattern>*/vendor/*</exclude-pattern>
-	<exclude-pattern>*/node_modules/*</exclude-pattern>
-
+	<!-- WPCS has no JavaScript sniffs; never let PHPCS touch .js. -->
 	<arg name="extensions" value="php"/>
+	<arg name="basepath" value="."/>
 	<arg name="colors"/>
 	<arg value="sp"/>
 
-	<rule ref="WordPress">
-		<!--
-			This plugin manages the database. Direct queries against arbitrary
-			tables are the feature, not an oversight, and there is nothing to
-			cache about OPTIMIZE, REPAIR, TRUNCATE or SHOW TABLE STATUS.
-		-->
-		<exclude name="WordPress.DB.DirectDatabaseQuery.DirectQuery"/>
-		<exclude name="WordPress.DB.DirectDatabaseQuery.NoCaching"/>
-		<exclude name="WordPress.DB.DirectDatabaseQuery.SchemaChange"/>
+	<!-- Scanning these makes the CI runner run out of memory. -->
+	<exclude-pattern>/vendor/*</exclude-pattern>
+	<exclude-pattern>/node_modules/*</exclude-pattern>
 
-		<!--
-			Table names are identifiers, which $wpdb->prepare() cannot bind.
-			They are validated against SHOW TABLES before ever reaching a query,
-			see database-empty.php, database-optimize.php and database-repair.php.
-		-->
-		<exclude name="WordPress.DB.PreparedSQL.NotPrepared"/>
-		<exclude name="WordPress.DB.PreparedSQL.InterpolatedNotPrepared"/>
-
-		<!--
-			Backing up shells out to mysqldump and restoring shells out to mysql.
-			There is no WordPress API for either.
-		-->
-		<exclude name="WordPress.PHP.DiscouragedPHPFunctions.system_calls_exec"/>
-		<exclude name="WordPress.PHP.DiscouragedPHPFunctions.system_calls_passthru"/>
-		<exclude name="WordPress.PHP.DiscouragedPHPFunctions.system_calls_system"/>
-
-		<!--
-			WP_Filesystem cannot stream a multi gigabyte dump, read a file for
-			download, or chmod a credentials file to 0600. These operate on the
-			backup folder and the temporary option file only.
-		-->
-		<exclude name="WordPress.WP.AlternativeFunctions.file_system_operations_fopen"/>
-		<exclude name="WordPress.WP.AlternativeFunctions.file_system_operations_fwrite"/>
-		<exclude name="WordPress.WP.AlternativeFunctions.file_system_operations_fclose"/>
-		<exclude name="WordPress.WP.AlternativeFunctions.file_system_operations_readfile"/>
-		<exclude name="WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents"/>
-		<exclude name="WordPress.WP.AlternativeFunctions.file_system_operations_is_writable"/>
-		<exclude name="WordPress.WP.AlternativeFunctions.file_system_operations_chmod"/>
-		<exclude name="WordPress.WP.AlternativeFunctions.rename_rename"/>
-
-		<!--
-			Filesystem calls on a folder the site owner configured are expected to
-			fail sometimes. The return value is checked where it matters and a
-			warning in the middle of a download would corrupt the response.
-		-->
-		<exclude name="WordPress.PHP.NoSilencedErrors.Discouraged"/>
-
-		<!--
-			The plugin registers its own cron schedules from user configured
-			intervals, which is the documented way to do it.
-		-->
-		<exclude name="WordPress.WP.CronInterval.ChangeDetected"/>
-
-		<!-- $wpdb and MySQL result columns are not ours to rename. -->
-		<exclude name="WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase"/>
-
-
-	</rule>
-
-	<!--
-		The coding standard exempts test classes from the class-{name}.php file
-		naming rule, and the suite drives the plugin's own screens, so it reads
-		superglobals it has just written itself.
-	-->
-	<rule ref="WordPress.Files.FileName.InvalidClassFileName">
-		<exclude-pattern>*/tests/*</exclude-pattern>
-	</rule>
-	<rule ref="WordPress.Security.EscapeOutput">
-		<exclude-pattern>*/tests/*</exclude-pattern>
-	</rule>
-	<rule ref="WordPress.Security.NonceVerification">
-		<exclude-pattern>*/tests/*</exclude-pattern>
-	</rule>
-	<rule ref="WordPress.Security.ValidatedSanitizedInput">
-		<exclude-pattern>*/tests/*</exclude-pattern>
-	</rule>
-	<rule ref="WordPress.WP.GlobalVariablesOverride">
-		<exclude-pattern>*/tests/*</exclude-pattern>
-	</rule>
-
-	<!--
-		The suite creates and tears down its own scratch directories, and it
-		installs an error handler so a screen that emits a PHP notice fails the
-		test rather than passing quietly. Neither belongs to the shipped plugin.
-	-->
-	<rule ref="WordPress.WP.AlternativeFunctions">
-		<exclude-pattern>*/tests/*</exclude-pattern>
-	</rule>
-	<rule ref="WordPress.PHP.DevelopmentFunctions">
-		<exclude-pattern>*/tests/*</exclude-pattern>
-	</rule>
+	<rule ref="WordPress"/>
 
 	<config name="text_domain" value="wp-dbmanager"/>
-	<config name="minimum_wp_version" value="6.0"/>
+	<config name="minimum_wp_version" value="6.8"/>
+
+	<!--
+		Everything below relaxes a sniff for the test suite only, and this list
+		is closed: it is identical in all nineteen plugins. A sniff firing in
+		includes/ is a bug in the code, not a missing exclusion - fix the code.
+	-->
+
+	<!-- The tests assert on the plugin's own markup, so they must not escape it. -->
+	<rule ref="WordPress.Security.EscapeOutput">
+		<exclude-pattern>/tests/*</exclude-pattern>
+	</rule>
+
+	<!--
+		A test method's name is its documentation - test_a_malformed_range_does_
+		not_ban_everyone() gains nothing from a docblock repeating it. Required
+		everywhere else.
+	-->
+	<rule ref="Squiz.Commenting.FunctionComment.Missing">
+		<exclude-pattern>/tests/*</exclude-pattern>
+	</rule>
+	<rule ref="Generic.Commenting.DocComment.MissingShort">
+		<exclude-pattern>/tests/*</exclude-pattern>
+	</rule>
+
+	<!--
+		Test files are named test-*.php by WordPress convention rather than
+		class-*.php; the coding standard excepts test classes from that rule.
+	-->
+	<rule ref="WordPress.Files.FileName.InvalidClassFileName">
+		<exclude-pattern>/tests/*</exclude-pattern>
+	</rule>
+
+	<!--
+		The tests read wp_options directly to assert which rows the migration
+		left behind. There is no API for "which rows exist".
+	-->
+	<rule ref="WordPress.DB.DirectDatabaseQuery">
+		<exclude-pattern>/tests/*</exclude-pattern>
+	</rule>
+
+	<!--
+		The tests drive superglobals to simulate proxy headers and form posts;
+		that is the behaviour under test, not unvalidated input.
+	-->
+	<rule ref="WordPress.Security.ValidatedSanitizedInput">
+		<exclude-pattern>/tests/*</exclude-pattern>
+	</rule>
+	<rule ref="WordPress.Security.NonceVerification">
+		<exclude-pattern>/tests/*</exclude-pattern>
+	</rule>
+
+	<!-- The tests read the plugin's own source; WP_Filesystem is not appropriate. -->
+	<rule ref="WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents">
+		<exclude-pattern>/tests/*</exclude-pattern>
+	</rule>
+
+	<!--
+		The admin-screen tests install an error handler on purpose: collecting
+		the diagnostics is what makes them more than smoke tests.
+	-->
+	<rule ref="WordPress.PHP.DevelopmentFunctions.error_log_set_error_handler">
+		<exclude-pattern>/tests/*</exclude-pattern>
+	</rule>
+
+	<!--
+		The settings tests set $hook_suffix, which wp-admin would have set before
+		any page callback ran. WP_List_Table's constructor reaches
+		WP_Screen::get(), which reads that global, so the test bootstrap has to
+		stand in for admin.php.
+
+		Worth re-checking now the floor is WordPress 6.8: this exclusion was
+		added for a much older core, and if current WP guards the read, the
+		tests can drop the assignment and this rule can go.
+	-->
+	<rule ref="WordPress.WP.GlobalVariablesOverride">
+		<exclude-pattern>/tests/*</exclude-pattern>
+	</rule>
 </ruleset>
