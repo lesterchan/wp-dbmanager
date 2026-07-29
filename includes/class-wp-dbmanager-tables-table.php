@@ -151,12 +151,18 @@ class WP_DBManager_Tables_Table extends WP_List_Table {
 		$items = array();
 
 		foreach ( WP_DBManager_Tables::status() as $status ) {
+			// SHOW TABLE STATUS names its columns Name, Rows, Data_length and so
+			// on, which are MySQL's spellings and not ours to rename. Read as an
+			// array rather than as object properties so the coding standard is
+			// not being asked to accept a property name nobody here chose.
+			$status = (array) $status;
+
 			$item = array(
-				'name'     => $status->Name,
-				'rows'     => (int) $status->Rows,
-				'data'     => (int) $status->Data_length,
-				'index'    => (int) $status->Index_length,
-				'overhead' => (int) $status->Data_free,
+				'name'     => $status['Name'],
+				'rows'     => (int) $status['Rows'],
+				'data'     => (int) $status['Data_length'],
+				'index'    => (int) $status['Index_length'],
+				'overhead' => (int) $status['Data_free'],
 			);
 
 			$this->totals['rows']     += $item['rows'];

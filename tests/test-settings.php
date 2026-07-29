@@ -170,4 +170,93 @@ class WP_DBManager_Settings_Test extends WP_DBManager_TestCase {
 
 		$this->assertArrayHasKey( WP_DBManager_Options::OPTION, $registered );
 	}
+
+	/**
+	 * The settings group is the settings row name.
+	 */
+	public function test_the_group_is_the_option_row_name() {
+		$this->assertSame( WP_DBManager_Options::OPTION, WP_DBManager_Settings::GROUP );
+		$this->assertSame( 'wp_dbmanager_options', WP_DBManager_Settings::GROUP );
+	}
+
+	/**
+	 * Four sections are registered against the DB Options page.
+	 */
+	public function test_the_sections_are_registered_against_the_options_page() {
+		global $wp_settings_sections;
+
+		$wp_settings_sections = array();
+
+		WP_DBManager_Settings::register();
+
+		$page = WP_DBManager_Settings::page();
+
+		$this->assertSame( 'wp-dbmanager-options', $page );
+		$this->assertArrayHasKey( $page, $wp_settings_sections );
+
+		$this->assertSame(
+			array(
+				WP_DBManager_Settings::SECTION_PATHS,
+				WP_DBManager_Settings::SECTION_SCHEDULE,
+				WP_DBManager_Settings::SECTION_EMAIL,
+				WP_DBManager_Settings::SECTION_MISC,
+			),
+			array_keys( $wp_settings_sections[ $page ] )
+		);
+	}
+
+	/**
+	 * Every registered field has a field_<name>() method behind it, and it prints.
+	 *
+	 * A typo in the callback name is not a fatal -- core skips a field it cannot
+	 * call -- so the setting simply vanishes from the screen, which is exactly
+	 * the kind of silence worth a test.
+	 */
+	public function test_every_registered_field_renders_through_its_own_method() {
+		global $wp_settings_fields;
+
+		$wp_settings_fields = array();
+
+		WP_DBManager_Settings::register();
+
+		$page = WP_DBManager_Settings::page();
+
+		$this->assertArrayHasKey( $page, $wp_settings_fields );
+
+		$seen = 0;
+
+		foreach ( $wp_settings_fields[ $page ] as $section => $fields ) {
+			foreach ( $fields as $id => $field ) {
+				$this->assertSame(
+					array( 'WP_DBManager_Settings', 'field_' . $id ),
+					$field['callback'],
+					"The {$id} field must be rendered by field_{$id}()."
+				);
+
+				$html = $this->render( $field['callback'] );
+
+				$this->assertNotEmpty( $html, "field_{$id}() rendered nothing." );
+				$this->assertStringNotContainsString( 'style=', $html, "field_{$id}() uses an inline style." );
+				++$seen;
+			}
+		}
+
+		$this->assertSame( 12, $seen, 'Twelve settings are rendered by the screen.' );
+	}
+
+	/**
+	 * The screen writes no table of its own; do_settings_sections() emits it.
+	 */
+	public function test_the_screen_does_not_hand_roll_a_form_table() {
+		$source = wp_dbmanager_test_read( 'includes/class-wp-dbmanager-settings.php' );
+
+		$this->assertStringNotContainsString(
+			'<table class="form-table"',
+			$source,
+			'Section 4.2 allows zero hand-written form tables.'
+		);
+		$this->assertStringContainsString( 'do_settings_sections(', $source );
+		$this->assertStringContainsString( 'add_settings_section(', $source );
+		$this->assertStringContainsString( 'add_settings_field(', $source );
+	}
 }

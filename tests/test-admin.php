@@ -207,9 +207,9 @@ class WP_DBManager_Admin_Test extends WP_DBManager_TestCase {
 	}
 
 	/**
-	 * Each message type gets its colour, and an unknown one is not fatal.
+	 * Each message type gets its core notice class, and an unknown one is not fatal.
 	 */
-	public function test_message_types_are_coloured() {
+	public function test_message_types_map_onto_core_notice_classes() {
 		$html = $this->render(
 			function () {
 				WP_DBManager_Admin::render_messages(
@@ -235,10 +235,70 @@ class WP_DBManager_Admin_Test extends WP_DBManager_TestCase {
 			}
 		);
 
-		$this->assertStringContainsString( 'color: green;', $html );
-		$this->assertStringContainsString( 'color: blue;', $html );
-		$this->assertStringContainsString( 'color: red;', $html );
+		$this->assertStringContainsString( 'notice notice-success inline', $html );
+		$this->assertStringContainsString( 'notice notice-info inline', $html );
+		$this->assertStringContainsString( 'notice notice-error inline', $html );
+
+		// The unknown type falls back to error rather than emitting notice-nonsense.
+		$this->assertStringNotContainsString( 'notice-nonsense', $html );
+		$this->assertSame( 2, substr_count( $html, 'notice notice-error inline' ) );
+
+		// Section 4.4: core classes only, and no inline styling anywhere.
+		$this->assertStringNotContainsString( 'style=', $html );
 		$this->assertScreenIsClean( $html );
+	}
+
+	/**
+	 * A type nobody defined still renders, as an error.
+	 */
+	public function test_an_unknown_status_type_renders_as_an_error() {
+		$html = $this->render(
+			function () {
+				WP_DBManager_Admin::render_status( 'catastrophe', 'something happened' );
+			}
+		);
+
+		$this->assertStringContainsString( 'notice notice-error inline', $html );
+		$this->assertStringContainsString( 'something happened', $html );
+	}
+
+	/**
+	 * The status text is escaped at the point of output.
+	 */
+	public function test_status_text_is_escaped() {
+		$html = $this->render(
+			function () {
+				WP_DBManager_Admin::render_status( 'success', '<script>alert(1)</script>' );
+			}
+		);
+
+		$this->assertStringNotContainsString( '<script>', $html );
+		$this->assertStringContainsString( '&lt;script&gt;', $html );
+	}
+
+	/**
+	 * The sorting arguments both list tables share come back sanitized.
+	 */
+	public function test_sort_arg_reads_the_query_string_and_falls_back() {
+		$_GET = array();
+		$this->assertSame( 'date', WP_DBManager_Admin::sort_arg( 'orderby', 'date' ) );
+		$this->assertSame( 'asc', WP_DBManager_Admin::sort_arg( 'order', 'asc' ) );
+
+		$_GET = array(
+			'orderby' => 'size',
+			'order'   => 'DESC',
+		);
+
+		$this->assertSame( 'size', WP_DBManager_Admin::sort_arg( 'orderby', 'date' ) );
+		// sanitize_key() lowercases, which is what lets the callers compare
+		// against 'desc' without lowercasing again.
+		$this->assertSame( 'desc', WP_DBManager_Admin::sort_arg( 'order', 'asc' ) );
+
+		// An empty argument is not a column name; the fallback stands.
+		$_GET = array( 'orderby' => '' );
+		$this->assertSame( 'date', WP_DBManager_Admin::sort_arg( 'orderby', 'date' ) );
+
+		$_GET = array();
 	}
 
 	/**

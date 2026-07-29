@@ -39,10 +39,11 @@ class WP_DBManager_Database {
 		);
 
 		if ( substr( PHP_OS, 0, 3 ) === 'WIN' ) {
-			$mysql_install = $wpdb->get_row( "SHOW VARIABLES LIKE 'basedir'" );
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- The sniff wants an API call or a cache around this; there is no WordPress API for SHOW VARIABLES, and caching where the server keeps its binaries is what would make a moved installation undetectable.
+			$mysql_install = (array) $wpdb->get_row( "SHOW VARIABLES LIKE 'basedir'", ARRAY_A );
 
-			if ( $mysql_install ) {
-				$install_path       = trailingslashit( str_replace( '\\', '/', $mysql_install->Value ) );
+			if ( ! empty( $mysql_install['Value'] ) ) {
+				$install_path       = trailingslashit( str_replace( '\\', '/', $mysql_install['Value'] ) );
 				$paths['mysql']     = $install_path . 'bin/mysql.exe';
 				$paths['mysqldump'] = $install_path . 'bin/mysqldump.exe';
 			} else {
@@ -50,7 +51,9 @@ class WP_DBManager_Database {
 				$paths['mysqldump'] = 'mysqldump.exe';
 			}
 		} elseif ( function_exists( 'exec' ) && ! self::is_function_disabled( 'exec' ) ) {
-			$paths['mysql']     = exec( 'which mysql' );
+			// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.system_calls_exec -- The sniff warns that shell calls are often disabled; this plugin backs up with mysqldump and restores with mysql, so shelling out is the feature. The branch is only reached once is_function_disabled() has said exec() is available.
+			$paths['mysql'] = exec( 'which mysql' );
+			// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.system_calls_exec -- As above; locating mysqldump is the other half of the same check.
 			$paths['mysqldump'] = exec( 'which mysqldump' );
 		} else {
 			$paths['mysql']     = 'mysql';
@@ -137,18 +140,27 @@ class WP_DBManager_Database {
 			return false;
 		}
 
-		$defaults_file = @tempnam( $temp_dir, 'wp-dbmanager-' );
+		// wp_tempnam() is core's own wrapper and needs no silencing: it returns an
+		// empty string rather than warning, and it lives in wp-admin/includes,
+		// which cron and the front end have not loaded.
+		require_once ABSPATH . 'wp-admin/includes/file.php';
 
-		if ( false === $defaults_file ) {
+		$defaults_file = wp_tempnam( 'wp-dbmanager-', $temp_dir );
+
+		if ( ! $defaults_file ) {
 			return false;
 		}
 
-		// Readable only by the user running PHP, before anything is written to it.
-		@chmod( $defaults_file, 0600 );
+		// Readable only by the user running PHP, and set before the password is
+		// written rather than after, so there is no window in which a
+		// world-readable temp directory exposes it.
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_chmod -- The sniff wants WP_Filesystem, which has no way to set a mode without also writing the file. The mode has to land first; that ordering is the entire point of this line.
+		chmod( $defaults_file, 0600 );
 
 		$contents = "[client]\npassword=" . self::escape_option_file_value( DB_PASSWORD ) . "\n";
 
-		if ( @file_put_contents( $defaults_file, $contents ) === false ) {
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- WP_Filesystem would re-chmod the file after writing, reopening the window the line above closes, and on an FTP-method host it would not be initialised at all during cron -- which is exactly when a scheduled backup needs this file.
+		if ( false === file_put_contents( $defaults_file, $contents ) ) {
 			wp_delete_file( $defaults_file );
 			return false;
 		}
@@ -309,17 +321,17 @@ class WP_DBManager_Database {
 			// command goes into a batch file inside the backup folder and that is
 			// what gets run.
 			$tmpnam = $options['path'] . '/wp-dbmanager.bat';
-			$handle = fopen( $tmpnam, 'w' );
 
-			if ( false === $handle ) {
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- WP_Filesystem is not initialised during cron on a host whose filesystem method is not direct, and a scheduled backup is precisely when this runs. The target is the site owner's own backup folder, which the plugin has already established is writable.
+			if ( false === file_put_contents( $tmpnam, $command ) ) {
 				return __( 'Unable to write the temporary batch file', 'wp-dbmanager' );
 			}
 
-			fwrite( $handle, $command );
-			fclose( $handle );
+			// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.system_calls_system -- Restoring a database means handing a dump to the mysql client. There is no WordPress API for that, and the Backup screen tells the user up front when the host has disabled these functions.
 			system( $tmpnam . ' > NUL', $error );
 			wp_delete_file( $tmpnam );
 		} else {
+			// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.system_calls_passthru -- As above. passthru() rather than system() so the pipeline's own exit status is what reaches $error.
 			passthru( $command, $error );
 		}
 
@@ -427,6 +439,7 @@ class WP_DBManager_Database {
 		}
 
 		$renamed = $path . '/' . md5_file( $filepath ) . '_-_' . $filename;
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.rename_rename -- WP_Filesystem::move() copies and deletes when it cannot rename, which on a multi-gigabyte dump means briefly needing twice the disk. Both names are inside the site's own backup folder, so a plain rename is atomic and is what is wanted.
 		rename( $filepath, $renamed );
 
 		$result['success']  = true;
@@ -469,6 +482,7 @@ class WP_DBManager_Database {
 		$command       = self::restore_command( $options['path'] . '/' . $filename, $defaults_file );
 		$error         = 0;
 
+		// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.system_calls_passthru -- Restoring feeds a dump to the mysql client; there is no WordPress API for it, and the Backup screen reports up front when the host has disabled these functions.
 		passthru( $command, $error );
 
 		self::delete_defaults_file( $defaults_file );

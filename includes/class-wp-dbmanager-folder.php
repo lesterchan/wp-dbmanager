@@ -225,18 +225,47 @@ class WP_DBManager_Folder {
 		}
 
 		if ( self::is_iis() ) {
-			if ( ! is_file( $path . '/Web.config' ) ) {
-				@copy( WP_DBMANAGER_DIR . 'Web.config.txt', $path . '/Web.config' );
-			}
-		} elseif ( ! is_file( $path . '/.htaccess' ) ) {
-			@copy( WP_DBMANAGER_DIR . 'htaccess.txt', $path . '/.htaccess' );
+			self::install_guard( 'Web.config.txt', $path . '/Web.config' );
+		} else {
+			self::install_guard( 'htaccess.txt', $path . '/.htaccess' );
 		}
 
-		if ( ! is_file( $path . '/index.php' ) ) {
-			@copy( WP_DBMANAGER_DIR . 'index.php', $path . '/index.php' );
+		self::install_guard( 'index.php', $path . '/index.php' );
+
+		// Owner and group only. The folder holds complete database dumps, so it
+		// has no business being world-readable even on a host where the web
+		// server never serves it.
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_chmod -- WP_Filesystem is not initialised when this runs from the activation hook or from cron on a host whose method is not direct, and failing to tighten the mode is worse than the sniff. The path is the site owner's own backup folder.
+		chmod( $path, 0750 );
+	}
+
+	/**
+	 * Copy one of the shipped protection files into the backup folder.
+	 *
+	 * The two .txt files at the plugin root are payloads rather than
+	 * configuration: they are copied in under the name the server actually reads
+	 * -- .htaccess on Apache, Web.config on IIS. index.php goes with them so the
+	 * folder cannot be listed.
+	 *
+	 * The copy is guarded rather than silenced -- a missing source or an
+	 * unwritable destination is checked for, so there is no warning to suppress.
+	 *
+	 * @param string $source      File name at the plugin root.
+	 * @param string $destination Absolute path to write.
+	 * @return bool Whether the guard is in place afterwards.
+	 */
+	protected static function install_guard( $source, $destination ) {
+		if ( is_file( $destination ) ) {
+			return true;
 		}
 
-		@chmod( $path, 0750 );
+		$from = WP_DBMANAGER_DIR . $source;
+
+		if ( ! is_readable( $from ) || ! wp_is_writable( dirname( $destination ) ) ) {
+			return false;
+		}
+
+		return copy( $from, $destination );
 	}
 
 	/**

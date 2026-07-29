@@ -37,6 +37,7 @@ class WP_DBManager_Tables {
 	public static function all() {
 		global $wpdb;
 
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- This plugin's whole subject is the database's own tables, for which WordPress has no API. Caching the table list would make a table created a moment ago invisible to the screen that exists to act on it.
 		return $wpdb->get_col( 'SHOW TABLES' );
 	}
 
@@ -48,6 +49,7 @@ class WP_DBManager_Tables {
 	public static function status() {
 		global $wpdb;
 
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- As above. The row counts and overhead are the numbers the Optimize screen is for, so a cached copy would be advice about a database as it used to be.
 		return $wpdb->get_results( 'SHOW TABLE STATUS' );
 	}
 
@@ -59,6 +61,7 @@ class WP_DBManager_Tables {
 	public static function version() {
 		global $wpdb;
 
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- The server version, which no WordPress API exposes and which cannot go stale within a request.
 		return $wpdb->get_var( 'SELECT VERSION() AS version' );
 	}
 
@@ -102,6 +105,7 @@ class WP_DBManager_Tables {
 			return false;
 		}
 
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared -- OPTIMIZE TABLE takes identifiers, and $wpdb->prepare() has no placeholder for an identifier. Every name has already been matched against SHOW TABLES by filter(), which is the only check that means anything here, and there is nothing about running OPTIMIZE to cache.
 		return (bool) $wpdb->query( 'OPTIMIZE TABLE `' . implode( '`, `', $tables ) . '`' );
 	}
 
@@ -118,6 +122,7 @@ class WP_DBManager_Tables {
 			return false;
 		}
 
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared -- As optimize(): an identifier list that prepare() cannot bind, already filtered against SHOW TABLES.
 		return (bool) $wpdb->query( 'REPAIR TABLE `' . implode( '`, `', $tables ) . '`' );
 	}
 
@@ -130,6 +135,7 @@ class WP_DBManager_Tables {
 	public static function truncate( $table ) {
 		global $wpdb;
 
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- One identifier, which prepare() cannot bind, and which the caller has already matched against SHOW TABLES.
 		return (bool) $wpdb->query( "TRUNCATE `$table`" );
 	}
 
@@ -146,6 +152,7 @@ class WP_DBManager_Tables {
 			return false;
 		}
 
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.NotPrepared -- Dropping tables is a schema change on purpose: it is what the Empty/Drop screen is for. The names are identifiers prepare() cannot bind and have already been filtered against SHOW TABLES.
 		return (bool) $wpdb->query( 'DROP TABLE `' . implode( '`, `', $tables ) . '`' );
 	}
 
@@ -190,6 +197,7 @@ class WP_DBManager_Tables {
 		}
 
 		if ( preg_match( '/^\s*(' . self::ALLOWED_STATEMENTS . ') /i', $query ) ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared -- This is the Run SQL Query console. The statement is the site owner's own, typed behind the install_plugins capability and a nonce; preparing it would defeat the feature outright. The statement type is checked against the allow list above, and LOAD_FILE is refused.
 			return $wpdb->query( $query ) ? 'ok' : 'failed';
 		}
 

@@ -283,9 +283,14 @@ class WP_DBManager_Backups {
 			header( 'Content-Transfer-Encoding: binary' );
 			header( 'Content-Length: ' . filesize( $file_path ) );
 
-			// Silenced deliberately: a warning printed into the response body
-			// would corrupt the dump the user is downloading.
-			@readfile( $file_path );
+			// readfile() streams; every alternative buffers. WP_Filesystem's
+			// get_contents() and file_get_contents() both pull the whole dump
+			// into memory first, and a database backup is routinely larger than
+			// the PHP memory limit -- which turns a working download into a
+			// fatal. The file has already been resolved to inside the backup
+			// folder by resolve().
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_readfile -- See above: the sniff's alternatives cannot stream, and this response is a multi-gigabyte file.
+			readfile( $file_path );
 		}
 
 		exit;
