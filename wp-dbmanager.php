@@ -16,12 +16,40 @@
  * @package WP-DBManager
  */
 
+/*
+	Copyright 2026  Lester Chan  (email : lesterchan@gmail.com)
+
+	This program is free software; you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation; either version 2 of the License, or
+	(at your option) any later version.
+
+	This program is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
+
+	You should have received a copy of the GNU General Public License
+	along with this program; if not, write to the Free Software
+	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+*/
+
 defined( 'ABSPATH' ) || exit;
 
 /**
- * WP-DBManager version.
+ * WP-DBManager version. The last-run value is kept in the wp_dbmanager_version row.
  */
 define( 'WP_DBMANAGER_VERSION', '3.0.0' );
+
+/**
+ * Schema counter. Bumped only when the stored rows need reshaping.
+ */
+define( 'WP_DBMANAGER_DB_VERSION', '1' );
+
+/**
+ * WP-DBManager slug, which is also the text domain.
+ */
+define( 'WP_DBMANAGER_SLUG', 'wp-dbmanager' );
 
 /**
  * WP-DBManager main file.
@@ -29,27 +57,27 @@ define( 'WP_DBMANAGER_VERSION', '3.0.0' );
 define( 'WP_DBMANAGER_MAIN_FILE', __FILE__ );
 
 /**
- * Absolute path to the plugin directory, with a trailing slash.
+ * WP-DBManager directory, with a trailing slash.
  */
 define( 'WP_DBMANAGER_DIR', plugin_dir_path( __FILE__ ) );
 
 /**
- * URL of the plugin directory, with a trailing slash.
+ * WP-DBManager URL, with a trailing slash.
  */
 define( 'WP_DBMANAGER_URL', plugin_dir_url( __FILE__ ) );
 
-require_once WP_DBMANAGER_DIR . 'includes/class-dbmanager-options.php';
-require_once WP_DBMANAGER_DIR . 'includes/class-dbmanager-database.php';
-require_once WP_DBMANAGER_DIR . 'includes/class-dbmanager-tables.php';
-require_once WP_DBMANAGER_DIR . 'includes/class-dbmanager-backups.php';
-require_once WP_DBMANAGER_DIR . 'includes/class-dbmanager-folder.php';
-require_once WP_DBMANAGER_DIR . 'includes/class-dbmanager-mailer.php';
-require_once WP_DBMANAGER_DIR . 'includes/class-dbmanager-cron.php';
-require_once WP_DBMANAGER_DIR . 'includes/class-dbmanager-admin.php';
-require_once WP_DBMANAGER_DIR . 'includes/class-dbmanager-backups-table.php';
-require_once WP_DBMANAGER_DIR . 'includes/class-dbmanager-tables-table.php';
-require_once WP_DBMANAGER_DIR . 'includes/class-dbmanager-screens.php';
-require_once WP_DBMANAGER_DIR . 'includes/class-dbmanager-settings.php';
-require_once WP_DBMANAGER_DIR . 'includes/class-dbmanager.php';
+require_once WP_DBMANAGER_DIR . 'includes/class-wp-dbmanager-options.php';
+require_once WP_DBMANAGER_DIR . 'includes/class-wp-dbmanager-database.php';
+require_once WP_DBMANAGER_DIR . 'includes/class-wp-dbmanager-tables.php';
+require_once WP_DBMANAGER_DIR . 'includes/class-wp-dbmanager-backups.php';
+require_once WP_DBMANAGER_DIR . 'includes/class-wp-dbmanager-folder.php';
+require_once WP_DBMANAGER_DIR . 'includes/class-wp-dbmanager-mailer.php';
+require_once WP_DBMANAGER_DIR . 'includes/class-wp-dbmanager-cron.php';
+require_once WP_DBMANAGER_DIR . 'includes/class-wp-dbmanager-admin.php';
+require_once WP_DBMANAGER_DIR . 'includes/class-wp-dbmanager-backups-table.php';
+require_once WP_DBMANAGER_DIR . 'includes/class-wp-dbmanager-tables-table.php';
+require_once WP_DBMANAGER_DIR . 'includes/class-wp-dbmanager-screens.php';
+require_once WP_DBMANAGER_DIR . 'includes/class-wp-dbmanager-settings.php';
+require_once WP_DBMANAGER_DIR . 'includes/class-wp-dbmanager.php';
 
-DBManager::get_instance();
+WP_DBManager::get_instance();

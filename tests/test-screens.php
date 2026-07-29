@@ -12,7 +12,7 @@
  * the branches a bare GET never reaches, so the POST outcomes are in the
  * providers below alongside the default views.
  */
-class Test_DBManager_Screens extends DBManager_TestCase {
+class Test_DBManager_Screens extends WP_DBManager_TestCase {
 
 	/**
 	 * Every screen's default view renders cleanly.
@@ -23,7 +23,7 @@ class Test_DBManager_Screens extends DBManager_TestCase {
 	 * @param string $expect Text the screen must contain.
 	 */
 	public function test_default_view_is_clean( $method, $expect ) {
-		$html = $this->render( array( 'DBManager_Screens', $method ) );
+		$html = $this->render( array( 'WP_DBManager_Screens', $method ) );
 
 		$this->assertScreenIsClean( $html );
 		$this->assertStringContainsString( $expect, $html );
@@ -50,7 +50,7 @@ class Test_DBManager_Screens extends DBManager_TestCase {
 	 * The settings screen renders cleanly too.
 	 */
 	public function test_settings_screen_is_clean() {
-		$html = $this->render( array( 'DBManager_Settings', 'render' ) );
+		$html = $this->render( array( 'WP_DBManager_Settings', 'render' ) );
 
 		$this->assertScreenIsClean( $html );
 		$this->assertStringContainsString( 'Database Options', $html );
@@ -82,7 +82,7 @@ class Test_DBManager_Screens extends DBManager_TestCase {
 			30
 		);
 
-		$html = $this->render( array( 'DBManager_Settings', 'render' ), array(), array( 'settings-updated' => 'true' ) );
+		$html = $this->render( array( 'WP_DBManager_Settings', 'render' ), array(), array( 'settings-updated' => 'true' ) );
 
 		$this->assertScreenIsClean( $html );
 		$this->assertStringContainsString( 'Settings saved.', $html );
@@ -92,9 +92,9 @@ class Test_DBManager_Screens extends DBManager_TestCase {
 	 * A validation error is still shown on the screen that caused it.
 	 */
 	public function test_a_validation_error_is_shown() {
-		add_settings_error( DBManager_Options::OPTION, 'path', 'That backup path is no good.' );
+		add_settings_error( WP_DBManager_Options::OPTION, 'path', 'That backup path is no good.' );
 
-		$html = $this->render( array( 'DBManager_Settings', 'render' ) );
+		$html = $this->render( array( 'WP_DBManager_Settings', 'render' ) );
 
 		$this->assertStringContainsString( 'That backup path is no good.', $html );
 	}
@@ -112,7 +112,7 @@ class Test_DBManager_Screens extends DBManager_TestCase {
 	public function test_post_view_is_clean( $method, $nonce, $post, $expect ) {
 		$post['_wpnonce'] = wp_create_nonce( $nonce );
 
-		$html = $this->render( array( 'DBManager_Screens', $method ), $post );
+		$html = $this->render( array( 'WP_DBManager_Screens', $method ), $post );
 
 		$this->assertScreenIsClean( $html );
 		$this->assertStringContainsString( $expect, $html );
@@ -127,43 +127,43 @@ class Test_DBManager_Screens extends DBManager_TestCase {
 		return array(
 			'restore with nothing selected' => array(
 				'manage',
-				DBManager_Backups_Table::nonce_action(),
+				WP_DBManager_Backups_Table::nonce_action(),
 				array( 'action' => 'restore' ),
 				'No Backup Database File Selected',
 			),
 			'delete with nothing selected'  => array(
 				'manage',
-				DBManager_Backups_Table::nonce_action(),
+				WP_DBManager_Backups_Table::nonce_action(),
 				array( 'action' => 'delete' ),
 				'No Backup Database File Selected',
 			),
 			'e-mail with nothing selected'  => array(
 				'manage',
-				DBManager_Backups_Table::nonce_action(),
+				WP_DBManager_Backups_Table::nonce_action(),
 				array( 'action' => 'email' ),
 				'No Backup Database File Selected',
 			),
 			'optimize with none selected'   => array(
 				'optimize',
-				DBManager_Tables_Table::nonce_action(),
+				WP_DBManager_Tables_Table::nonce_action(),
 				array( 'action' => 'optimize' ),
 				'No Tables Selected',
 			),
 			'repair with none selected'     => array(
 				'repair',
-				DBManager_Tables_Table::nonce_action(),
+				WP_DBManager_Tables_Table::nonce_action(),
 				array( 'action' => 'repair' ),
 				'No Tables Selected',
 			),
 			'empty with none selected'      => array(
 				'empty_tables',
-				DBManager_Tables_Table::nonce_action(),
+				WP_DBManager_Tables_Table::nonce_action(),
 				array( 'action' => 'empty' ),
 				'No Tables Selected',
 			),
 			'drop with none selected'       => array(
 				'empty_tables',
-				DBManager_Tables_Table::nonce_action(),
+				WP_DBManager_Tables_Table::nonce_action(),
 				array( 'action' => 'drop' ),
 				'No Tables Selected',
 			),
@@ -195,7 +195,7 @@ class Test_DBManager_Screens extends DBManager_TestCase {
 		$name = str_repeat( 'c', 32 ) . '_-_1700000000_-_sitedb.sql';
 		file_put_contents( $this->backup_dir . '/' . $name, 'SOME SQL' );
 
-		$html = $this->render( array( 'DBManager_Screens', 'manage' ) );
+		$html = $this->render( array( 'WP_DBManager_Screens', 'manage' ) );
 
 		$this->assertScreenIsClean( $html );
 		$this->assertStringContainsString( str_repeat( 'c', 32 ), $html, 'The checksum column is empty.' );
@@ -208,7 +208,7 @@ class Test_DBManager_Screens extends DBManager_TestCase {
 	 * An empty folder says so rather than rendering a bare table.
 	 */
 	public function test_the_manage_screen_reports_an_empty_folder() {
-		$html = $this->render( array( 'DBManager_Screens', 'manage' ) );
+		$html = $this->render( array( 'WP_DBManager_Screens', 'manage' ) );
 
 		$this->assertStringContainsString( 'There Are No Database Backup Files Available.', $html );
 	}
@@ -222,11 +222,11 @@ class Test_DBManager_Screens extends DBManager_TestCase {
 		file_put_contents( $path, 'SOME SQL' );
 
 		$html = $this->render(
-			array( 'DBManager_Screens', 'manage' ),
+			array( 'WP_DBManager_Screens', 'manage' ),
 			array(
 				'action'   => 'delete',
 				'backups'  => array( $name ),
-				'_wpnonce' => wp_create_nonce( DBManager_Backups_Table::nonce_action() ),
+				'_wpnonce' => wp_create_nonce( WP_DBManager_Backups_Table::nonce_action() ),
 			)
 		);
 
@@ -240,11 +240,11 @@ class Test_DBManager_Screens extends DBManager_TestCase {
 	 */
 	public function test_deleting_a_missing_backup_reports_it() {
 		$html = $this->render(
-			array( 'DBManager_Screens', 'manage' ),
+			array( 'WP_DBManager_Screens', 'manage' ),
 			array(
 				'action'   => 'delete',
 				'backups'  => array( 'nothing_-_1700000000_-_sitedb.sql' ),
-				'_wpnonce' => wp_create_nonce( DBManager_Backups_Table::nonce_action() ),
+				'_wpnonce' => wp_create_nonce( WP_DBManager_Backups_Table::nonce_action() ),
 			)
 		);
 
@@ -261,12 +261,12 @@ class Test_DBManager_Screens extends DBManager_TestCase {
 		file_put_contents( $this->backup_dir . '/' . $name, 'SOME SQL' );
 
 		$html = $this->render(
-			array( 'DBManager_Screens', 'manage' ),
+			array( 'WP_DBManager_Screens', 'manage' ),
 			array(
 				'action'   => 'email',
 				'backups'  => array( $name ),
 				'email_to' => 'someone@example.com',
-				'_wpnonce' => wp_create_nonce( DBManager_Backups_Table::nonce_action() ),
+				'_wpnonce' => wp_create_nonce( WP_DBManager_Backups_Table::nonce_action() ),
 			)
 		);
 
@@ -290,7 +290,7 @@ class Test_DBManager_Screens extends DBManager_TestCase {
 
 		$this->expectException( 'WPDieException' );
 
-		$this->render( array( 'DBManager_Screens', $method ), $post );
+		$this->render( array( 'WP_DBManager_Screens', $method ), $post );
 	}
 
 	/**
@@ -316,7 +316,7 @@ class Test_DBManager_Screens extends DBManager_TestCase {
 	public function test_the_information_screen_totals_the_tables() {
 		global $wpdb;
 
-		$html = $this->render( array( 'DBManager_Screens', 'manager' ) );
+		$html = $this->render( array( 'WP_DBManager_Screens', 'manager' ) );
 
 		$this->assertStringContainsString( $wpdb->posts, $html );
 		$this->assertMatchesRegularExpression( '/[0-9,]+ Tables?/', $html );
@@ -332,7 +332,7 @@ class Test_DBManager_Screens extends DBManager_TestCase {
 	 * Action Is Not Reversible."
 	 */
 	public function test_confirmations_are_data_attributes() {
-		$html = $this->render( array( 'DBManager_Screens', 'manage' ) );
+		$html = $this->render( array( 'WP_DBManager_Screens', 'manage' ) );
 
 		$this->assertStringNotContainsString( 'onclick', $html );
 		$this->assertStringContainsString( 'data-dbmanager-confirm-actions="', $html );
@@ -362,7 +362,7 @@ class Test_DBManager_Screens extends DBManager_TestCase {
 	 */
 	public function test_form_targets_carry_no_directory_name() {
 		foreach ( array( 'backup', 'manage', 'optimize', 'repair', 'empty_tables', 'run' ) as $method ) {
-			$html = $this->render( array( 'DBManager_Screens', $method ) );
+			$html = $this->render( array( 'WP_DBManager_Screens', $method ) );
 
 			$this->assertStringNotContainsString( 'wp-dbmanager/database-', $html, $method );
 			$this->assertStringNotContainsString( '.php&', $html, $method );
@@ -377,6 +377,6 @@ class Test_DBManager_Screens extends DBManager_TestCase {
 
 		$this->expectException( 'WPDieException' );
 
-		$this->render( array( 'DBManager_Screens', 'manager' ) );
+		$this->render( array( 'WP_DBManager_Screens', 'manager' ) );
 	}
 }

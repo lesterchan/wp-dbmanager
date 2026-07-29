@@ -10,7 +10,7 @@
  * change made any other way left the events pointing at the old interval.
  * It hangs off the option now, which is what most of this file checks.
  */
-class Test_DBManager_Cron extends DBManager_TestCase {
+class Test_DBManager_Cron extends WP_DBManager_TestCase {
 
 	/**
 	 * Set up.
@@ -18,7 +18,7 @@ class Test_DBManager_Cron extends DBManager_TestCase {
 	public function set_up() {
 		parent::set_up();
 
-		DBManager_Cron::init();
+		WP_DBManager_Cron::init();
 	}
 
 	/**
@@ -28,7 +28,7 @@ class Test_DBManager_Cron extends DBManager_TestCase {
 	 * @return void
 	 */
 	protected function save( array $changes ) {
-		update_option( DBManager_Options::OPTION, array_merge( DBManager_Options::get(), $changes ) );
+		update_option( WP_DBManager_Options::OPTION, array_merge( WP_DBManager_Options::get(), $changes ) );
 	}
 
 	/**
@@ -46,7 +46,7 @@ class Test_DBManager_Cron extends DBManager_TestCase {
 			)
 		);
 
-		$schedules = DBManager_Cron::schedules( array() );
+		$schedules = WP_DBManager_Cron::schedules( array() );
 
 		$this->assertSame( 2 * 86400, $schedules['dbmanager_backup']['interval'] );
 		$this->assertSame( 5 * 3600, $schedules['dbmanager_optimize']['interval'] );
@@ -62,7 +62,7 @@ class Test_DBManager_Cron extends DBManager_TestCase {
 	public function test_a_disabled_job_still_has_a_schedule() {
 		$this->save( array( 'backup_period' => 0 ) );
 
-		$schedules = DBManager_Cron::schedules( array() );
+		$schedules = WP_DBManager_Cron::schedules( array() );
 
 		$this->assertArrayHasKey( 'dbmanager_backup', $schedules );
 		$this->assertSame( YEAR_IN_SECONDS, $schedules['dbmanager_backup']['interval'] );
@@ -72,7 +72,7 @@ class Test_DBManager_Cron extends DBManager_TestCase {
 	 * Existing schedules from other plugins are left alone.
 	 */
 	public function test_schedules_preserves_what_it_was_given() {
-		$schedules = DBManager_Cron::schedules( array( 'someone_else' => array( 'interval' => 60 ) ) );
+		$schedules = WP_DBManager_Cron::schedules( array( 'someone_else' => array( 'interval' => 60 ) ) );
 
 		$this->assertArrayHasKey( 'someone_else', $schedules );
 	}
@@ -154,9 +154,9 @@ class Test_DBManager_Cron extends DBManager_TestCase {
 			)
 		);
 
-		DBManager_Cron::clear();
+		WP_DBManager_Cron::clear();
 
-		foreach ( DBManager_Cron::jobs() as $hook ) {
+		foreach ( WP_DBManager_Cron::jobs() as $hook ) {
 			$this->assertFalse( wp_next_scheduled( $hook ), $hook );
 		}
 	}
@@ -167,9 +167,9 @@ class Test_DBManager_Cron extends DBManager_TestCase {
 	public function test_a_disabled_backup_job_takes_no_backup() {
 		$this->save( array( 'backup_period' => 0 ) );
 
-		DBManager_Cron::backup();
+		WP_DBManager_Cron::backup();
 
-		$this->assertSame( array(), DBManager_Backups::all( $this->backup_dir ) );
+		$this->assertSame( array(), WP_DBManager_Backups::all( $this->backup_dir ) );
 	}
 
 	/**
@@ -183,9 +183,9 @@ class Test_DBManager_Cron extends DBManager_TestCase {
 			)
 		);
 
-		DBManager_Cron::backup();
+		WP_DBManager_Cron::backup();
 
-		$this->assertSame( array(), DBManager_Backups::all( $this->backup_dir ) );
+		$this->assertSame( array(), WP_DBManager_Backups::all( $this->backup_dir ) );
 	}
 
 	/**
@@ -200,9 +200,9 @@ class Test_DBManager_Cron extends DBManager_TestCase {
 
 		$this->save( array( 'backup_period' => 86400 ) );
 
-		DBManager_Cron::backup();
+		WP_DBManager_Cron::backup();
 
-		$this->assertCount( 1, DBManager_Backups::all( $this->backup_dir ) );
+		$this->assertCount( 1, WP_DBManager_Backups::all( $this->backup_dir ) );
 	}
 
 	/**
@@ -222,7 +222,7 @@ class Test_DBManager_Cron extends DBManager_TestCase {
 			}
 		);
 
-		DBManager_Cron::optimize();
+		WP_DBManager_Cron::optimize();
 
 		$this->assertSame( 0, $ran );
 	}
@@ -244,7 +244,7 @@ class Test_DBManager_Cron extends DBManager_TestCase {
 			}
 		);
 
-		DBManager_Cron::optimize();
+		WP_DBManager_Cron::optimize();
 
 		$this->assertStringContainsString( 'OPTIMIZE TABLE', $seen );
 		$this->assertStringContainsString( $GLOBALS['wpdb']->posts, $seen );
@@ -267,7 +267,7 @@ class Test_DBManager_Cron extends DBManager_TestCase {
 			}
 		);
 
-		DBManager_Cron::repair();
+		WP_DBManager_Cron::repair();
 
 		$this->assertSame( 0, $ran );
 	}
@@ -289,7 +289,7 @@ class Test_DBManager_Cron extends DBManager_TestCase {
 			}
 		);
 
-		DBManager_Cron::repair();
+		WP_DBManager_Cron::repair();
 
 		$this->assertStringContainsString( 'REPAIR TABLE', $seen );
 	}
@@ -320,7 +320,7 @@ class Test_DBManager_Cron extends DBManager_TestCase {
 			)
 		);
 
-		DBManager_Cron::backup();
+		WP_DBManager_Cron::backup();
 
 		$this->assertSame( 1, $mails );
 	}
@@ -351,9 +351,9 @@ class Test_DBManager_Cron extends DBManager_TestCase {
 			)
 		);
 
-		DBManager_Cron::backup();
+		WP_DBManager_Cron::backup();
 
-		$this->assertCount( 1, DBManager_Backups::all( $this->backup_dir ) );
+		$this->assertCount( 1, WP_DBManager_Backups::all( $this->backup_dir ) );
 		$this->assertSame( 0, $mails );
 	}
 
@@ -382,7 +382,7 @@ class Test_DBManager_Cron extends DBManager_TestCase {
 			)
 		);
 
-		DBManager_Cron::backup();
+		WP_DBManager_Cron::backup();
 
 		$this->assertSame( 0, $mails );
 	}

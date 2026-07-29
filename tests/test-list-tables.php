@@ -9,7 +9,7 @@
  * Columns, sorting and bulk actions on the screens that were hand-rolled
  * tables before 3.0.0.
  */
-class Test_DBManager_List_Tables extends DBManager_TestCase {
+class Test_DBManager_List_Tables extends WP_DBManager_TestCase {
 
 	/**
 	 * Drop a fake backup into the scratch folder.
@@ -49,7 +49,7 @@ class Test_DBManager_List_Tables extends DBManager_TestCase {
 	 * The information screen reports, so it offers nothing to select.
 	 */
 	public function test_the_information_table_has_no_checkboxes() {
-		$table = new DBManager_Tables_Table( 'info' );
+		$table = new WP_DBManager_Tables_Table( 'info' );
 
 		$this->assertArrayNotHasKey( 'cb', $table->get_columns() );
 		$this->assertSame( array(), $table->get_bulk_actions() );
@@ -66,7 +66,7 @@ class Test_DBManager_List_Tables extends DBManager_TestCase {
 	 * @param array  $actions Bulk actions it should offer.
 	 */
 	public function test_each_mode_offers_its_own_actions( $mode, $actions ) {
-		$table = new DBManager_Tables_Table( $mode );
+		$table = new WP_DBManager_Tables_Table( $mode );
 
 		$this->assertSame( $actions, array_keys( $table->get_bulk_actions() ) );
 		$this->assertArrayHasKey( 'cb', $table->get_columns() );
@@ -91,7 +91,7 @@ class Test_DBManager_List_Tables extends DBManager_TestCase {
 	public function test_the_tables_table_lists_tables() {
 		global $wpdb;
 
-		$table = new DBManager_Tables_Table( 'optimize' );
+		$table = new WP_DBManager_Tables_Table( 'optimize' );
 		$html  = $this->render_table( $table );
 
 		$this->assertScreenIsClean( $html );
@@ -104,7 +104,7 @@ class Test_DBManager_List_Tables extends DBManager_TestCase {
 	 * The information screen totals its columns.
 	 */
 	public function test_the_information_table_totals_its_columns() {
-		$table = new DBManager_Tables_Table( 'info' );
+		$table = new WP_DBManager_Tables_Table( 'info' );
 		$html  = $this->render_table( $table );
 
 		$this->assertScreenIsClean( $html );
@@ -116,7 +116,7 @@ class Test_DBManager_List_Tables extends DBManager_TestCase {
 	 * The action screens do not print a totals row.
 	 */
 	public function test_the_action_tables_have_no_totals_row() {
-		$html = $this->render_table( new DBManager_Tables_Table( 'optimize' ) );
+		$html = $this->render_table( new WP_DBManager_Tables_Table( 'optimize' ) );
 
 		$this->assertDoesNotMatchRegularExpression( '/[0-9,]+ Tables?</', $html );
 	}
@@ -126,7 +126,7 @@ class Test_DBManager_List_Tables extends DBManager_TestCase {
 	 */
 	public function test_tables_sort_by_name() {
 		$_GET  = array();
-		$table = new DBManager_Tables_Table( 'info' );
+		$table = new WP_DBManager_Tables_Table( 'info' );
 		$table->prepare_items();
 		$ascending = wp_list_pluck( $table->items, 'name' );
 
@@ -138,7 +138,7 @@ class Test_DBManager_List_Tables extends DBManager_TestCase {
 			'orderby' => 'name',
 			'order'   => 'desc',
 		);
-		$table = new DBManager_Tables_Table( 'info' );
+		$table = new WP_DBManager_Tables_Table( 'info' );
 		$table->prepare_items();
 
 		$this->assertSame( array_reverse( $ascending ), wp_list_pluck( $table->items, 'name' ) );
@@ -151,7 +151,7 @@ class Test_DBManager_List_Tables extends DBManager_TestCase {
 	 */
 	public function test_an_unknown_orderby_falls_back() {
 		$_GET  = array( 'orderby' => 'nonsense' );
-		$table = new DBManager_Tables_Table( 'info' );
+		$table = new WP_DBManager_Tables_Table( 'info' );
 		$table->prepare_items();
 
 		$names  = wp_list_pluck( $table->items, 'name' );
@@ -170,7 +170,7 @@ class Test_DBManager_List_Tables extends DBManager_TestCase {
 		$name = str_repeat( 'a', 32 ) . '_-_1700000000_-_sitedb.sql';
 		$this->make_backup( $name, 1700000000, 'SOME SQL' );
 
-		$table = new DBManager_Backups_Table();
+		$table = new WP_DBManager_Backups_Table();
 		$html  = $this->render_table( $table );
 
 		$this->assertScreenIsClean( $html );
@@ -184,7 +184,7 @@ class Test_DBManager_List_Tables extends DBManager_TestCase {
 	 * An empty folder says so.
 	 */
 	public function test_the_backups_table_reports_an_empty_folder() {
-		$html = $this->render_table( new DBManager_Backups_Table() );
+		$html = $this->render_table( new WP_DBManager_Backups_Table() );
 
 		$this->assertStringContainsString( 'There Are No Database Backup Files Available.', $html );
 	}
@@ -200,7 +200,7 @@ class Test_DBManager_List_Tables extends DBManager_TestCase {
 		$this->make_backup( 'b_-_1700009999_-_newer.sql', 1700009999 );
 
 		$_GET  = array();
-		$table = new DBManager_Backups_Table();
+		$table = new WP_DBManager_Backups_Table();
 		$table->prepare_items();
 
 		$this->assertSame( 'newer.sql', $table->items[0]['database'] );
@@ -218,7 +218,7 @@ class Test_DBManager_List_Tables extends DBManager_TestCase {
 			'orderby' => 'size',
 			'order'   => 'asc',
 		);
-		$table = new DBManager_Backups_Table();
+		$table = new WP_DBManager_Backups_Table();
 		$table->prepare_items();
 
 		$this->assertSame( 'small.sql', $table->items[0]['database'] );
@@ -230,7 +230,7 @@ class Test_DBManager_List_Tables extends DBManager_TestCase {
 	 * The bulk actions cover everything the old buttons did.
 	 */
 	public function test_the_backups_table_offers_every_action() {
-		$actions = array_keys( ( new DBManager_Backups_Table() )->get_bulk_actions() );
+		$actions = array_keys( ( new WP_DBManager_Backups_Table() )->get_bulk_actions() );
 
 		sort( $actions );
 
@@ -244,16 +244,16 @@ class Test_DBManager_List_Tables extends DBManager_TestCase {
 	 * handler checking anything else rejects every submission.
 	 */
 	public function test_the_nonce_actions_match_the_rendered_field() {
-		$this->assertSame( 'bulk-backups', DBManager_Backups_Table::nonce_action() );
-		$this->assertSame( 'bulk-tables', DBManager_Tables_Table::nonce_action() );
+		$this->assertSame( 'bulk-backups', WP_DBManager_Backups_Table::nonce_action() );
+		$this->assertSame( 'bulk-tables', WP_DBManager_Tables_Table::nonce_action() );
 
-		$html = $this->render_table( new DBManager_Backups_Table() );
+		$html = $this->render_table( new WP_DBManager_Backups_Table() );
 		$this->assertStringContainsString( 'name="_wpnonce"', $html );
 
 		$this->assertNotFalse(
 			wp_verify_nonce(
 				$this->nonce_from( $html ),
-				DBManager_Backups_Table::nonce_action()
+				WP_DBManager_Backups_Table::nonce_action()
 			),
 			'The rendered nonce does not verify against the action the handler checks.'
 		);

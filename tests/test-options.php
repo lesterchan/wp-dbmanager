@@ -8,13 +8,13 @@
 /**
  * Reading, writing and defaulting the one option row.
  */
-class Test_DBManager_Options extends DBManager_TestCase {
+class Test_DBManager_Options extends WP_DBManager_TestCase {
 
 	/**
 	 * The plugin owns exactly one row.
 	 */
 	public function test_there_is_one_option_row() {
-		$this->assertSame( 'dbmanager_options', DBManager_Options::OPTION );
+		$this->assertSame( 'dbmanager_options', WP_DBManager_Options::OPTION );
 	}
 
 	/**
@@ -24,27 +24,27 @@ class Test_DBManager_Options extends DBManager_TestCase {
 	 * which is where the PHP 8 warnings used to come from.
 	 */
 	public function test_missing_keys_fall_back_to_defaults() {
-		update_option( DBManager_Options::OPTION, array( 'max_backup' => 3 ) );
+		update_option( WP_DBManager_Options::OPTION, array( 'max_backup' => 3 ) );
 
-		$this->assertSame( 3, DBManager_Options::get( 'max_backup' ) );
-		$this->assertSame( DBManager_Options::defaults()['backup_period'], DBManager_Options::get( 'backup_period' ) );
-		$this->assertArrayHasKey( 'hide_admin_notices', DBManager_Options::get() );
+		$this->assertSame( 3, WP_DBManager_Options::get( 'max_backup' ) );
+		$this->assertSame( WP_DBManager_Options::defaults()['backup_period'], WP_DBManager_Options::get( 'backup_period' ) );
+		$this->assertArrayHasKey( 'hide_admin_notices', WP_DBManager_Options::get() );
 	}
 
 	/**
 	 * A row that is not an array at all does not take the plugin down.
 	 */
 	public function test_a_corrupt_row_falls_back_to_defaults() {
-		update_option( DBManager_Options::OPTION, 'not an array' );
+		update_option( WP_DBManager_Options::OPTION, 'not an array' );
 
-		$this->assertSame( DBManager_Options::defaults(), DBManager_Options::get() );
+		$this->assertSame( WP_DBManager_Options::defaults(), WP_DBManager_Options::get() );
 	}
 
 	/**
 	 * An unknown key reads as null rather than warning.
 	 */
 	public function test_an_unknown_key_is_null() {
-		$this->assertNull( DBManager_Options::get( 'no_such_setting' ) );
+		$this->assertNull( WP_DBManager_Options::get( 'no_such_setting' ) );
 	}
 
 	/**
@@ -55,7 +55,7 @@ class Test_DBManager_Options extends DBManager_TestCase {
 	 * Activation does it once and stores the answer.
 	 */
 	public function test_binary_paths_default_to_empty() {
-		$defaults = DBManager_Options::defaults();
+		$defaults = WP_DBManager_Options::defaults();
 
 		$this->assertSame( '', $defaults['mysqldumppath'] );
 		$this->assertSame( '', $defaults['mysqlpath'] );
@@ -65,14 +65,14 @@ class Test_DBManager_Options extends DBManager_TestCase {
 	 * The backup folder defaults inside wp-content.
 	 */
 	public function test_backup_path_defaults_under_wp_content() {
-		$this->assertStringEndsWith( '/backup-db', DBManager_Options::defaults()['path'] );
+		$this->assertStringEndsWith( '/backup-db', WP_DBManager_Options::defaults()['path'] );
 	}
 
 	/**
 	 * The periods list is what both the screen and the sanitizer read.
 	 */
 	public function test_periods_cover_the_offered_intervals() {
-		$periods = DBManager_Options::periods();
+		$periods = WP_DBManager_Options::periods();
 
 		$this->assertArrayHasKey( 0, $periods );
 
@@ -88,25 +88,25 @@ class Test_DBManager_Options extends DBManager_TestCase {
 	 * half-written option row would become "/index.php" at the filesystem root.
 	 */
 	public function test_backup_path_is_always_a_string() {
-		$this->assertIsString( DBManager_Options::backup_path() );
-		$this->assertSame( DBManager_Options::get( 'path' ), DBManager_Options::backup_path() );
+		$this->assertIsString( WP_DBManager_Options::backup_path() );
+		$this->assertSame( WP_DBManager_Options::get( 'path' ), WP_DBManager_Options::backup_path() );
 
-		update_option( DBManager_Options::OPTION, array( 'path' => '/somewhere/else' ) );
-		$this->assertSame( '/somewhere/else', DBManager_Options::backup_path() );
+		update_option( WP_DBManager_Options::OPTION, array( 'path' => '/somewhere/else' ) );
+		$this->assertSame( '/somewhere/else', WP_DBManager_Options::backup_path() );
 
-		update_option( DBManager_Options::OPTION, 'not an array' );
-		$this->assertIsString( DBManager_Options::backup_path() );
+		update_option( WP_DBManager_Options::OPTION, 'not an array' );
+		$this->assertIsString( WP_DBManager_Options::backup_path() );
 	}
 
 	/**
 	 * Writing and reading round-trips.
 	 */
 	public function test_update_round_trips() {
-		$values               = DBManager_Options::get();
+		$values               = WP_DBManager_Options::get();
 		$values['max_backup'] = 42;
 
-		DBManager_Options::update( $values );
+		WP_DBManager_Options::update( $values );
 
-		$this->assertSame( 42, DBManager_Options::get( 'max_backup' ) );
+		$this->assertSame( 42, WP_DBManager_Options::get( 'max_backup' ) );
 	}
 }

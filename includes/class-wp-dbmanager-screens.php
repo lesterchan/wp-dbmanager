@@ -18,7 +18,7 @@ defined( 'ABSPATH' ) || exit;
  *
  * @since 3.0.0
  */
-class DBManager_Screens {
+class WP_DBManager_Screens {
 
 	/**
 	 * The Database information screen.
@@ -26,9 +26,9 @@ class DBManager_Screens {
 	 * @return void
 	 */
 	public static function manager() {
-		DBManager_Admin::check_capability();
+		WP_DBManager_Admin::check_capability();
 
-		$version = DBManager_Tables::version();
+		$version = WP_DBManager_Tables::version();
 		?>
 <!-- Database Information -->
 <div class="wrap">
@@ -70,7 +70,7 @@ class DBManager_Screens {
 	<h3><?php esc_html_e( 'Tables Information', 'wp-dbmanager' ); ?></h3>
 	<br style="clear" />
 		<?php
-		$tables = new DBManager_Tables_Table( 'info' );
+		$tables = new WP_DBManager_Tables_Table( 'info' );
 		$tables->prepare_items();
 		$tables->display();
 		?>
@@ -84,10 +84,10 @@ class DBManager_Screens {
 	 * @return void
 	 */
 	public static function backup() {
-		DBManager_Admin::check_capability();
+		WP_DBManager_Admin::check_capability();
 
-		$options      = DBManager_Options::get();
-		$current_date = DBManager::format_timestamp( time() );
+		$options      = WP_DBManager_Options::get();
+		$current_date = WP_DBManager::format_timestamp( time() );
 		$backup_path  = $options['path'];
 		$messages     = array();
 
@@ -99,7 +99,7 @@ class DBManager_Screens {
 
 			if ( __( 'Backup', 'wp-dbmanager' ) === $action ) {
 				$gzip   = isset( $_POST['gzip'] ) ? 1 === (int) $_POST['gzip'] : false;
-				$result = DBManager_Database::backup( $gzip );
+				$result = WP_DBManager_Database::backup( $gzip );
 
 				$failures = array(
 					/* translators: %s: date and time of the attempt. */
@@ -135,7 +135,7 @@ class DBManager_Screens {
 		$has_error         = false;
 		$disabled_function = false;
 
-		DBManager_Admin::render_messages( $messages );
+		WP_DBManager_Admin::render_messages( $messages );
 		?>
 <!-- Checking Backup Status -->
 <div class="wrap">
@@ -143,12 +143,12 @@ class DBManager_Screens {
 	<h3><?php esc_html_e( 'Checking Security Status', 'wp-dbmanager' ); ?></h3>
 	<p>
 		<?php
-		$server_type = DBManager_Folder::server_type();
-		$backup_url  = DBManager_Folder::url();
+		$server_type = WP_DBManager_Folder::server_type();
+		$backup_url  = WP_DBManager_Folder::url();
 
 		// Ask the server whether the folder is reachable, rather than assuming a
 		// dropped in file did the job. On nginx it did not.
-		$is_public = DBManager_Folder::is_public();
+		$is_public = WP_DBManager_Folder::is_public();
 
 		if ( false === $backup_url ) {
 			printf( '<p style="color: green;">%s</p>', esc_html__( 'Your backup folder is outside the web root, so it cannot be downloaded over HTTP.', 'wp-dbmanager' ) );
@@ -238,7 +238,7 @@ class DBManager_Screens {
 	</p>
 	<p>
 		<?php
-		if ( DBManager_Database::is_valid_path( $options['mysqldumppath'] ) === 0 ) {
+		if ( WP_DBManager_Database::is_valid_path( $options['mysqldumppath'] ) === 0 ) {
 			/* translators: %s: configured mysqldump path. */
 			printf( '<p style="color: red;">%s</p>', esc_html( sprintf( __( '%s is not a valid backup mysqldump path', 'wp-dbmanager' ), $options['mysqldumppath'] ) ) );
 			$has_error = true;
@@ -258,7 +258,7 @@ class DBManager_Screens {
 	</p>
 	<p>
 		<?php
-		if ( DBManager_Database::is_valid_path( $options['mysqlpath'] ) === 0 ) {
+		if ( WP_DBManager_Database::is_valid_path( $options['mysqlpath'] ) === 0 ) {
 			/* translators: %s: configured mysql path. */
 			printf( '<p style="color: red;">%s</p>', esc_html( sprintf( __( '%s is not a valid backup mysql path', 'wp-dbmanager' ), $options['mysqlpath'] ) ) );
 			$has_error = true;
@@ -280,7 +280,7 @@ class DBManager_Screens {
 		<?php esc_html_e( 'Checking PHP Functions', 'wp-dbmanager' ); ?> <span dir="ltr">(<strong>passthru()</strong>, <strong>system()</strong> <?php esc_html_e( 'and', 'wp-dbmanager' ); ?> <strong>exec()</strong>)</span> ...<br />
 		<?php
 		foreach ( array( 'passthru', 'system', 'exec' ) as $function_name ) {
-			if ( DBManager_Database::is_function_disabled( $function_name ) ) {
+			if ( WP_DBManager_Database::is_function_disabled( $function_name ) ) {
 				printf(
 					'<p style="color: red;"><span dir="ltr">%1$s()</span> %2$s.</p>',
 					esc_html( $function_name ),
@@ -318,7 +318,7 @@ class DBManager_Screens {
 	<p><i><?php esc_html_e( 'Note: The checking of backup status is still undergoing testing, it may not be accurate.', 'wp-dbmanager' ); ?></i></p>
 </div>
 <!-- Backup Database -->
-<form method="post" action="<?php echo esc_url( DBManager_Admin::page_url( 'backup' ) ); ?>">
+<form method="post" action="<?php echo esc_url( WP_DBManager_Admin::page_url( 'backup' ) ); ?>">
 		<?php wp_nonce_field( 'wp-dbmanager_backup' ); ?>
 	<div class="wrap">
 		<h3><?php esc_html_e( 'Backup Database', 'wp-dbmanager' ); ?></h3>
@@ -340,7 +340,7 @@ class DBManager_Screens {
 			</tr>
 			<tr>
 				<th><?php esc_html_e( 'Database Backup Date:', 'wp-dbmanager' ); ?></th>
-				<td><?php echo esc_html( DBManager::format_timestamp( $backup_date ) ); ?></td>
+				<td><?php echo esc_html( WP_DBManager::format_timestamp( $backup_date ) ); ?></td>
 			</tr>
 			<tr style="background-color: #eee;">
 				<th><?php esc_html_e( 'Database Backup File Name:', 'wp-dbmanager' ); ?></th>
@@ -373,18 +373,18 @@ class DBManager_Screens {
 	 * @return void
 	 */
 	public static function manage() {
-		DBManager_Admin::check_capability();
+		WP_DBManager_Admin::check_capability();
 
-		$options  = DBManager_Options::get();
+		$options  = WP_DBManager_Options::get();
 		$messages = array();
 
-		$table = new DBManager_Backups_Table();
+		$table = new WP_DBManager_Backups_Table();
 
 		// current_action() reads the bulk dropdown at either end of the table.
 		$action = $table->current_action();
 
 		if ( false !== $action ) {
-			check_admin_referer( DBManager_Backups_Table::nonce_action() );
+			check_admin_referer( WP_DBManager_Backups_Table::nonce_action() );
 
 			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Each entry is run through sanitize_file_name() below.
 			$selected = isset( $_POST['backups'] ) ? (array) wp_unslash( $_POST['backups'] ) : array();
@@ -393,7 +393,7 @@ class DBManager_Screens {
 			$messages = self::handle_backup_action( $action, $selected, $options );
 		}
 
-		DBManager_Admin::render_messages( $messages );
+		WP_DBManager_Admin::render_messages( $messages );
 
 		$table->prepare_items();
 
@@ -410,7 +410,7 @@ class DBManager_Screens {
 <div class="wrap">
 	<h2><?php esc_html_e( 'Manage Backup Database', 'wp-dbmanager' ); ?></h2>
 	<p><?php esc_html_e( 'Choose A Backup To E-Mail, Restore, Download Or Delete. Restore and Download act on one backup at a time.', 'wp-dbmanager' ); ?></p>
-	<form method="post" action="<?php echo esc_url( DBManager_Admin::page_url( 'manage' ) ); ?>" data-dbmanager-confirm-actions="<?php echo esc_attr( $confirmations ); ?>">
+	<form method="post" action="<?php echo esc_url( WP_DBManager_Admin::page_url( 'manage' ) ); ?>" data-dbmanager-confirm-actions="<?php echo esc_attr( $confirmations ); ?>">
 		<p>
 			<label for="email_to"><?php esc_html_e( 'E-mail database backup file to:', 'wp-dbmanager' ); ?></label>
 			<input type="text" id="email_to" name="email_to" size="30" maxlength="50" value="<?php echo esc_attr( get_option( 'admin_email' ) ); ?>" dir="ltr" />
@@ -422,7 +422,7 @@ class DBManager_Screens {
 				/* translators: 1: number of backup files, 2: total size on disk. */
 				esc_html( _n( '%1$s backup file, %2$s on disk.', '%1$s backup files, %2$s on disk.', count( $table->items ), 'wp-dbmanager' ) ),
 				esc_html( number_format_i18n( count( $table->items ) ) ),
-				esc_html( DBManager_Backups::format_size( $table->total_size() ) )
+				esc_html( WP_DBManager_Backups::format_size( $table->total_size() ) )
 			);
 			?>
 		</p>
@@ -465,8 +465,8 @@ class DBManager_Screens {
 
 		switch ( $action ) {
 			case 'restore':
-				$file   = DBManager_Backups::parse_filename( $selected[0] );
-				$result = DBManager_Database::restore( $selected[0] );
+				$file   = WP_DBManager_Backups::parse_filename( $selected[0] );
+				$result = WP_DBManager_Database::restore( $selected[0] );
 
 				foreach ( $result['errors'] as $error ) {
 					$messages[] = array(
@@ -494,9 +494,9 @@ class DBManager_Screens {
 				$to = ! empty( $_POST['email_to'] ) ? sanitize_email( wp_unslash( $_POST['email_to'] ) ) : get_option( 'admin_email' );
 
 				foreach ( $selected as $name ) {
-					$file = DBManager_Backups::parse_filename( $name );
+					$file = WP_DBManager_Backups::parse_filename( $name );
 
-					if ( DBManager_Mailer::send( $to, $options['path'] . '/' . $name ) ) {
+					if ( WP_DBManager_Mailer::send( $to, $options['path'] . '/' . $name ) ) {
 						$messages[] = array(
 							'type' => 'success',
 							/* translators: 1: date and time of the backup file, 2: e-mail address. */
@@ -523,7 +523,7 @@ class DBManager_Screens {
 
 			case 'delete':
 				foreach ( $selected as $name ) {
-					$file = DBManager_Backups::parse_filename( $name );
+					$file = WP_DBManager_Backups::parse_filename( $name );
 					$path = $options['path'] . '/' . $name;
 
 					if ( ! is_file( $path ) ) {
@@ -615,23 +615,23 @@ class DBManager_Screens {
 	 * @return void
 	 */
 	protected static function render_table_screen( $mode, $title, array $copy = array() ) {
-		DBManager_Admin::check_capability();
+		WP_DBManager_Admin::check_capability();
 
-		$table  = new DBManager_Tables_Table( $mode );
+		$table  = new WP_DBManager_Tables_Table( $mode );
 		$action = $table->current_action();
 
 		$messages = array();
 
 		if ( false !== $action ) {
-			check_admin_referer( DBManager_Tables_Table::nonce_action() );
+			check_admin_referer( WP_DBManager_Tables_Table::nonce_action() );
 
-			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Names are validated against SHOW TABLES by DBManager_Tables::filter().
+			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Names are validated against SHOW TABLES by WP_DBManager_Tables::filter().
 			$submitted = isset( $_POST['tables'] ) ? (array) wp_unslash( $_POST['tables'] ) : array();
 
 			$messages = self::handle_table_action( $action, $submitted );
 		}
 
-		DBManager_Admin::render_messages( $messages );
+		WP_DBManager_Admin::render_messages( $messages );
 
 		$table->prepare_items();
 
@@ -642,7 +642,7 @@ class DBManager_Screens {
 		<?php if ( ! empty( $copy['p'] ) ) : ?>
 		<p><?php echo esc_html( $copy['p'] ); ?></p>
 	<?php endif; ?>
-	<form method="post" action="<?php echo esc_url( DBManager_Admin::page_url( 'empty' === $mode ? 'empty' : $mode ) ); ?>"<?php echo '' !== $confirmations ? ' data-dbmanager-confirm-actions="' . esc_attr( $confirmations ) . '"' : ''; ?>>
+	<form method="post" action="<?php echo esc_url( WP_DBManager_Admin::page_url( 'empty' === $mode ? 'empty' : $mode ) ); ?>"<?php echo '' !== $confirmations ? ' data-dbmanager-confirm-actions="' . esc_attr( $confirmations ) . '"' : ''; ?>>
 		<?php $table->display(); ?>
 	</form>
 		<?php if ( ! empty( $copy['notes'] ) ) : ?>
@@ -670,7 +670,7 @@ class DBManager_Screens {
 	 */
 	protected static function handle_table_action( $action, array $submitted ) {
 		$wanted = array_fill_keys( array_map( 'strval', $submitted ), 'yes' );
-		$tables = DBManager_Tables::filter( $wanted, 'yes' );
+		$tables = WP_DBManager_Tables::filter( $wanted, 'yes' );
 
 		if ( empty( $tables ) ) {
 			return array(
@@ -685,7 +685,7 @@ class DBManager_Screens {
 			case 'optimize':
 				// Called once and held: inlining this into both branches of the
 				// ternary below would run OPTIMIZE TABLE twice.
-				$optimized = DBManager_Tables::optimize( $tables );
+				$optimized = WP_DBManager_Tables::optimize( $tables );
 
 				return array(
 					array(
@@ -699,7 +699,7 @@ class DBManager_Screens {
 				);
 
 			case 'repair':
-				$repaired = DBManager_Tables::repair( $tables );
+				$repaired = WP_DBManager_Tables::repair( $tables );
 
 				return array(
 					array(
@@ -716,7 +716,7 @@ class DBManager_Screens {
 				$messages = array();
 
 				foreach ( $tables as $table ) {
-					DBManager_Tables::truncate( $table );
+					WP_DBManager_Tables::truncate( $table );
 
 					$messages[] = array(
 						'type' => 'success',
@@ -728,7 +728,7 @@ class DBManager_Screens {
 				return $messages;
 
 			case 'drop':
-				DBManager_Tables::drop( $tables );
+				WP_DBManager_Tables::drop( $tables );
 
 				return array(
 					array(
@@ -748,7 +748,7 @@ class DBManager_Screens {
 	 * @return void
 	 */
 	public static function run() {
-		DBManager_Admin::check_capability();
+		WP_DBManager_Admin::check_capability();
 
 		$messages = array();
 
@@ -764,7 +764,7 @@ class DBManager_Screens {
 				// empty() rather than a comparison against '': the pre-3.0.0 code
 				// gated on plain truthiness, so a console holding only "0" counted
 				// as an empty query, and that is worth keeping identical.
-				$queries = ! empty( $blob ) ? DBManager_Tables::split_queries( $blob ) : array();
+				$queries = ! empty( $blob ) ? WP_DBManager_Tables::split_queries( $blob ) : array();
 
 				if ( empty( $queries ) ) {
 					$messages[] = array(
@@ -776,7 +776,7 @@ class DBManager_Screens {
 					$success = 0;
 
 					foreach ( $queries as $query ) {
-						$outcome = DBManager_Tables::run_query( $query );
+						$outcome = WP_DBManager_Tables::run_query( $query );
 
 						if ( 'ignored' === $outcome ) {
 							continue;
@@ -802,10 +802,10 @@ class DBManager_Screens {
 			}
 		}
 
-		DBManager_Admin::render_messages( $messages );
+		WP_DBManager_Admin::render_messages( $messages );
 		?>
 <!-- Run SQL Query -->
-<form method="post" action="<?php echo esc_url( DBManager_Admin::page_url( 'run' ) ); ?>">
+<form method="post" action="<?php echo esc_url( WP_DBManager_Admin::page_url( 'run' ) ); ?>">
 		<?php wp_nonce_field( 'wp-dbmanager_run' ); ?>
 	<div class="wrap">
 		<h2><?php esc_html_e( 'Run SQL Query', 'wp-dbmanager' ); ?></h2>

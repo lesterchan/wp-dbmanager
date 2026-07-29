@@ -17,7 +17,7 @@ defined( 'ABSPATH' ) || exit;
  *
  * @since 3.0.0
  */
-class DBManager_Folder {
+class WP_DBManager_Folder {
 
 	/**
 	 * Transient holding the cached reachability answer.
@@ -64,7 +64,7 @@ class DBManager_Folder {
 	 * @return string|false The URL, or false when the folder is outside the web root.
 	 */
 	public static function url() {
-		$path = DBManager_Options::backup_path();
+		$path = WP_DBManager_Options::backup_path();
 
 		if ( '' === $path ) {
 			return false;
@@ -131,7 +131,7 @@ class DBManager_Folder {
 
 		$result     = 'unknown';
 		$backup_url = self::url();
-		$path       = DBManager_Options::backup_path();
+		$path       = WP_DBManager_Options::backup_path();
 
 		if ( false === $backup_url ) {
 			// Outside the web root, so there is nothing for the server to hand out.
@@ -183,7 +183,7 @@ class DBManager_Folder {
 	 * @return string File name, or an empty string when there is nothing to ask for.
 	 */
 	protected static function probe_target( $path ) {
-		$files = DBManager_Backups::all( $path );
+		$files = WP_DBManager_Backups::all( $path );
 
 		if ( ! empty( $files ) ) {
 			$target = end( $files );
@@ -212,7 +212,7 @@ class DBManager_Folder {
 	 * @return void
 	 */
 	public static function create() {
-		$path = DBManager_Options::backup_path();
+		$path = WP_DBManager_Options::backup_path();
 
 		if ( '' === $path ) {
 			return;

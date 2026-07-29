@@ -12,10 +12,21 @@ defined( 'ABSPATH' ) || exit;
  *
  * @since 3.0.0
  */
-class DBManager_Admin {
+class WP_DBManager_Admin {
+
+	/**
+	 * Top-level menu and page slug.
+	 */
+	const PAGE = 'wp-dbmanager';
 
 	/**
 	 * Capability required for every screen this plugin owns.
+	 *
+	 * install_plugins rather than the manage_options of a settings-only plugin,
+	 * and deliberately so: these screens restore, empty and drop tables, so
+	 * reaching them is as consequential as installing code. Section 2.7 keeps a
+	 * plugin's existing custom capability for its data screens, and this one is
+	 * the reason that clause exists.
 	 */
 	const CAPABILITY = 'install_plugins';
 
@@ -33,14 +44,14 @@ class DBManager_Admin {
 	 */
 	public static function pages() {
 		return array(
-			'manager'  => 'wp-dbmanager',
-			'backup'   => 'wp-dbmanager-backup',
-			'manage'   => 'wp-dbmanager-manage',
-			'optimize' => 'wp-dbmanager-optimize',
-			'repair'   => 'wp-dbmanager-repair',
-			'empty'    => 'wp-dbmanager-empty',
-			'run'      => 'wp-dbmanager-run',
-			'options'  => 'wp-dbmanager-options',
+			'manager'  => self::PAGE,
+			'backup'   => self::PAGE . '-backup',
+			'manage'   => self::PAGE . '-manage',
+			'optimize' => self::PAGE . '-optimize',
+			'repair'   => self::PAGE . '-repair',
+			'empty'    => self::PAGE . '-empty',
+			'run'      => self::PAGE . '-run',
+			'options'  => self::PAGE . '-options',
 		);
 	}
 
@@ -86,12 +97,12 @@ class DBManager_Admin {
 			__( 'Database', 'wp-dbmanager' ),
 			$cap,
 			$pages['manager'],
-			array( 'DBManager_Screens', 'manager' ),
+			array( 'WP_DBManager_Screens', 'manager' ),
 			'dashicons-archive'
 		);
 
 		// The method name is carried explicitly rather than reused from the key:
-		// the Empty/Drop screen cannot be DBManager_Screens::empty(), because
+		// the Empty/Drop screen cannot be WP_DBManager_Screens::empty(), because
 		// empty is a language construct rather than an ordinary function name.
 		$submenus = array(
 			'backup'   => array( __( 'Backup DB', 'wp-dbmanager' ), 'backup' ),
@@ -111,7 +122,7 @@ class DBManager_Admin {
 				$label,
 				$cap,
 				$pages[ $key ],
-				array( 'DBManager_Screens', $method )
+				array( 'WP_DBManager_Screens', $method )
 			);
 		}
 
@@ -121,7 +132,7 @@ class DBManager_Admin {
 			__( 'DB Options', 'wp-dbmanager' ),
 			$cap,
 			$pages['options'],
-			array( 'DBManager_Settings', 'render' )
+			array( 'WP_DBManager_Settings', 'render' )
 		);
 	}
 
@@ -157,7 +168,7 @@ class DBManager_Admin {
 		// Only the options screen needs the detected paths, and detection shells
 		// out, so it is not done for the other seven.
 		if ( false !== strpos( $hook_suffix, $pages['options'] ) ) {
-			wp_localize_script( 'wp-dbmanager', 'wpDBManagerL10n', DBManager_Database::detect_binaries() );
+			wp_localize_script( 'wp-dbmanager', 'wpDBManagerL10n', WP_DBManager_Database::detect_binaries() );
 		}
 	}
 
@@ -216,7 +227,7 @@ class DBManager_Admin {
 			return;
 		}
 
-		$options = DBManager_Options::get();
+		$options = WP_DBManager_Options::get();
 
 		if ( empty( $options['path'] ) ) {
 			return;
@@ -231,7 +242,7 @@ class DBManager_Admin {
 
 		// Read the cached answer only. The Backup screen makes the actual request;
 		// there is no reason to hold up an unrelated admin page for it.
-		$is_public = DBManager_Folder::is_public( false );
+		$is_public = WP_DBManager_Folder::is_public( false );
 
 		if ( $writable && $indexed && true !== $is_public ) {
 			return;

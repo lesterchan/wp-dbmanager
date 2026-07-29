@@ -12,12 +12,12 @@ defined( 'ABSPATH' ) || exit;
  *
  * @since 3.0.0
  */
-class DBManager {
+class WP_DBManager {
 
 	/**
 	 * Static instance.
 	 *
-	 * @var DBManager|null
+	 * @var WP_DBManager|null
 	 */
 	private static $instance;
 
@@ -37,7 +37,7 @@ class DBManager {
 	/**
 	 * Initialize the plugin object and return its instance.
 	 *
-	 * @return DBManager
+	 * @return WP_DBManager
 	 */
 	public static function get_instance() {
 		if ( ! isset( self::$instance ) ) {
@@ -53,18 +53,18 @@ class DBManager {
 	 * @return void
 	 */
 	public function add_hooks() {
-		DBManager_Cron::init();
+		WP_DBManager_Cron::init();
 
 		add_filter( 'upload_mimes', array( $this, 'upload_mimes' ) );
 
 		// Both of these answer a POST and then exit, so they have to run before
 		// anything renders.
-		add_action( 'init', array( 'DBManager_Backups', 'maybe_download' ) );
-		add_action( 'init', array( 'DBManager_Folder', 'maybe_fix' ) );
+		add_action( 'init', array( 'WP_DBManager_Backups', 'maybe_download' ) );
+		add_action( 'init', array( 'WP_DBManager_Folder', 'maybe_fix' ) );
 
 		if ( is_admin() ) {
-			DBManager_Admin::init();
-			DBManager_Settings::init();
+			WP_DBManager_Admin::init();
+			WP_DBManager_Settings::init();
 		}
 	}
 
@@ -107,15 +107,15 @@ class DBManager {
 	 * @return void
 	 */
 	public static function activate_site() {
-		$binaries = DBManager_Database::detect_binaries();
-		$defaults = DBManager_Options::defaults();
+		$binaries = WP_DBManager_Database::detect_binaries();
+		$defaults = WP_DBManager_Options::defaults();
 
 		$defaults['mysqldumppath'] = $binaries['mysqldump'];
 		$defaults['mysqlpath']     = $binaries['mysql'];
 
-		add_option( DBManager_Options::OPTION, $defaults );
+		add_option( WP_DBManager_Options::OPTION, $defaults );
 
-		DBManager_Folder::create();
+		WP_DBManager_Folder::create();
 
 		// Dropped in 2.80.6 in favour of install_plugins, but sites activated
 		// before then still carry it.

@@ -8,7 +8,7 @@
 /**
  * Constants, hook registration and the shared helpers on the main class.
  */
-class Test_DBManager_Plugin extends DBManager_TestCase {
+class Test_DBManager_Plugin extends WP_DBManager_TestCase {
 
 	/**
 	 * The constants the rest of the plugin builds paths from exist.
@@ -53,21 +53,21 @@ class Test_DBManager_Plugin extends DBManager_TestCase {
 	 * There is one instance.
 	 */
 	public function test_get_instance_is_a_singleton() {
-		$this->assertSame( DBManager::get_instance(), DBManager::get_instance() );
-		$this->assertInstanceOf( 'DBManager', DBManager::get_instance() );
+		$this->assertSame( WP_DBManager::get_instance(), WP_DBManager::get_instance() );
+		$this->assertInstanceOf( 'WP_DBManager', WP_DBManager::get_instance() );
 	}
 
 	/**
 	 * .sql uploads are permitted.
 	 */
 	public function test_sql_uploads_are_allowed() {
-		$mimes = DBManager::get_instance()->upload_mimes( array() );
+		$mimes = WP_DBManager::get_instance()->upload_mimes( array() );
 
 		$this->assertArrayHasKey( 'sql', $mimes );
 		$this->assertSame( 'application/sql', $mimes['sql'] );
 
 		// Whatever was already allowed stays allowed.
-		$this->assertArrayHasKey( 'jpg|jpeg|jpe', DBManager::get_instance()->upload_mimes( array( 'jpg|jpeg|jpe' => 'image/jpeg' ) ) );
+		$this->assertArrayHasKey( 'jpg|jpeg|jpe', WP_DBManager::get_instance()->upload_mimes( array( 'jpg|jpeg|jpe' => 'image/jpeg' ) ) );
 	}
 
 	/**
@@ -75,8 +75,8 @@ class Test_DBManager_Plugin extends DBManager_TestCase {
 	 */
 	public function test_the_hooks_are_registered() {
 		$this->assertNotFalse( has_filter( 'upload_mimes' ) );
-		$this->assertNotFalse( has_action( 'init', array( 'DBManager_Backups', 'maybe_download' ) ) );
-		$this->assertNotFalse( has_action( 'init', array( 'DBManager_Folder', 'maybe_fix' ) ) );
+		$this->assertNotFalse( has_action( 'init', array( 'WP_DBManager_Backups', 'maybe_download' ) ) );
+		$this->assertNotFalse( has_action( 'init', array( 'WP_DBManager_Folder', 'maybe_fix' ) ) );
 		$this->assertNotFalse( has_filter( 'cron_schedules' ) );
 	}
 
@@ -89,24 +89,24 @@ class Test_DBManager_Plugin extends DBManager_TestCase {
 		remove_all_actions( 'admin_enqueue_scripts' );
 		remove_all_actions( 'admin_init' );
 
-		DBManager_Admin::init();
-		DBManager_Settings::init();
+		WP_DBManager_Admin::init();
+		WP_DBManager_Settings::init();
 
-		$this->assertNotFalse( has_action( 'admin_menu', array( 'DBManager_Admin', 'menu' ) ) );
-		$this->assertNotFalse( has_action( 'admin_notices', array( 'DBManager_Admin', 'notices' ) ) );
-		$this->assertNotFalse( has_action( 'admin_enqueue_scripts', array( 'DBManager_Admin', 'enqueue' ) ) );
-		$this->assertNotFalse( has_action( 'admin_init', array( 'DBManager_Settings', 'register' ) ) );
+		$this->assertNotFalse( has_action( 'admin_menu', array( 'WP_DBManager_Admin', 'menu' ) ) );
+		$this->assertNotFalse( has_action( 'admin_notices', array( 'WP_DBManager_Admin', 'notices' ) ) );
+		$this->assertNotFalse( has_action( 'admin_enqueue_scripts', array( 'WP_DBManager_Admin', 'enqueue' ) ) );
+		$this->assertNotFalse( has_action( 'admin_init', array( 'WP_DBManager_Settings', 'register' ) ) );
 	}
 
 	/**
 	 * Activating on a single site sets it up without touching the network.
 	 */
 	public function test_activation_on_a_single_site() {
-		delete_option( DBManager_Options::OPTION );
+		delete_option( WP_DBManager_Options::OPTION );
 
-		DBManager::get_instance()->activate( false );
+		WP_DBManager::get_instance()->activate( false );
 
-		$this->assertIsArray( get_option( DBManager_Options::OPTION ) );
+		$this->assertIsArray( get_option( WP_DBManager_Options::OPTION ) );
 	}
 
 	/**
@@ -118,7 +118,7 @@ class Test_DBManager_Plugin extends DBManager_TestCase {
 	 * on the argument that makes the loop correct.
 	 */
 	public function test_network_activation_lifts_the_site_query_cap() {
-		$source = file_get_contents( WP_DBMANAGER_DIR . 'includes/class-dbmanager.php' );
+		$source = file_get_contents( WP_DBMANAGER_DIR . 'includes/class-wp-dbmanager.php' );
 
 		$this->assertMatchesRegularExpression( "/'number'\s*=>\s*0/", $source );
 		$this->assertMatchesRegularExpression( "/'fields'\s*=>\s*'ids'/", $source );
@@ -140,10 +140,10 @@ class Test_DBManager_Plugin extends DBManager_TestCase {
 	public function test_timestamps_honour_the_site_offset() {
 		update_option( 'timezone_string', '' );
 		update_option( 'gmt_offset', 0 );
-		$utc = DBManager::format_timestamp( 1700000000, 'Y-m-d H:i' );
+		$utc = WP_DBManager::format_timestamp( 1700000000, 'Y-m-d H:i' );
 
 		update_option( 'gmt_offset', 8 );
-		$plus_eight = DBManager::format_timestamp( 1700000000, 'Y-m-d H:i' );
+		$plus_eight = WP_DBManager::format_timestamp( 1700000000, 'Y-m-d H:i' );
 
 		$this->assertSame( '2023-11-14 22:13', $utc );
 		$this->assertSame( '2023-11-15 06:13', $plus_eight );
@@ -156,7 +156,7 @@ class Test_DBManager_Plugin extends DBManager_TestCase {
 		update_option( 'timezone_string', '' );
 		update_option( 'gmt_offset', -5 );
 
-		$this->assertSame( '2023-11-14 17:13', DBManager::format_timestamp( 1700000000, 'Y-m-d H:i' ) );
+		$this->assertSame( '2023-11-14 17:13', WP_DBManager::format_timestamp( 1700000000, 'Y-m-d H:i' ) );
 	}
 
 	/**
@@ -167,8 +167,8 @@ class Test_DBManager_Plugin extends DBManager_TestCase {
 		update_option( 'time_format', 'H:i' );
 		update_option( 'gmt_offset', 0 );
 
-		$this->assertStringContainsString( '2023-11-14', DBManager::format_timestamp( 1700000000 ) );
-		$this->assertStringContainsString( '22:13', DBManager::format_timestamp( 1700000000 ) );
+		$this->assertStringContainsString( '2023-11-14', WP_DBManager::format_timestamp( 1700000000 ) );
+		$this->assertStringContainsString( '22:13', WP_DBManager::format_timestamp( 1700000000 ) );
 	}
 
 	/**

@@ -8,7 +8,7 @@
 /**
  * Listing, parsing, pruning and resolving backup files.
  */
-class Test_DBManager_Backups extends DBManager_TestCase {
+class Test_DBManager_Backups extends WP_DBManager_TestCase {
 
 	/**
 	 * Drop a fake backup into the scratch folder.
@@ -36,11 +36,11 @@ class Test_DBManager_Backups extends DBManager_TestCase {
 	 * 2 GiB backup was reported as "2048.0 GiB".
 	 */
 	public function test_format_size_uses_the_right_divisor() {
-		$this->assertStringContainsString( 'bytes', DBManager_Backups::format_size( 512 ) );
-		$this->assertStringContainsString( 'KiB', DBManager_Backups::format_size( 2 * KB_IN_BYTES ) );
-		$this->assertStringContainsString( 'MiB', DBManager_Backups::format_size( 2 * MB_IN_BYTES ) );
+		$this->assertStringContainsString( 'bytes', WP_DBManager_Backups::format_size( 512 ) );
+		$this->assertStringContainsString( 'KiB', WP_DBManager_Backups::format_size( 2 * KB_IN_BYTES ) );
+		$this->assertStringContainsString( 'MiB', WP_DBManager_Backups::format_size( 2 * MB_IN_BYTES ) );
 
-		$two_gib = DBManager_Backups::format_size( 2 * GB_IN_BYTES );
+		$two_gib = WP_DBManager_Backups::format_size( 2 * GB_IN_BYTES );
 
 		$this->assertStringContainsString( 'GiB', $two_gib );
 		$this->assertStringContainsString( '2.0', $two_gib );
@@ -51,7 +51,7 @@ class Test_DBManager_Backups extends DBManager_TestCase {
 	 * A checksummed name is split into its three parts.
 	 */
 	public function test_parse_filename_reads_a_checksummed_name() {
-		$file = DBManager_Backups::parse_filename( str_repeat( 'a', 32 ) . '_-_1700000000_-_sitedb.sql' );
+		$file = WP_DBManager_Backups::parse_filename( str_repeat( 'a', 32 ) . '_-_1700000000_-_sitedb.sql' );
 
 		$this->assertSame( str_repeat( 'a', 32 ), $file['checksum'] );
 		$this->assertSame( '1700000000', $file['timestamp'] );
@@ -63,7 +63,7 @@ class Test_DBManager_Backups extends DBManager_TestCase {
 	 * A name from before checksums were added still parses.
 	 */
 	public function test_parse_filename_reads_a_legacy_name() {
-		$file = DBManager_Backups::parse_filename( '1700000000_-_sitedb.sql' );
+		$file = WP_DBManager_Backups::parse_filename( '1700000000_-_sitedb.sql' );
 
 		$this->assertSame( '-', $file['checksum'] );
 		$this->assertSame( '1700000000', $file['timestamp'] );
@@ -74,7 +74,7 @@ class Test_DBManager_Backups extends DBManager_TestCase {
 	 * A name that is not a backup at all does not blow up.
 	 */
 	public function test_parse_filename_survives_an_unexpected_name() {
-		$file = DBManager_Backups::parse_filename( 'notabackup.sql' );
+		$file = WP_DBManager_Backups::parse_filename( 'notabackup.sql' );
 
 		$this->assertSame( '-', $file['formatted_date'] );
 		$this->assertSame( 'notabackup.sql', $file['database'] );
@@ -90,7 +90,7 @@ class Test_DBManager_Backups extends DBManager_TestCase {
 		$this->make_backup( 'index.php' );
 		$this->make_backup( 'notes.txt' );
 
-		$names = wp_list_pluck( DBManager_Backups::all( $this->backup_dir ), 'name' );
+		$names = wp_list_pluck( WP_DBManager_Backups::all( $this->backup_dir ), 'name' );
 
 		$this->assertContains( 'a_-_1700000000_-_db.sql', $names );
 		$this->assertContains( 'b_-_1700000001_-_db.sql.gz', $names );
@@ -109,7 +109,7 @@ class Test_DBManager_Backups extends DBManager_TestCase {
 		$this->make_backup( 'a_-_1700000000_-_db.sql', 1700000000 );
 		$this->make_backup( 'b_-_1700000000_-_db.sql', 1700000000 );
 
-		$this->assertCount( 2, DBManager_Backups::all( $this->backup_dir ) );
+		$this->assertCount( 2, WP_DBManager_Backups::all( $this->backup_dir ) );
 	}
 
 	/**
@@ -119,7 +119,7 @@ class Test_DBManager_Backups extends DBManager_TestCase {
 		$this->make_backup( 'newer_-_1700000100_-_db.sql', 1700000100 );
 		$this->make_backup( 'older_-_1700000000_-_db.sql', 1700000000 );
 
-		$names = wp_list_pluck( DBManager_Backups::all( $this->backup_dir ), 'name' );
+		$names = wp_list_pluck( WP_DBManager_Backups::all( $this->backup_dir ), 'name' );
 
 		$this->assertSame( 'older_-_1700000000_-_db.sql', $names[0] );
 	}
@@ -135,14 +135,14 @@ class Test_DBManager_Backups extends DBManager_TestCase {
 			$this->make_backup( 'f' . $i . '_-_17000000' . sprintf( '%02d', $i ) . '_-_db.sql', 1700000000 + $i );
 		}
 
-		$options               = DBManager_Options::get();
+		$options               = WP_DBManager_Options::get();
 		$options['max_backup'] = 3;
-		update_option( DBManager_Options::OPTION, $options );
+		update_option( WP_DBManager_Options::OPTION, $options );
 
-		DBManager_Backups::prune();
+		WP_DBManager_Backups::prune();
 
 		// Two left, so the third slot is free for the backup about to be taken.
-		$this->assertCount( 2, DBManager_Backups::all( $this->backup_dir ) );
+		$this->assertCount( 2, WP_DBManager_Backups::all( $this->backup_dir ) );
 	}
 
 	/**
@@ -152,13 +152,13 @@ class Test_DBManager_Backups extends DBManager_TestCase {
 		$this->make_backup( 'old_-_1700000000_-_db.sql', 1700000000 );
 		$this->make_backup( 'new_-_1700000900_-_db.sql', 1700000900 );
 
-		$options               = DBManager_Options::get();
+		$options               = WP_DBManager_Options::get();
 		$options['max_backup'] = 2;
-		update_option( DBManager_Options::OPTION, $options );
+		update_option( WP_DBManager_Options::OPTION, $options );
 
-		DBManager_Backups::prune();
+		WP_DBManager_Backups::prune();
 
-		$names = wp_list_pluck( DBManager_Backups::all( $this->backup_dir ), 'name' );
+		$names = wp_list_pluck( WP_DBManager_Backups::all( $this->backup_dir ), 'name' );
 
 		$this->assertSame( array( 'new_-_1700000900_-_db.sql' ), $names );
 	}
@@ -171,13 +171,13 @@ class Test_DBManager_Backups extends DBManager_TestCase {
 		$this->make_backup( 'b_-_1700000001_-_db.sql' );
 
 		foreach ( array( 0, -1 ) as $max ) {
-			$options               = DBManager_Options::get();
+			$options               = WP_DBManager_Options::get();
 			$options['max_backup'] = $max;
-			update_option( DBManager_Options::OPTION, $options );
+			update_option( WP_DBManager_Options::OPTION, $options );
 
-			DBManager_Backups::prune();
+			WP_DBManager_Backups::prune();
 
-			$this->assertCount( 2, DBManager_Backups::all( $this->backup_dir ), 'max_backup ' . $max );
+			$this->assertCount( 2, WP_DBManager_Backups::all( $this->backup_dir ), 'max_backup ' . $max );
 		}
 	}
 
@@ -187,7 +187,7 @@ class Test_DBManager_Backups extends DBManager_TestCase {
 	public function test_resolve_accepts_a_real_backup() {
 		$path = $this->make_backup( 'a_-_1700000000_-_db.sql' );
 
-		$this->assertSame( realpath( $path ), DBManager_Backups::resolve( 'a_-_1700000000_-_db.sql' ) );
+		$this->assertSame( realpath( $path ), WP_DBManager_Backups::resolve( 'a_-_1700000000_-_db.sql' ) );
 	}
 
 	/**
@@ -200,7 +200,7 @@ class Test_DBManager_Backups extends DBManager_TestCase {
 	public function test_resolve_refuses( $name ) {
 		$this->make_backup( 'a_-_1700000000_-_db.sql' );
 
-		$this->assertFalse( DBManager_Backups::resolve( $name ) );
+		$this->assertFalse( WP_DBManager_Backups::resolve( $name ) );
 	}
 
 	/**
@@ -224,9 +224,9 @@ class Test_DBManager_Backups extends DBManager_TestCase {
 	 * Extensions are read off the end of the name.
 	 */
 	public function test_file_ext() {
-		$this->assertSame( 'sql', DBManager_Backups::file_ext( 'a_-_1700000000_-_db.sql' ) );
-		$this->assertSame( 'gz', DBManager_Backups::file_ext( 'a_-_1700000000_-_db.sql.gz' ) );
-		$this->assertSame( '', DBManager_Backups::file_ext( 'noextension' ) );
+		$this->assertSame( 'sql', WP_DBManager_Backups::file_ext( 'a_-_1700000000_-_db.sql' ) );
+		$this->assertSame( 'gz', WP_DBManager_Backups::file_ext( 'a_-_1700000000_-_db.sql.gz' ) );
+		$this->assertSame( '', WP_DBManager_Backups::file_ext( 'noextension' ) );
 	}
 
 	/**
@@ -242,8 +242,8 @@ class Test_DBManager_Backups extends DBManager_TestCase {
 			'mtime' => 200,
 		);
 
-		$this->assertLessThan( 0, DBManager_Backups::compare( $older, $newer ) );
-		$this->assertGreaterThan( 0, DBManager_Backups::compare( $newer, $older ) );
+		$this->assertLessThan( 0, WP_DBManager_Backups::compare( $older, $newer ) );
+		$this->assertGreaterThan( 0, WP_DBManager_Backups::compare( $newer, $older ) );
 
 		$same_a = array(
 			'name'  => 'a',
@@ -254,8 +254,8 @@ class Test_DBManager_Backups extends DBManager_TestCase {
 			'mtime' => 100,
 		);
 
-		$this->assertLessThan( 0, DBManager_Backups::compare( $same_a, $same_b ) );
-		$this->assertSame( 0, DBManager_Backups::compare( $same_a, $same_a ) );
+		$this->assertLessThan( 0, WP_DBManager_Backups::compare( $same_a, $same_b ) );
+		$this->assertSame( 0, WP_DBManager_Backups::compare( $same_a, $same_a ) );
 	}
 
 	/**
@@ -264,7 +264,7 @@ class Test_DBManager_Backups extends DBManager_TestCase {
 	public function test_parse_file_adds_size_and_path() {
 		$path = $this->make_backup( str_repeat( 'b', 32 ) . '_-_1700000000_-_db.sql', null, 'SOME SQL' );
 
-		$file = DBManager_Backups::parse_file( $path );
+		$file = WP_DBManager_Backups::parse_file( $path );
 
 		$this->assertSame( 8, $file['size'] );
 		$this->assertSame( $this->backup_dir, $file['path'] );
@@ -281,13 +281,13 @@ class Test_DBManager_Backups extends DBManager_TestCase {
 	 */
 	public function test_download_ignores_other_requests() {
 		$_POST = array();
-		$this->assertNull( DBManager_Backups::maybe_download() );
+		$this->assertNull( WP_DBManager_Backups::maybe_download() );
 
 		$_POST = array( 'action' => 'delete' );
-		$this->assertNull( DBManager_Backups::maybe_download() );
+		$this->assertNull( WP_DBManager_Backups::maybe_download() );
 
 		$_POST = array( 'action' => 'download' );
-		$this->assertNull( DBManager_Backups::maybe_download(), 'A download with nothing selected should fall through.' );
+		$this->assertNull( WP_DBManager_Backups::maybe_download(), 'A download with nothing selected should fall through.' );
 
 		// Downloading sends one file, so a multiple selection falls through to
 		// the screen rather than being resolved to whichever came first.
@@ -295,7 +295,7 @@ class Test_DBManager_Backups extends DBManager_TestCase {
 			'action'  => 'download',
 			'backups' => array( 'a_-_1700000000_-_db.sql', 'b_-_1700000000_-_db.sql' ),
 		);
-		$this->assertNull( DBManager_Backups::maybe_download() );
+		$this->assertNull( WP_DBManager_Backups::maybe_download() );
 
 		$_POST = array();
 	}
@@ -318,7 +318,7 @@ class Test_DBManager_Backups extends DBManager_TestCase {
 		try {
 			// Getting as far as the capability check proves action2 was read.
 			$this->expectException( 'WPDieException' );
-			DBManager_Backups::maybe_download();
+			WP_DBManager_Backups::maybe_download();
 		} finally {
 			$_POST = array();
 		}
@@ -339,7 +339,7 @@ class Test_DBManager_Backups extends DBManager_TestCase {
 
 		try {
 			$this->expectException( 'WPDieException' );
-			DBManager_Backups::maybe_download();
+			WP_DBManager_Backups::maybe_download();
 		} finally {
 			$_POST = array();
 		}
@@ -352,14 +352,14 @@ class Test_DBManager_Backups extends DBManager_TestCase {
 	 * backups on every site that had not taken one yet.
 	 */
 	public function test_an_empty_folder_is_valid() {
-		$this->assertTrue( DBManager_Backups::is_folder_valid( $this->backup_dir ) );
+		$this->assertTrue( WP_DBManager_Backups::is_folder_valid( $this->backup_dir ) );
 	}
 
 	/**
 	 * A folder that is not there is not valid.
 	 */
 	public function test_a_missing_folder_is_not_valid() {
-		$this->assertFalse( DBManager_Backups::is_folder_valid( $this->backup_dir . '/nope' ) );
-		$this->assertFalse( DBManager_Backups::is_folder_valid( '' ) );
+		$this->assertFalse( WP_DBManager_Backups::is_folder_valid( $this->backup_dir . '/nope' ) );
+		$this->assertFalse( WP_DBManager_Backups::is_folder_valid( '' ) );
 	}
 }

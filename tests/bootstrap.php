@@ -31,4 +31,4 @@ require $_tests_dir . '/includes/bootstrap.php';
 // Loading it here rather than from each test file keeps a bare statement from
 // sitting between those files' doc comment and their class, which is what makes
 // PHPCS attribute the file comment to the statement and report it missing.
-require_once __DIR__ . '/testcase.php';
+require_once __DIR__ . '/helper-testcase.php';

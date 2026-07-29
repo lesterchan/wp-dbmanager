@@ -17,7 +17,7 @@ defined( 'ABSPATH' ) || exit;
  *
  * @since 3.0.0
  */
-class DBManager_Options {
+class WP_DBManager_Options {
 
 	/**
 	 * Option holding the plugin settings.

@@ -9,7 +9,7 @@
  * A dump contains the users table, so whether the folder answers over HTTP is
  * the single most consequential thing this plugin reports.
  */
-class Test_DBManager_Folder extends DBManager_TestCase {
+class Test_DBManager_Folder extends WP_DBManager_TestCase {
 
 	/**
 	 * Pretend to be a particular server.
@@ -41,7 +41,7 @@ class Test_DBManager_Folder extends DBManager_TestCase {
 	public function test_server_type( $software, $expected ) {
 		$this->pretend_server( $software );
 
-		$this->assertSame( $expected, DBManager_Folder::server_type() );
+		$this->assertSame( $expected, WP_DBManager_Folder::server_type() );
 	}
 
 	/**
@@ -66,11 +66,11 @@ class Test_DBManager_Folder extends DBManager_TestCase {
 		$outside = get_temp_dir() . 'wp-dbmanager-outside-' . wp_generate_password( 8, false );
 		wp_mkdir_p( $outside );
 
-		$options         = DBManager_Options::get();
+		$options         = WP_DBManager_Options::get();
 		$options['path'] = $outside;
-		update_option( DBManager_Options::OPTION, $options );
+		update_option( WP_DBManager_Options::OPTION, $options );
 
-		$this->assertFalse( DBManager_Folder::url() );
+		$this->assertFalse( WP_DBManager_Folder::url() );
 
 		rmdir( $outside );
 	}
@@ -82,11 +82,11 @@ class Test_DBManager_Folder extends DBManager_TestCase {
 		$inside = WP_CONTENT_DIR . '/wp-dbmanager-inside-' . wp_generate_password( 8, false );
 		wp_mkdir_p( $inside );
 
-		$options         = DBManager_Options::get();
+		$options         = WP_DBManager_Options::get();
 		$options['path'] = $inside;
-		update_option( DBManager_Options::OPTION, $options );
+		update_option( WP_DBManager_Options::OPTION, $options );
 
-		$url = DBManager_Folder::url();
+		$url = WP_DBManager_Folder::url();
 
 		$this->assertNotFalse( $url );
 		$this->assertStringStartsWith( content_url(), $url );
@@ -101,13 +101,13 @@ class Test_DBManager_Folder extends DBManager_TestCase {
 		$outside = get_temp_dir() . 'wp-dbmanager-outside-' . wp_generate_password( 8, false );
 		wp_mkdir_p( $outside );
 
-		$options         = DBManager_Options::get();
+		$options         = WP_DBManager_Options::get();
 		$options['path'] = $outside;
-		update_option( DBManager_Options::OPTION, $options );
+		update_option( WP_DBManager_Options::OPTION, $options );
 
-		DBManager_Folder::flush();
+		WP_DBManager_Folder::flush();
 
-		$this->assertFalse( DBManager_Folder::is_public() );
+		$this->assertFalse( WP_DBManager_Folder::is_public() );
 
 		rmdir( $outside );
 	}
@@ -116,14 +116,14 @@ class Test_DBManager_Folder extends DBManager_TestCase {
 	 * The cached answer is read without making a request.
 	 */
 	public function test_the_cached_answer_is_reused() {
-		set_transient( DBManager_Folder::TRANSIENT, 'public', HOUR_IN_SECONDS );
-		$this->assertTrue( DBManager_Folder::is_public( false ) );
+		set_transient( WP_DBManager_Folder::TRANSIENT, 'public', HOUR_IN_SECONDS );
+		$this->assertTrue( WP_DBManager_Folder::is_public( false ) );
 
-		set_transient( DBManager_Folder::TRANSIENT, 'protected', HOUR_IN_SECONDS );
-		$this->assertFalse( DBManager_Folder::is_public( false ) );
+		set_transient( WP_DBManager_Folder::TRANSIENT, 'protected', HOUR_IN_SECONDS );
+		$this->assertFalse( WP_DBManager_Folder::is_public( false ) );
 
-		set_transient( DBManager_Folder::TRANSIENT, 'unknown', HOUR_IN_SECONDS );
-		$this->assertNull( DBManager_Folder::is_public( false ) );
+		set_transient( WP_DBManager_Folder::TRANSIENT, 'unknown', HOUR_IN_SECONDS );
+		$this->assertNull( WP_DBManager_Folder::is_public( false ) );
 	}
 
 	/**
@@ -133,9 +133,9 @@ class Test_DBManager_Folder extends DBManager_TestCase {
 	 * on two HTTP requests.
 	 */
 	public function test_no_cache_and_no_probe_is_undetermined() {
-		DBManager_Folder::flush();
+		WP_DBManager_Folder::flush();
 
-		$this->assertNull( DBManager_Folder::is_public( false ) );
+		$this->assertNull( WP_DBManager_Folder::is_public( false ) );
 	}
 
 	/**
@@ -144,12 +144,12 @@ class Test_DBManager_Folder extends DBManager_TestCase {
 	public function test_create_adds_the_protection_files() {
 		$fresh = WP_CONTENT_DIR . '/wp-dbmanager-fresh-' . wp_generate_password( 8, false );
 
-		$options         = DBManager_Options::get();
+		$options         = WP_DBManager_Options::get();
 		$options['path'] = $fresh;
-		update_option( DBManager_Options::OPTION, $options );
+		update_option( WP_DBManager_Options::OPTION, $options );
 
 		$this->pretend_server( 'Apache/2.4.57' );
-		DBManager_Folder::create();
+		WP_DBManager_Folder::create();
 
 		$this->assertDirectoryExists( $fresh );
 		$this->assertFileExists( $fresh . '/index.php' );
@@ -163,10 +163,10 @@ class Test_DBManager_Folder extends DBManager_TestCase {
 	 */
 	public function test_is_iis() {
 		$this->pretend_server( 'Microsoft-IIS/10.0' );
-		$this->assertTrue( DBManager_Folder::is_iis() );
+		$this->assertTrue( WP_DBManager_Folder::is_iis() );
 
 		$this->pretend_server( 'nginx/1.24.0' );
-		$this->assertFalse( DBManager_Folder::is_iis() );
+		$this->assertFalse( WP_DBManager_Folder::is_iis() );
 	}
 
 	/**
@@ -177,7 +177,7 @@ class Test_DBManager_Folder extends DBManager_TestCase {
 	 * nginx configs that deny dotfiles while happily serving .sql.
 	 */
 	public function test_the_probe_prefers_a_real_backup() {
-		$method = new ReflectionMethod( 'DBManager_Folder', 'probe_target' );
+		$method = new ReflectionMethod( 'WP_DBManager_Folder', 'probe_target' );
 		$method->setAccessible( true );
 
 		// Nothing at all to ask for.
@@ -198,10 +198,10 @@ class Test_DBManager_Folder extends DBManager_TestCase {
 	 */
 	public function test_maybe_fix_ignores_other_requests() {
 		$_GET = array();
-		$this->assertNull( DBManager_Folder::maybe_fix() );
+		$this->assertNull( WP_DBManager_Folder::maybe_fix() );
 
 		$_GET = array( 'try_fix' => '0' );
-		$this->assertNull( DBManager_Folder::maybe_fix() );
+		$this->assertNull( WP_DBManager_Folder::maybe_fix() );
 
 		$_GET = array();
 	}
@@ -216,7 +216,7 @@ class Test_DBManager_Folder extends DBManager_TestCase {
 
 		try {
 			$this->expectException( 'WPDieException' );
-			DBManager_Folder::maybe_fix();
+			WP_DBManager_Folder::maybe_fix();
 		} finally {
 			$_GET = array();
 		}
@@ -233,7 +233,7 @@ class Test_DBManager_Folder extends DBManager_TestCase {
 
 		try {
 			$this->expectException( 'WPDieException' );
-			DBManager_Folder::maybe_fix();
+			WP_DBManager_Folder::maybe_fix();
 		} finally {
 			$_GET = array();
 		}
@@ -245,11 +245,11 @@ class Test_DBManager_Folder extends DBManager_TestCase {
 	public function test_maybe_fix_recreates_the_folder() {
 		$fresh = WP_CONTENT_DIR . '/wp-dbmanager-fix-' . wp_generate_password( 8, false );
 
-		$options         = DBManager_Options::get();
+		$options         = WP_DBManager_Options::get();
 		$options['path'] = $fresh;
-		update_option( DBManager_Options::OPTION, $options );
+		update_option( WP_DBManager_Options::OPTION, $options );
 
-		set_transient( DBManager_Folder::TRANSIENT, 'public', HOUR_IN_SECONDS );
+		set_transient( WP_DBManager_Folder::TRANSIENT, 'public', HOUR_IN_SECONDS );
 
 		$this->pretend_server( 'Apache/2.4.57' );
 
@@ -260,13 +260,13 @@ class Test_DBManager_Folder extends DBManager_TestCase {
 		);
 		$_REQUEST = $_GET;
 
-		DBManager_Folder::maybe_fix();
+		WP_DBManager_Folder::maybe_fix();
 		$_GET     = array();
 		$_REQUEST = array();
 
 		$this->assertDirectoryExists( $fresh );
 		$this->assertFileExists( $fresh . '/index.php' );
-		$this->assertFalse( get_transient( DBManager_Folder::TRANSIENT ), 'The stale verdict survived the fix.' );
+		$this->assertFalse( get_transient( WP_DBManager_Folder::TRANSIENT ), 'The stale verdict survived the fix.' );
 
 		self::remove_directory( $fresh );
 	}
@@ -277,12 +277,12 @@ class Test_DBManager_Folder extends DBManager_TestCase {
 	public function test_create_uses_web_config_on_iis() {
 		$fresh = WP_CONTENT_DIR . '/wp-dbmanager-iis-' . wp_generate_password( 8, false );
 
-		$options         = DBManager_Options::get();
+		$options         = WP_DBManager_Options::get();
 		$options['path'] = $fresh;
-		update_option( DBManager_Options::OPTION, $options );
+		update_option( WP_DBManager_Options::OPTION, $options );
 
 		$this->pretend_server( 'Microsoft-IIS/10.0' );
-		DBManager_Folder::create();
+		WP_DBManager_Folder::create();
 
 		$this->assertFileExists( $fresh . '/Web.config' );
 		$this->assertFileDoesNotExist( $fresh . '/.htaccess' );

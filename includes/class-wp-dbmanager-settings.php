@@ -13,17 +13,17 @@ defined( 'ABSPATH' ) || exit;
  * Before 3.0.0 this was a hand-rolled <form> that read twenty $_POST keys,
  * wrote the option, and then cleared and re-created the three cron events
  * inline. The rescheduling has moved onto the option itself - see
- * DBManager_Cron - so it now happens however the settings change, including
+ * WP_DBManager_Cron - so it now happens however the settings change, including
  * from WP-CLI, rather than only when somebody submits this particular form.
  *
  * @since 3.0.0
  */
-class DBManager_Settings {
+class WP_DBManager_Settings {
 
 	/**
-	 * Settings group.
+	 * Settings group, which is the settings row name (section 2.2).
 	 */
-	const GROUP = 'wp-dbmanager';
+	const GROUP = 'wp_dbmanager_options';
 
 	/**
 	 * Hook up.
@@ -42,11 +42,11 @@ class DBManager_Settings {
 	public static function register() {
 		register_setting(
 			self::GROUP,
-			DBManager_Options::OPTION,
+			WP_DBManager_Options::OPTION,
 			array(
 				'type'              => 'array',
 				'sanitize_callback' => array( __CLASS__, 'sanitize' ),
-				'default'           => DBManager_Options::defaults(),
+				'default'           => WP_DBManager_Options::defaults(),
 			)
 		);
 	}
@@ -61,7 +61,7 @@ class DBManager_Settings {
 	 * @return array
 	 */
 	public static function sanitize( $input ) {
-		$values = DBManager_Options::get();
+		$values = WP_DBManager_Options::get();
 
 		if ( ! is_array( $input ) ) {
 			return $values;
@@ -110,7 +110,7 @@ class DBManager_Settings {
 
 		// Intervals, taken from the same list the screen offers so it cannot
 		// present a period this callback then silently rejects.
-		$periods = array_keys( DBManager_Options::periods() );
+		$periods = array_keys( WP_DBManager_Options::periods() );
 
 		foreach ( array( 'backup_period', 'optimize_period', 'repair_period' ) as $key ) {
 			if ( isset( $input[ $key ] ) ) {
@@ -138,7 +138,7 @@ class DBManager_Settings {
 	protected static function validate_paths( array &$values, array $previous ) {
 		if ( realpath( $values['path'] ) === false ) {
 			add_settings_error(
-				DBManager_Options::OPTION,
+				WP_DBManager_Options::OPTION,
 				'path',
 				/* translators: %s: configured backup folder path. */
 				sprintf( __( '%s is not a valid backup path', 'wp-dbmanager' ), $values['path'] )
@@ -146,9 +146,9 @@ class DBManager_Settings {
 			$values['path'] = $previous['path'];
 		}
 
-		if ( DBManager_Database::is_valid_path( $values['mysqldumppath'] ) === 0 ) {
+		if ( WP_DBManager_Database::is_valid_path( $values['mysqldumppath'] ) === 0 ) {
 			add_settings_error(
-				DBManager_Options::OPTION,
+				WP_DBManager_Options::OPTION,
 				'mysqldumppath',
 				/* translators: %s: configured mysqldump path. */
 				sprintf( __( '%s is not a valid mysqldump path', 'wp-dbmanager' ), $values['mysqldumppath'] )
@@ -156,9 +156,9 @@ class DBManager_Settings {
 			$values['mysqldumppath'] = $previous['mysqldumppath'];
 		}
 
-		if ( DBManager_Database::is_valid_path( $values['mysqlpath'] ) === 0 ) {
+		if ( WP_DBManager_Database::is_valid_path( $values['mysqlpath'] ) === 0 ) {
 			add_settings_error(
-				DBManager_Options::OPTION,
+				WP_DBManager_Options::OPTION,
 				'mysqlpath',
 				/* translators: %s: configured mysql path. */
 				sprintf( __( '%s is not a valid mysql path', 'wp-dbmanager' ), $values['mysqlpath'] )
@@ -168,7 +168,7 @@ class DBManager_Settings {
 
 		// The backup folder may have moved, so the cached reachability answer is
 		// about somewhere else now.
-		DBManager_Folder::flush();
+		WP_DBManager_Folder::flush();
 	}
 
 	/**
@@ -179,11 +179,11 @@ class DBManager_Settings {
 	 * @return void
 	 */
 	protected static function render_schedule( $key, $values ) {
-		$option = DBManager_Options::OPTION;
+		$option = WP_DBManager_Options::OPTION;
 		?>
 		<?php esc_html_e( 'Every', 'wp-dbmanager' ); ?>&nbsp;<input type="text" name="<?php echo esc_attr( $option . '[' . $key . ']' ); ?>" size="3" maxlength="5" value="<?php echo esc_attr( $values[ $key ] ); ?>" />&nbsp;
 		<select name="<?php echo esc_attr( $option . '[' . $key . '_period]' ); ?>" size="1">
-			<?php foreach ( DBManager_Options::periods() as $seconds => $label ) : ?>
+			<?php foreach ( WP_DBManager_Options::periods() as $seconds => $label ) : ?>
 				<option value="<?php echo esc_attr( $seconds ); ?>"<?php selected( $seconds, (int) $values[ $key . '_period' ] ); ?>><?php echo esc_html( $label ); ?></option>
 			<?php endforeach; ?>
 		</select>
@@ -200,7 +200,7 @@ class DBManager_Settings {
 		$next = wp_next_scheduled( $hook );
 
 		if ( $next ) {
-			echo '<strong>' . esc_html( DBManager::format_timestamp( $next ) ) . '</strong>';
+			echo '<strong>' . esc_html( WP_DBManager::format_timestamp( $next ) ) . '</strong>';
 		} else {
 			esc_html_e( 'N/A', 'wp-dbmanager' );
 		}
@@ -212,10 +212,10 @@ class DBManager_Settings {
 	 * @return void
 	 */
 	public static function render() {
-		DBManager_Admin::check_capability();
+		WP_DBManager_Admin::check_capability();
 
-		$option = DBManager_Options::OPTION;
-		$values = DBManager_Options::get();
+		$option = WP_DBManager_Options::OPTION;
+		$values = WP_DBManager_Options::get();
 		?>
 <div class="wrap">
 	<h2><?php esc_html_e( 'Database Options', 'wp-dbmanager' ); ?></h2>

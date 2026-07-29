@@ -12,7 +12,7 @@
  * instead. That is deliberately a source-level guard: it cannot prove the loop
  * works, only that the argument which makes it correct has not been dropped.
  */
-class Test_DBManager_Uninstall extends DBManager_TestCase {
+class Test_DBManager_Uninstall extends WP_DBManager_TestCase {
 
 	/**
 	 * The uninstall script's source.
@@ -90,14 +90,14 @@ class Test_DBManager_Uninstall extends DBManager_TestCase {
 	public function test_uninstall_clears_everything_it_owns() {
 		$this->load_uninstall();
 
-		update_option( DBManager_Options::OPTION, DBManager_Options::defaults() );
-		set_transient( DBManager_Folder::TRANSIENT, 'protected', HOUR_IN_SECONDS );
+		update_option( WP_DBManager_Options::OPTION, WP_DBManager_Options::defaults() );
+		set_transient( WP_DBManager_Folder::TRANSIENT, 'protected', HOUR_IN_SECONDS );
 		wp_schedule_event( time(), 'daily', 'dbmanager_cron_backup' );
 
 		dbmanager_uninstall_site();
 
-		$this->assertFalse( get_option( DBManager_Options::OPTION ) );
-		$this->assertFalse( get_transient( DBManager_Folder::TRANSIENT ) );
+		$this->assertFalse( get_option( WP_DBManager_Options::OPTION ) );
+		$this->assertFalse( get_transient( WP_DBManager_Folder::TRANSIENT ) );
 		$this->assertFalse( wp_next_scheduled( 'dbmanager_cron_backup' ) );
 	}
 
@@ -122,11 +122,11 @@ class Test_DBManager_Uninstall extends DBManager_TestCase {
 	 * Activation stores the detected binary paths.
 	 */
 	public function test_activation_stores_the_detected_binaries() {
-		delete_option( DBManager_Options::OPTION );
+		delete_option( WP_DBManager_Options::OPTION );
 
-		DBManager::activate_site();
+		WP_DBManager::activate_site();
 
-		$stored = get_option( DBManager_Options::OPTION );
+		$stored = get_option( WP_DBManager_Options::OPTION );
 
 		$this->assertIsArray( $stored );
 		$this->assertArrayHasKey( 'mysqldumppath', $stored );
@@ -137,13 +137,13 @@ class Test_DBManager_Uninstall extends DBManager_TestCase {
 	 * Activation does not overwrite an existing configuration.
 	 */
 	public function test_activation_leaves_existing_settings_alone() {
-		$options               = DBManager_Options::get();
+		$options               = WP_DBManager_Options::get();
 		$options['max_backup'] = 99;
-		update_option( DBManager_Options::OPTION, $options );
+		update_option( WP_DBManager_Options::OPTION, $options );
 
-		DBManager::activate_site();
+		WP_DBManager::activate_site();
 
-		$this->assertSame( 99, DBManager_Options::get( 'max_backup' ) );
+		$this->assertSame( 99, WP_DBManager_Options::get( 'max_backup' ) );
 	}
 
 	/**
@@ -153,7 +153,7 @@ class Test_DBManager_Uninstall extends DBManager_TestCase {
 		$role = get_role( 'administrator' );
 		$role->add_cap( 'manage_database' );
 
-		DBManager::activate_site();
+		WP_DBManager::activate_site();
 
 		$this->assertFalse( get_role( 'administrator' )->has_cap( 'manage_database' ) );
 	}

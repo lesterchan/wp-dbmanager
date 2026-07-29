@@ -12,7 +12,7 @@ defined( 'ABSPATH' ) || exit;
  *
  * @since 3.0.0
  */
-class DBManager_Mailer {
+class WP_DBManager_Mailer {
 
 	/**
 	 * E-mail the details of a backup.
@@ -33,20 +33,20 @@ class DBManager_Mailer {
 			return false;
 		}
 
-		$options   = DBManager_Options::get();
-		$file      = DBManager_Backups::parse_file( $backup_file_path );
+		$options   = WP_DBManager_Options::get();
+		$file      = WP_DBManager_Backups::parse_file( $backup_file_path );
 		$site_name = wp_specialchars_decode( get_bloginfo( 'name' ), ENT_QUOTES );
 
 		$subject = ! empty( $options['backup_email_subject'] )
 			? $options['backup_email_subject']
-			: DBManager_Options::defaults()['backup_email_subject'];
+			: WP_DBManager_Options::defaults()['backup_email_subject'];
 
 		$subject = str_replace(
 			array( '%SITE_NAME%', '%POST_DATE%', '%POST_TIME%' ),
 			array(
 				$site_name,
-				DBManager::format_timestamp( $file['timestamp'], get_option( 'date_format' ) ),
-				DBManager::format_timestamp( $file['timestamp'], get_option( 'time_format' ) ),
+				WP_DBManager::format_timestamp( $file['timestamp'], get_option( 'date_format' ) ),
+				WP_DBManager::format_timestamp( $file['timestamp'], get_option( 'time_format' ) ),
 			),
 			$subject
 		);
@@ -61,7 +61,7 @@ class DBManager_Mailer {
 			$site_name . ' ' . __( 'Administrator', 'wp-dbmanager' ) . "\n" .
 			get_bloginfo( 'url' );
 
-		$defaults  = DBManager_Options::defaults();
+		$defaults  = WP_DBManager_Options::defaults();
 		$from      = ! empty( $options['backup_email_from'] ) ? $options['backup_email_from'] : $defaults['backup_email_from'];
 		$from_name = ! empty( $options['backup_email_from_name'] ) ? $options['backup_email_from_name'] : $defaults['backup_email_from_name'];
 

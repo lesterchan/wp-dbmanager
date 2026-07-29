@@ -17,7 +17,7 @@ defined( 'ABSPATH' ) || exit;
  *
  * @since 3.0.0
  */
-class DBManager_Tables {
+class WP_DBManager_Tables {
 
 	/**
 	 * Statements the query console will run.

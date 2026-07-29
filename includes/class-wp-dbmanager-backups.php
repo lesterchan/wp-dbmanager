@@ -12,7 +12,7 @@ defined( 'ABSPATH' ) || exit;
  *
  * @since 3.0.0
  */
-class DBManager_Backups {
+class WP_DBManager_Backups {
 
 	/**
 	 * Whether a folder can be used as the backup folder.
@@ -79,7 +79,7 @@ class DBManager_Backups {
 	 * @return array List of arrays with name and mtime keys.
 	 */
 	public static function all( $path = null ) {
-		$path  = ( null === $path ) ? DBManager_Options::backup_path() : $path;
+		$path  = ( null === $path ) ? WP_DBManager_Options::backup_path() : $path;
 		$files = array();
 
 		if ( ! self::is_folder_valid( $path ) ) {
@@ -155,7 +155,7 @@ class DBManager_Backups {
 		$file['name'] = $filename;
 
 		if ( is_numeric( $file['timestamp'] ) ) {
-			$file['formatted_date'] = DBManager::format_timestamp( $file['timestamp'] );
+			$file['formatted_date'] = WP_DBManager::format_timestamp( $file['timestamp'] );
 		} else {
 			$file['formatted_date'] = '-';
 		}
@@ -188,7 +188,7 @@ class DBManager_Backups {
 	 * @return void
 	 */
 	public static function prune() {
-		$options    = DBManager_Options::get();
+		$options    = WP_DBManager_Options::get();
 		$max_backup = (int) $options['max_backup'];
 
 		// A limit below one is treated as no limit. Deleting every backup the
@@ -214,7 +214,7 @@ class DBManager_Backups {
 	 * @return string|false Absolute path, or false when it is not a backup file.
 	 */
 	public static function resolve( $filename ) {
-		$options = DBManager_Options::get();
+		$options = WP_DBManager_Options::get();
 
 		$clean = sanitize_file_name( $filename );
 		$clean = str_replace( 'sql_.gz', 'sql.gz', $clean );
@@ -272,7 +272,7 @@ class DBManager_Backups {
 			wp_die( esc_html__( 'Access Denied', 'wp-dbmanager' ) );
 		}
 
-		check_admin_referer( DBManager_Backups_Table::nonce_action() );
+		check_admin_referer( WP_DBManager_Backups_Table::nonce_action() );
 
 		$file_path = self::resolve( sanitize_file_name( reset( $selected ) ) );
 

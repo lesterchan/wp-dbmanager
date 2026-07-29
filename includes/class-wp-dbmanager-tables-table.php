@@ -1,6 +1,6 @@
 <?php
 /**
- * WP-DBManager class-dbmanager-tables-table.php
+ * The database tables list table.
  *
  * @package WP-DBManager
  */
@@ -25,7 +25,7 @@ if ( ! class_exists( 'WP_List_Table' ) ) {
  *
  * @since 3.0.0
  */
-class DBManager_Tables_Table extends WP_List_Table {
+class WP_DBManager_Tables_Table extends WP_List_Table {
 
 	/**
 	 * Which screen this instance is serving.
@@ -150,7 +150,7 @@ class DBManager_Tables_Table extends WP_List_Table {
 
 		$items = array();
 
-		foreach ( DBManager_Tables::status() as $status ) {
+		foreach ( WP_DBManager_Tables::status() as $status ) {
 			$item = array(
 				'name'     => $status->Name,
 				'rows'     => (int) $status->Rows,
@@ -230,7 +230,7 @@ class DBManager_Tables_Table extends WP_List_Table {
 		}
 
 		if ( isset( $item[ $column_name ] ) ) {
-			return esc_html( DBManager_Backups::format_size( $item[ $column_name ] ) );
+			return esc_html( WP_DBManager_Backups::format_size( $item[ $column_name ] ) );
 		}
 
 		return '';
@@ -279,9 +279,9 @@ class DBManager_Tables_Table extends WP_List_Table {
 					number_format_i18n( $this->totals['rows'] )
 				)
 			),
-			esc_html( DBManager_Backups::format_size( $this->totals['data'] ) ),
-			esc_html( DBManager_Backups::format_size( $this->totals['index'] ) ),
-			esc_html( DBManager_Backups::format_size( $this->totals['overhead'] ) )
+			esc_html( WP_DBManager_Backups::format_size( $this->totals['data'] ) ),
+			esc_html( WP_DBManager_Backups::format_size( $this->totals['index'] ) ),
+			esc_html( WP_DBManager_Backups::format_size( $this->totals['overhead'] ) )
 		);
 
 		unset( $columns );

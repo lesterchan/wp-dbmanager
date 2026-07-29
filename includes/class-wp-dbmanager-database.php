@@ -18,7 +18,7 @@ defined( 'ABSPATH' ) || exit;
  *
  * @since 3.0.0
  */
-class DBManager_Database {
+class WP_DBManager_Database {
 
 	/**
 	 * Character set passed to both binaries.
@@ -195,7 +195,7 @@ class DBManager_Database {
 	 * @return string
 	 */
 	public static function dump_command( $filepath, $gzip, $defaults_file ) {
-		$options = DBManager_Options::get();
+		$options = WP_DBManager_Options::get();
 		$args    = self::connection_args();
 
 		/**
@@ -229,10 +229,10 @@ class DBManager_Database {
 	 * @return string
 	 */
 	public static function restore_command( $filepath, $defaults_file ) {
-		$options = DBManager_Options::get();
+		$options = WP_DBManager_Options::get();
 		$args    = self::connection_args();
 
-		/** This action is documented in includes/class-dbmanager-database.php */
+		/** This action is documented in includes/class-wp-dbmanager-database.php */
 		do_action( 'wp_dbmanager_before_escapeshellcmd' );
 
 		$command = escapeshellarg( $options['mysqlpath'] )
@@ -260,7 +260,7 @@ class DBManager_Database {
 	 * @return array List of human readable errors, empty when all three are usable.
 	 */
 	public static function path_errors() {
-		$options = DBManager_Options::get();
+		$options = WP_DBManager_Options::get();
 		$errors  = array();
 
 		if ( realpath( $options['path'] ) === false ) {
@@ -290,9 +290,9 @@ class DBManager_Database {
 	 * @return int|string Exit code, or an error message when a configured path is invalid.
 	 */
 	public static function execute( $command ) {
-		$options = DBManager_Options::get();
+		$options = WP_DBManager_Options::get();
 
-		DBManager_Backups::prune();
+		WP_DBManager_Backups::prune();
 
 		$errors = self::path_errors();
 
@@ -383,7 +383,7 @@ class DBManager_Database {
 	 * }
 	 */
 	public static function backup( $gzip ) {
-		$options  = DBManager_Options::get();
+		$options  = WP_DBManager_Options::get();
 		$path     = $options['path'];
 		$filename = time() . '_-_' . DB_NAME . '.sql' . ( $gzip ? '.gz' : '' );
 		$filepath = $path . '/' . $filename;
@@ -444,7 +444,7 @@ class DBManager_Database {
 	 * }
 	 */
 	public static function restore( $filename ) {
-		$options = DBManager_Options::get();
+		$options = WP_DBManager_Options::get();
 		$errors  = array();
 
 		if ( realpath( $options['path'] ) === false ) {

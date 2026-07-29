@@ -12,7 +12,7 @@ defined( 'ABSPATH' ) || exit;
  *
  * @since 3.0.0
  */
-class DBManager_Cron {
+class WP_DBManager_Cron {
 
 	/**
 	 * The three jobs, as setting prefix => hook.
@@ -46,8 +46,8 @@ class DBManager_Cron {
 		// Whenever the settings change, however they change - the settings screen,
 		// WP-CLI, another plugin - the schedule follows. Hanging this off the
 		// option rather than off the form is what keeps the two in step.
-		add_action( 'update_option_' . DBManager_Options::OPTION, array( __CLASS__, 'reschedule' ) );
-		add_action( 'add_option_' . DBManager_Options::OPTION, array( __CLASS__, 'reschedule' ) );
+		add_action( 'update_option_' . WP_DBManager_Options::OPTION, array( __CLASS__, 'reschedule' ) );
+		add_action( 'add_option_' . WP_DBManager_Options::OPTION, array( __CLASS__, 'reschedule' ) );
 	}
 
 	/**
@@ -57,7 +57,7 @@ class DBManager_Cron {
 	 * @return array
 	 */
 	public static function schedules( $schedules ) {
-		$options = DBManager_Options::get();
+		$options = WP_DBManager_Options::get();
 
 		$labels = array(
 			'backup'   => __( 'WP-DBManager Backup Schedule', 'wp-dbmanager' ),
@@ -90,7 +90,7 @@ class DBManager_Cron {
 	 * @return void
 	 */
 	public static function reschedule() {
-		$options = DBManager_Options::get();
+		$options = WP_DBManager_Options::get();
 
 		foreach ( self::jobs() as $job => $hook ) {
 			wp_clear_scheduled_hook( $hook );
@@ -118,10 +118,10 @@ class DBManager_Cron {
 	 * @return void
 	 */
 	public static function backup() {
-		$options = DBManager_Options::get();
+		$options = WP_DBManager_Options::get();
 
 		// Do not start a dump that has nowhere to land.
-		if ( '' === $options['path'] || ! DBManager_Backups::is_folder_valid( $options['path'] ) ) {
+		if ( '' === $options['path'] || ! WP_DBManager_Backups::is_folder_valid( $options['path'] ) ) {
 			return;
 		}
 
@@ -129,7 +129,7 @@ class DBManager_Cron {
 			return;
 		}
 
-		$result = DBManager_Database::backup( 1 === (int) $options['backup_gzip'] );
+		$result = WP_DBManager_Database::backup( 1 === (int) $options['backup_gzip'] );
 
 		// Never rename or e-mail a dump that did not happen.
 		if ( ! $result['success'] ) {
@@ -137,7 +137,7 @@ class DBManager_Cron {
 		}
 
 		if ( ! empty( $options['backup_email'] ) ) {
-			DBManager_Mailer::send(
+			WP_DBManager_Mailer::send(
 				$options['backup_email'],
 				$result['filepath'],
 				1 === (int) $options['backup_email_attach']
@@ -151,13 +151,13 @@ class DBManager_Cron {
 	 * @return void
 	 */
 	public static function optimize() {
-		$options = DBManager_Options::get();
+		$options = WP_DBManager_Options::get();
 
 		if ( (int) $options['optimize_period'] <= 0 ) {
 			return;
 		}
 
-		DBManager_Tables::optimize( DBManager_Tables::all() );
+		WP_DBManager_Tables::optimize( WP_DBManager_Tables::all() );
 	}
 
 	/**
@@ -166,12 +166,12 @@ class DBManager_Cron {
 	 * @return void
 	 */
 	public static function repair() {
-		$options = DBManager_Options::get();
+		$options = WP_DBManager_Options::get();
 
 		if ( (int) $options['repair_period'] <= 0 ) {
 			return;
 		}
 
-		DBManager_Tables::repair( DBManager_Tables::all() );
+		WP_DBManager_Tables::repair( WP_DBManager_Tables::all() );
 	}
 }

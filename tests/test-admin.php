@@ -12,7 +12,7 @@
  * whether a copy of the whole database is downloadable, so the conditions it
  * appears under are worth pinning down.
  */
-class Test_DBManager_Admin extends DBManager_TestCase {
+class Test_DBManager_Admin extends WP_DBManager_TestCase {
 
 	/**
 	 * Render the admin notice.
@@ -20,7 +20,7 @@ class Test_DBManager_Admin extends DBManager_TestCase {
 	 * @return string
 	 */
 	protected function notice() {
-		return $this->render( array( 'DBManager_Admin', 'notices' ) );
+		return $this->render( array( 'WP_DBManager_Admin', 'notices' ) );
 	}
 
 	/**
@@ -30,7 +30,7 @@ class Test_DBManager_Admin extends DBManager_TestCase {
 	 * which is why the plugin only worked when installed as "wp-dbmanager".
 	 */
 	public function test_pages_are_slugs_not_file_paths() {
-		$pages = DBManager_Admin::pages();
+		$pages = WP_DBManager_Admin::pages();
 
 		$this->assertCount( 8, $pages );
 
@@ -47,7 +47,7 @@ class Test_DBManager_Admin extends DBManager_TestCase {
 	 * A page URL points at admin.php with the right slug.
 	 */
 	public function test_page_url_builds_an_admin_url() {
-		$url = DBManager_Admin::page_url( 'backup' );
+		$url = WP_DBManager_Admin::page_url( 'backup' );
 
 		$this->assertStringContainsString( 'admin.php', $url );
 		$this->assertStringContainsString( 'page=wp-dbmanager-backup', $url );
@@ -57,14 +57,14 @@ class Test_DBManager_Admin extends DBManager_TestCase {
 	 * Extra query arguments survive.
 	 */
 	public function test_page_url_carries_extra_arguments() {
-		$this->assertStringContainsString( 'try_fix=1', DBManager_Admin::page_url( 'backup', array( 'try_fix' => 1 ) ) );
+		$this->assertStringContainsString( 'try_fix=1', WP_DBManager_Admin::page_url( 'backup', array( 'try_fix' => 1 ) ) );
 	}
 
 	/**
 	 * An unknown key falls back to the top level page rather than a broken URL.
 	 */
 	public function test_page_url_falls_back_for_an_unknown_key() {
-		$this->assertStringContainsString( 'page=wp-dbmanager', DBManager_Admin::page_url( 'no-such-page' ) );
+		$this->assertStringContainsString( 'page=wp-dbmanager', WP_DBManager_Admin::page_url( 'no-such-page' ) );
 	}
 
 	/**
@@ -77,9 +77,9 @@ class Test_DBManager_Admin extends DBManager_TestCase {
 		$submenu = array();
 
 		wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
-		DBManager_Admin::menu();
+		WP_DBManager_Admin::menu();
 
-		$pages = DBManager_Admin::pages();
+		$pages = WP_DBManager_Admin::pages();
 
 		$this->assertArrayHasKey( $pages['manager'], $submenu );
 
@@ -99,9 +99,9 @@ class Test_DBManager_Admin extends DBManager_TestCase {
 		$menu    = array();
 		$submenu = array();
 
-		DBManager_Admin::menu();
+		WP_DBManager_Admin::menu();
 
-		foreach ( $submenu[ DBManager_Admin::pages()['manager'] ] as $entry ) {
+		foreach ( $submenu[ WP_DBManager_Admin::pages()['manager'] ] as $entry ) {
 			$this->assertSame( 'install_plugins', $entry[1] );
 		}
 	}
@@ -111,10 +111,10 @@ class Test_DBManager_Admin extends DBManager_TestCase {
 	 */
 	public function test_the_script_loads_only_on_our_screens() {
 		wp_dequeue_script( 'wp-dbmanager' );
-		DBManager_Admin::enqueue( 'index.php' );
+		WP_DBManager_Admin::enqueue( 'index.php' );
 		$this->assertFalse( wp_script_is( 'wp-dbmanager', 'enqueued' ), 'The script loaded on the dashboard.' );
 
-		DBManager_Admin::enqueue( 'database_page_wp-dbmanager-manage' );
+		WP_DBManager_Admin::enqueue( 'database_page_wp-dbmanager-manage' );
 		$this->assertTrue( wp_script_is( 'wp-dbmanager', 'enqueued' ) );
 	}
 
@@ -126,12 +126,12 @@ class Test_DBManager_Admin extends DBManager_TestCase {
 	public function test_the_detected_paths_are_localised_only_on_the_options_screen() {
 		wp_dequeue_script( 'wp-dbmanager' );
 		wp_deregister_script( 'wp-dbmanager' );
-		DBManager_Admin::enqueue( 'database_page_wp-dbmanager-repair' );
+		WP_DBManager_Admin::enqueue( 'database_page_wp-dbmanager-repair' );
 		$this->assertEmpty( wp_scripts()->get_data( 'wp-dbmanager', 'data' ) );
 
 		wp_dequeue_script( 'wp-dbmanager' );
 		wp_deregister_script( 'wp-dbmanager' );
-		DBManager_Admin::enqueue( 'database_page_wp-dbmanager-options' );
+		WP_DBManager_Admin::enqueue( 'database_page_wp-dbmanager-options' );
 		$this->assertStringContainsString( 'wpDBManagerL10n', (string) wp_scripts()->get_data( 'wp-dbmanager', 'data' ) );
 	}
 
@@ -141,7 +141,7 @@ class Test_DBManager_Admin extends DBManager_TestCase {
 	public function test_messages_are_escaped() {
 		$html = $this->render(
 			function () {
-				DBManager_Admin::render_messages(
+				WP_DBManager_Admin::render_messages(
 					array(
 						array(
 							'type' => 'error',
@@ -162,7 +162,7 @@ class Test_DBManager_Admin extends DBManager_TestCase {
 	public function test_message_types_are_coloured() {
 		$html = $this->render(
 			function () {
-				DBManager_Admin::render_messages(
+				WP_DBManager_Admin::render_messages(
 					array(
 						array(
 							'type' => 'success',
@@ -199,7 +199,7 @@ class Test_DBManager_Admin extends DBManager_TestCase {
 			'',
 			$this->render(
 				function () {
-					DBManager_Admin::render_messages( array() );
+					WP_DBManager_Admin::render_messages( array() );
 				}
 			)
 		);
@@ -210,7 +210,7 @@ class Test_DBManager_Admin extends DBManager_TestCase {
 	 */
 	public function test_a_healthy_folder_is_quiet() {
 		file_put_contents( $this->backup_dir . '/index.php', '<?php // Silence is golden.' );
-		set_transient( DBManager_Folder::TRANSIENT, 'protected', HOUR_IN_SECONDS );
+		set_transient( WP_DBManager_Folder::TRANSIENT, 'protected', HOUR_IN_SECONDS );
 
 		$this->assertSame( '', $this->notice() );
 	}
@@ -219,7 +219,7 @@ class Test_DBManager_Admin extends DBManager_TestCase {
 	 * A missing index.php is reported.
 	 */
 	public function test_a_missing_index_is_reported() {
-		set_transient( DBManager_Folder::TRANSIENT, 'protected', HOUR_IN_SECONDS );
+		set_transient( WP_DBManager_Folder::TRANSIENT, 'protected', HOUR_IN_SECONDS );
 
 		$html = $this->notice();
 
@@ -232,7 +232,7 @@ class Test_DBManager_Admin extends DBManager_TestCase {
 	 */
 	public function test_a_public_folder_is_reported() {
 		file_put_contents( $this->backup_dir . '/index.php', '<?php // Silence is golden.' );
-		set_transient( DBManager_Folder::TRANSIENT, 'public', HOUR_IN_SECONDS );
+		set_transient( WP_DBManager_Folder::TRANSIENT, 'public', HOUR_IN_SECONDS );
 
 		$html = $this->notice();
 
@@ -244,11 +244,11 @@ class Test_DBManager_Admin extends DBManager_TestCase {
 	 * The notice can be turned off.
 	 */
 	public function test_the_notice_can_be_hidden() {
-		set_transient( DBManager_Folder::TRANSIENT, 'public', HOUR_IN_SECONDS );
+		set_transient( WP_DBManager_Folder::TRANSIENT, 'public', HOUR_IN_SECONDS );
 
-		$options                       = DBManager_Options::get();
+		$options                       = WP_DBManager_Options::get();
 		$options['hide_admin_notices'] = 1;
-		update_option( DBManager_Options::OPTION, $options );
+		update_option( WP_DBManager_Options::OPTION, $options );
 
 		$this->assertSame( '', $this->notice() );
 	}
@@ -259,7 +259,7 @@ class Test_DBManager_Admin extends DBManager_TestCase {
 	 * It names the backup folder and links to a screen they cannot reach.
 	 */
 	public function test_the_notice_is_hidden_from_users_who_cannot_act() {
-		set_transient( DBManager_Folder::TRANSIENT, 'public', HOUR_IN_SECONDS );
+		set_transient( WP_DBManager_Folder::TRANSIENT, 'public', HOUR_IN_SECONDS );
 		wp_set_current_user( self::factory()->user->create( array( 'role' => 'editor' ) ) );
 
 		$this->assertSame( '', $this->notice() );
@@ -269,7 +269,7 @@ class Test_DBManager_Admin extends DBManager_TestCase {
 	 * The fix link is nonced and points at the backup screen.
 	 */
 	public function test_the_fix_link_is_nonced() {
-		set_transient( DBManager_Folder::TRANSIENT, 'public', HOUR_IN_SECONDS );
+		set_transient( WP_DBManager_Folder::TRANSIENT, 'public', HOUR_IN_SECONDS );
 
 		$html = $this->notice();
 
@@ -285,7 +285,7 @@ class Test_DBManager_Admin extends DBManager_TestCase {
 	 * two round trips to the site.
 	 */
 	public function test_the_notice_does_not_probe() {
-		DBManager_Folder::flush();
+		WP_DBManager_Folder::flush();
 
 		$requests = 0;
 
@@ -306,7 +306,7 @@ class Test_DBManager_Admin extends DBManager_TestCase {
 	 * A user with the capability passes the guard.
 	 */
 	public function test_check_capability_allows_an_administrator() {
-		DBManager_Admin::check_capability();
+		WP_DBManager_Admin::check_capability();
 
 		$this->assertTrue( current_user_can( 'install_plugins' ) );
 	}
@@ -319,6 +319,6 @@ class Test_DBManager_Admin extends DBManager_TestCase {
 
 		$this->expectException( 'WPDieException' );
 
-		DBManager_Admin::check_capability();
+		WP_DBManager_Admin::check_capability();
 	}
 }

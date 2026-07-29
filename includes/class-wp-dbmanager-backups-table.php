@@ -1,6 +1,6 @@
 <?php
 /**
- * WP-DBManager class-dbmanager-backups-table.php
+ * The backup files list table.
  *
  * @package WP-DBManager
  */
@@ -21,7 +21,7 @@ if ( ! class_exists( 'WP_List_Table' ) ) {
  *
  * @since 3.0.0
  */
-class DBManager_Backups_Table extends WP_List_Table {
+class WP_DBManager_Backups_Table extends WP_List_Table {
 
 	/**
 	 * Total size of every backup listed.
@@ -114,11 +114,11 @@ class DBManager_Backups_Table extends WP_List_Table {
 	public function prepare_items() {
 		$this->_column_headers = array( $this->get_columns(), array(), $this->get_sortable_columns() );
 
-		$path  = DBManager_Options::backup_path();
+		$path  = WP_DBManager_Options::backup_path();
 		$items = array();
 
-		foreach ( DBManager_Backups::all( $path ) as $entry ) {
-			$file = DBManager_Backups::parse_file( $path . '/' . $entry['name'] );
+		foreach ( WP_DBManager_Backups::all( $path ) as $entry ) {
+			$file = WP_DBManager_Backups::parse_file( $path . '/' . $entry['name'] );
 
 			$items[]           = array(
 				'name'     => $entry['name'],
@@ -192,7 +192,7 @@ class DBManager_Backups_Table extends WP_List_Table {
 	 * @return string
 	 */
 	public function column_size( $item ) {
-		return esc_html( DBManager_Backups::format_size( $item['size'] ) );
+		return esc_html( WP_DBManager_Backups::format_size( $item['size'] ) );
 	}
 
 	/**

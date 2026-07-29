@@ -11,7 +11,7 @@
  * The attachment is the interesting part: it is a copy of the whole database,
  * so "send the details but not the dump" has to actually mean that.
  */
-class Test_DBManager_Mailer extends DBManager_TestCase {
+class Test_DBManager_Mailer extends WP_DBManager_TestCase {
 
 	/**
 	 * Mail handed to wp_mail(), newest last.
@@ -69,7 +69,7 @@ class Test_DBManager_Mailer extends DBManager_TestCase {
 	 * A backup is mailed to the address given.
 	 */
 	public function test_a_backup_is_mailed() {
-		$this->assertTrue( DBManager_Mailer::send( 'someone@example.com', $this->make_backup() ) );
+		$this->assertTrue( WP_DBManager_Mailer::send( 'someone@example.com', $this->make_backup() ) );
 
 		$this->assertCount( 1, $this->sent );
 		$this->assertSame( 'someone@example.com', $this->last_mail()['to'] );
@@ -79,7 +79,7 @@ class Test_DBManager_Mailer extends DBManager_TestCase {
 	 * An empty recipient falls back to the site admin.
 	 */
 	public function test_an_empty_recipient_falls_back_to_the_admin() {
-		DBManager_Mailer::send( '', $this->make_backup() );
+		WP_DBManager_Mailer::send( '', $this->make_backup() );
 
 		$this->assertSame( get_option( 'admin_email' ), $this->last_mail()['to'] );
 	}
@@ -88,7 +88,7 @@ class Test_DBManager_Mailer extends DBManager_TestCase {
 	 * Nothing is sent to an address that is not one.
 	 */
 	public function test_an_invalid_address_sends_nothing() {
-		$this->assertFalse( DBManager_Mailer::send( 'not-an-address', $this->make_backup() ) );
+		$this->assertFalse( WP_DBManager_Mailer::send( 'not-an-address', $this->make_backup() ) );
 		$this->assertSame( array(), $this->sent );
 	}
 
@@ -98,7 +98,7 @@ class Test_DBManager_Mailer extends DBManager_TestCase {
 	 * Otherwise a failed backup still produces a reassuring e-mail.
 	 */
 	public function test_a_missing_backup_sends_nothing() {
-		$this->assertFalse( DBManager_Mailer::send( 'someone@example.com', $this->backup_dir . '/nope.sql' ) );
+		$this->assertFalse( WP_DBManager_Mailer::send( 'someone@example.com', $this->backup_dir . '/nope.sql' ) );
 		$this->assertSame( array(), $this->sent );
 	}
 
@@ -108,7 +108,7 @@ class Test_DBManager_Mailer extends DBManager_TestCase {
 	public function test_the_dump_is_attached_by_default() {
 		$path = $this->make_backup();
 
-		DBManager_Mailer::send( 'someone@example.com', $path );
+		WP_DBManager_Mailer::send( 'someone@example.com', $path );
 
 		$this->assertSame( $path, $this->last_mail()['attachments'] );
 	}
@@ -120,7 +120,7 @@ class Test_DBManager_Mailer extends DBManager_TestCase {
 	 * mailbox, so this must not be a cosmetic setting.
 	 */
 	public function test_declining_the_attachment_sends_no_file() {
-		DBManager_Mailer::send( 'someone@example.com', $this->make_backup(), false );
+		WP_DBManager_Mailer::send( 'someone@example.com', $this->make_backup(), false );
 
 		$this->assertSame( array(), $this->last_mail()['attachments'] );
 	}
@@ -131,7 +131,7 @@ class Test_DBManager_Mailer extends DBManager_TestCase {
 	public function test_the_body_describes_the_backup() {
 		$path = $this->make_backup();
 
-		DBManager_Mailer::send( 'someone@example.com', $path, false );
+		WP_DBManager_Mailer::send( 'someone@example.com', $path, false );
 
 		$message = $this->last_mail()['message'];
 
@@ -145,11 +145,11 @@ class Test_DBManager_Mailer extends DBManager_TestCase {
 	 * The subject tokens are replaced.
 	 */
 	public function test_subject_tokens_are_replaced() {
-		$options                         = DBManager_Options::get();
+		$options                         = WP_DBManager_Options::get();
 		$options['backup_email_subject'] = '%SITE_NAME% on %POST_DATE% at %POST_TIME%';
-		update_option( DBManager_Options::OPTION, $options );
+		update_option( WP_DBManager_Options::OPTION, $options );
 
-		DBManager_Mailer::send( 'someone@example.com', $this->make_backup() );
+		WP_DBManager_Mailer::send( 'someone@example.com', $this->make_backup() );
 
 		$subject = $this->last_mail()['subject'];
 
@@ -163,11 +163,11 @@ class Test_DBManager_Mailer extends DBManager_TestCase {
 	 * A blank subject falls back to the default rather than sending nothing.
 	 */
 	public function test_a_blank_subject_falls_back_to_the_default() {
-		$options                         = DBManager_Options::get();
+		$options                         = WP_DBManager_Options::get();
 		$options['backup_email_subject'] = '';
-		update_option( DBManager_Options::OPTION, $options );
+		update_option( WP_DBManager_Options::OPTION, $options );
 
-		DBManager_Mailer::send( 'someone@example.com', $this->make_backup() );
+		WP_DBManager_Mailer::send( 'someone@example.com', $this->make_backup() );
 
 		$this->assertNotSame( '', trim( $this->last_mail()['subject'] ) );
 	}
@@ -176,12 +176,12 @@ class Test_DBManager_Mailer extends DBManager_TestCase {
 	 * The From header is built from the configured name and address.
 	 */
 	public function test_the_from_header_is_set() {
-		$options                           = DBManager_Options::get();
+		$options                           = WP_DBManager_Options::get();
 		$options['backup_email_from']      = 'backups@example.com';
 		$options['backup_email_from_name'] = 'Backup Robot';
-		update_option( DBManager_Options::OPTION, $options );
+		update_option( WP_DBManager_Options::OPTION, $options );
 
-		DBManager_Mailer::send( 'someone@example.com', $this->make_backup() );
+		WP_DBManager_Mailer::send( 'someone@example.com', $this->make_backup() );
 
 		$headers = (array) $this->last_mail()['headers'];
 
@@ -197,11 +197,11 @@ class Test_DBManager_Mailer extends DBManager_TestCase {
 	public function test_a_comma_in_the_site_title_survives() {
 		update_option( 'blogname', 'Lester, Chan &amp; Co' );
 
-		$options                           = DBManager_Options::get();
+		$options                           = WP_DBManager_Options::get();
 		$options['backup_email_from_name'] = wp_specialchars_decode( get_bloginfo( 'name' ), ENT_QUOTES );
-		update_option( DBManager_Options::OPTION, $options );
+		update_option( WP_DBManager_Options::OPTION, $options );
 
-		DBManager_Mailer::send( 'someone@example.com', $this->make_backup() );
+		WP_DBManager_Mailer::send( 'someone@example.com', $this->make_backup() );
 
 		$headers = implode( "\n", (array) $this->last_mail()['headers'] );
 

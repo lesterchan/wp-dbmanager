@@ -9,7 +9,7 @@
  * Sets up an administrator, a scratch backup folder, and a way to render a
  * screen while watching for PHP diagnostics.
  */
-abstract class DBManager_TestCase extends WP_UnitTestCase {
+abstract class WP_DBManager_TestCase extends WP_UnitTestCase {
 
 	/**
 	 * Diagnostics raised while a screen was rendering.
@@ -39,9 +39,9 @@ abstract class DBManager_TestCase extends WP_UnitTestCase {
 		wp_mkdir_p( $this->backup_dir );
 
 		update_option(
-			DBManager_Options::OPTION,
+			WP_DBManager_Options::OPTION,
 			array_merge(
-				DBManager_Options::defaults(),
+				WP_DBManager_Options::defaults(),
 				array(
 					'path'          => $this->backup_dir,
 					'mysqldumppath' => $this->mysqldump_path(),
@@ -51,7 +51,7 @@ abstract class DBManager_TestCase extends WP_UnitTestCase {
 		);
 
 		// Rendering must not depend on whichever answer a previous test cached.
-		DBManager_Folder::flush();
+		WP_DBManager_Folder::flush();
 
 		// WP_List_Table resolves a screen in its constructor, so the list table
 		// screens need one to exist before they can be rendered at all.
@@ -73,7 +73,7 @@ abstract class DBManager_TestCase extends WP_UnitTestCase {
 	public function tear_down() {
 		self::remove_directory( $this->backup_dir );
 
-		DBManager_Cron::clear();
+		WP_DBManager_Cron::clear();
 
 		parent::tear_down();
 	}
