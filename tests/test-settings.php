@@ -9,7 +9,7 @@
  * The sanitize callback is the whole safety net for this screen, so it is
  * tested against the values a browser actually sends: strings, every time.
  */
-class Test_DBManager_Settings extends WP_DBManager_TestCase {
+class WP_DBManager_Settings_Test extends WP_DBManager_TestCase {
 
 	/**
 	 * A full, valid submission round-trips unchanged.

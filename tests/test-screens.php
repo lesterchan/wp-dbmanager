@@ -12,7 +12,7 @@
  * the branches a bare GET never reaches, so the POST outcomes are in the
  * providers below alongside the default views.
  */
-class Test_DBManager_Screens extends WP_DBManager_TestCase {
+class WP_DBManager_Screens_Test extends WP_DBManager_TestCase {
 
 	/**
 	 * Set up.
@@ -208,7 +208,7 @@ class Test_DBManager_Screens extends WP_DBManager_TestCase {
 	 */
 	public function test_the_manage_screen_lists_backups() {
 		$name = str_repeat( 'c', 32 ) . '_-_1700000000_-_sitedb.sql';
-		file_put_contents( $this->backup_dir . '/' . $name, 'SOME SQL' );
+		self::write_file( $this->backup_dir . '/' . $name, 'SOME SQL' );
 
 		$html = $this->render( array( 'WP_DBManager_Screens', 'manage' ) );
 
@@ -234,7 +234,7 @@ class Test_DBManager_Screens extends WP_DBManager_TestCase {
 	public function test_deleting_a_backup_removes_the_file() {
 		$name = str_repeat( 'd', 32 ) . '_-_1700000000_-_sitedb.sql';
 		$path = $this->backup_dir . '/' . $name;
-		file_put_contents( $path, 'SOME SQL' );
+		self::write_file( $path, 'SOME SQL' );
 
 		$html = $this->render(
 			array( 'WP_DBManager_Screens', 'manage' ),
@@ -273,7 +273,7 @@ class Test_DBManager_Screens extends WP_DBManager_TestCase {
 		add_filter( 'pre_wp_mail', '__return_true' );
 
 		$name = str_repeat( 'e', 32 ) . '_-_1700000000_-_sitedb.sql';
-		file_put_contents( $this->backup_dir . '/' . $name, 'SOME SQL' );
+		self::write_file( $this->backup_dir . '/' . $name, 'SOME SQL' );
 
 		$html = $this->render(
 			array( 'WP_DBManager_Screens', 'manage' ),

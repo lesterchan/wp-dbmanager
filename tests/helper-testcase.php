@@ -79,12 +79,57 @@ abstract class WP_DBManager_TestCase extends WP_UnitTestCase {
 	}
 
 	/**
+	 * The WordPress filesystem abstraction.
+	 *
+	 * The suite writes fixture files constantly, and doing that with
+	 * file_put_contents() and friends means a WordPress.WP.AlternativeFunctions
+	 * warning per call site. Going through WP_Filesystem once, here, is both the
+	 * house answer to that sniff and the only place the suite has to care: under
+	 * wp-env the method is always 'direct', because the test runner owns the
+	 * files it is creating.
+	 *
+	 * @return WP_Filesystem_Base
+	 */
+	protected static function filesystem() {
+		global $wp_filesystem;
+
+		if ( ! $wp_filesystem ) {
+			require_once ABSPATH . 'wp-admin/includes/file.php';
+			WP_Filesystem();
+		}
+
+		return $wp_filesystem;
+	}
+
+	/**
+	 * Write a fixture file.
+	 *
+	 * @param string $path     Absolute path.
+	 * @param string $contents File contents.
+	 * @return void
+	 */
+	protected static function write_file( $path, $contents = '' ) {
+		self::filesystem()->put_contents( $path, $contents );
+	}
+
+	/**
+	 * Create an empty fixture file, or bump an existing one's timestamp.
+	 *
+	 * @param string   $path  Absolute path.
+	 * @param int|null $mtime Modification time, or null for now.
+	 * @return void
+	 */
+	protected static function touch_file( $path, $mtime = null ) {
+		self::filesystem()->touch( $path, null === $mtime ? 0 : $mtime );
+	}
+
+	/**
 	 * Delete a scratch directory and everything in it.
 	 *
-	 * Uses scandir() rather than glob(): the plugin drops a .htaccess into every
-	 * folder it creates, glob() does not match dotfiles, and the leftover then
-	 * fails the rmdir with "Directory not empty" in whichever unrelated test
-	 * happened to create the folder.
+	 * Recursive rather than a single call because the plugin drops a .htaccess
+	 * into every folder it creates, and a non-recursive removal leaves that
+	 * behind and then fails with "Directory not empty" in whichever unrelated
+	 * test happened to create the folder.
 	 *
 	 * @param string $dir Directory to remove.
 	 * @return void
@@ -94,21 +139,7 @@ abstract class WP_DBManager_TestCase extends WP_UnitTestCase {
 			return;
 		}
 
-		foreach ( scandir( $dir ) as $entry ) {
-			if ( '.' === $entry || '..' === $entry ) {
-				continue;
-			}
-
-			$path = $dir . '/' . $entry;
-
-			if ( is_dir( $path ) ) {
-				self::remove_directory( $path );
-			} else {
-				unlink( $path );
-			}
-		}
-
-		rmdir( $dir );
+		self::filesystem()->rmdir( $dir, true );
 	}
 
 	/**

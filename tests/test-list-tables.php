@@ -9,7 +9,7 @@
  * Columns, sorting and bulk actions on the screens that were hand-rolled
  * tables before 3.0.0.
  */
-class Test_DBManager_List_Tables extends WP_DBManager_TestCase {
+class WP_DBManager_List_Tables_Test extends WP_DBManager_TestCase {
 
 	/**
 	 * Drop a fake backup into the scratch folder.
@@ -21,10 +21,10 @@ class Test_DBManager_List_Tables extends WP_DBManager_TestCase {
 	 */
 	protected function make_backup( $name, $mtime = null, $body = 'dump' ) {
 		$path = $this->backup_dir . '/' . $name;
-		file_put_contents( $path, $body );
+		self::write_file( $path, $body );
 
 		if ( null !== $mtime ) {
-			touch( $path, $mtime );
+			self::touch_file( $path, $mtime );
 		}
 
 		return $path;

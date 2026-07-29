@@ -11,7 +11,7 @@
  * The attachment is the interesting part: it is a copy of the whole database,
  * so "send the details but not the dump" has to actually mean that.
  */
-class Test_DBManager_Mailer extends WP_DBManager_TestCase {
+class WP_DBManager_Mailer_Test extends WP_DBManager_TestCase {
 
 	/**
 	 * Mail handed to wp_mail(), newest last.
@@ -51,7 +51,7 @@ class Test_DBManager_Mailer extends WP_DBManager_TestCase {
 		$name = ( null === $name ) ? str_repeat( 'a', 32 ) . '_-_1700000000_-_sitedb.sql' : $name;
 		$path = $this->backup_dir . '/' . $name;
 
-		file_put_contents( $path, 'SOME SQL' );
+		self::write_file( $path, 'SOME SQL' );
 
 		return $path;
 	}

@@ -8,7 +8,7 @@
 /**
  * Reading, writing and defaulting the one option row.
  */
-class Test_DBManager_Options extends WP_DBManager_TestCase {
+class WP_DBManager_Options_Test extends WP_DBManager_TestCase {
 
 	/**
 	 * The plugin owns one settings row and one markers row, both prefixed.

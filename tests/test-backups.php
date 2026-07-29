@@ -8,7 +8,7 @@
 /**
  * Listing, parsing, pruning and resolving backup files.
  */
-class Test_DBManager_Backups extends WP_DBManager_TestCase {
+class WP_DBManager_Backups_Test extends WP_DBManager_TestCase {
 
 	/**
 	 * Drop a fake backup into the scratch folder.
@@ -20,10 +20,10 @@ class Test_DBManager_Backups extends WP_DBManager_TestCase {
 	 */
 	protected function make_backup( $name, $mtime = null, $body = 'dump' ) {
 		$path = $this->backup_dir . '/' . $name;
-		file_put_contents( $path, $body ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents
+		self::write_file( $path, $body );
 
 		if ( null !== $mtime ) {
-			touch( $path, $mtime );
+			self::touch_file( $path, $mtime );
 		}
 
 		return $path;

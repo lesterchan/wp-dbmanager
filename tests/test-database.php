@@ -12,7 +12,7 @@
  * drifted, so the point of most of these tests is that there is now one
  * construction to check.
  */
-class Test_DBManager_Database extends WP_DBManager_TestCase {
+class WP_DBManager_Database_Test extends WP_DBManager_TestCase {
 
 	/**
 	 * The password never appears on the command line.
@@ -330,7 +330,7 @@ class Test_DBManager_Database extends WP_DBManager_TestCase {
 	 */
 	public function test_an_empty_gzip_stream_has_no_content() {
 		$path = $this->backup_dir . '/empty.sql.gz';
-		file_put_contents( $path, gzencode( '' ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents
+		self::write_file( $path, gzencode( '' ) );
 
 		$this->assertGreaterThan( 0, filesize( $path ), 'An empty gzip stream is still a non-empty file.' );
 
@@ -345,7 +345,7 @@ class Test_DBManager_Database extends WP_DBManager_TestCase {
 	 */
 	public function test_a_real_gzip_stream_has_content() {
 		$path = $this->backup_dir . '/real.sql.gz';
-		file_put_contents( $path, gzencode( "-- MariaDB dump\nCREATE TABLE x (id INT);\n" ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents
+		self::write_file( $path, gzencode( "-- MariaDB dump\nCREATE TABLE x (id INT);\n" ) );
 
 		$method = new ReflectionMethod( 'WP_DBManager_Database', 'dump_has_content' );
 		$method->setAccessible( true );
@@ -358,7 +358,7 @@ class Test_DBManager_Database extends WP_DBManager_TestCase {
 	 */
 	public function test_a_whitespace_only_dump_has_no_content() {
 		$path = $this->backup_dir . '/blank.sql.gz';
-		file_put_contents( $path, gzencode( "\n\n   \n" ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents
+		self::write_file( $path, gzencode( "\n\n   \n" ) );
 
 		$method = new ReflectionMethod( 'WP_DBManager_Database', 'dump_has_content' );
 		$method->setAccessible( true );
@@ -374,11 +374,11 @@ class Test_DBManager_Database extends WP_DBManager_TestCase {
 		$method->setAccessible( true );
 
 		$empty = $this->backup_dir . '/empty.sql';
-		file_put_contents( $empty, '' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents
+		self::write_file( $empty, '' );
 		$this->assertFalse( $method->invoke( null, $empty, false ) );
 
 		$real = $this->backup_dir . '/real.sql';
-		file_put_contents( $real, 'CREATE TABLE x (id INT);' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents
+		self::write_file( $real, 'CREATE TABLE x (id INT);' );
 		$this->assertTrue( $method->invoke( null, $real, false ) );
 
 		$this->assertFalse( $method->invoke( null, $this->backup_dir . '/missing.sql', false ) );

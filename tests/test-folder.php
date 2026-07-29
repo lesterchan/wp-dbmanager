@@ -9,7 +9,7 @@
  * A dump contains the users table, so whether the folder answers over HTTP is
  * the single most consequential thing this plugin reports.
  */
-class Test_DBManager_Folder extends WP_DBManager_TestCase {
+class WP_DBManager_Folder_Test extends WP_DBManager_TestCase {
 
 	/**
 	 * Pretend to be a particular server.
@@ -72,7 +72,7 @@ class Test_DBManager_Folder extends WP_DBManager_TestCase {
 
 		$this->assertFalse( WP_DBManager_Folder::url() );
 
-		rmdir( $outside );
+		self::remove_directory( $outside );
 	}
 
 	/**
@@ -91,7 +91,7 @@ class Test_DBManager_Folder extends WP_DBManager_TestCase {
 		$this->assertNotFalse( $url );
 		$this->assertStringStartsWith( content_url(), $url );
 
-		rmdir( $inside );
+		self::remove_directory( $inside );
 	}
 
 	/**
@@ -109,7 +109,7 @@ class Test_DBManager_Folder extends WP_DBManager_TestCase {
 
 		$this->assertFalse( WP_DBManager_Folder::is_public() );
 
-		rmdir( $outside );
+		self::remove_directory( $outside );
 	}
 
 	/**
@@ -184,12 +184,12 @@ class Test_DBManager_Folder extends WP_DBManager_TestCase {
 		$this->assertSame( '', $method->invoke( null, $this->backup_dir ) );
 
 		// Only the silence guard.
-		file_put_contents( $this->backup_dir . '/index.php', '<?php' );
+		self::write_file( $this->backup_dir . '/index.php', '<?php' );
 		$this->assertSame( 'index.php', $method->invoke( null, $this->backup_dir ) );
 
 		// A real dump wins.
 		$name = str_repeat( 'f', 32 ) . '_-_1700000000_-_db.sql';
-		file_put_contents( $this->backup_dir . '/' . $name, 'SOME SQL' );
+		self::write_file( $this->backup_dir . '/' . $name, 'SOME SQL' );
 		$this->assertSame( $name, $method->invoke( null, $this->backup_dir ) );
 	}
 

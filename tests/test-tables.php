@@ -10,7 +10,7 @@
  * they can only be matched against the real list. That match is the security
  * boundary for four screens, which is why most of this file is about it.
  */
-class Test_DBManager_Tables extends WP_DBManager_TestCase {
+class WP_DBManager_Tables_Test extends WP_DBManager_TestCase {
 
 	/**
 	 * Scratch table name.

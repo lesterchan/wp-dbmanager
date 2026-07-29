@@ -12,7 +12,7 @@
  * whether a copy of the whole database is downloadable, so the conditions it
  * appears under are worth pinning down.
  */
-class Test_DBManager_Admin extends WP_DBManager_TestCase {
+class WP_DBManager_Admin_Test extends WP_DBManager_TestCase {
 
 	/**
 	 * Render the admin notice.
@@ -259,7 +259,7 @@ class Test_DBManager_Admin extends WP_DBManager_TestCase {
 	 * A healthy folder produces no notice at all.
 	 */
 	public function test_a_healthy_folder_is_quiet() {
-		file_put_contents( $this->backup_dir . '/index.php', '<?php // Silence is golden.' );
+		self::write_file( $this->backup_dir . '/index.php', '<?php // Silence is golden.' );
 		set_transient( WP_DBManager_Folder::TRANSIENT, 'protected', HOUR_IN_SECONDS );
 
 		$this->assertSame( '', $this->notice() );
@@ -281,7 +281,7 @@ class Test_DBManager_Admin extends WP_DBManager_TestCase {
 	 * A reachable folder is reported in the strongest terms available.
 	 */
 	public function test_a_public_folder_is_reported() {
-		file_put_contents( $this->backup_dir . '/index.php', '<?php // Silence is golden.' );
+		self::write_file( $this->backup_dir . '/index.php', '<?php // Silence is golden.' );
 		set_transient( WP_DBManager_Folder::TRANSIENT, 'public', HOUR_IN_SECONDS );
 
 		$html = $this->notice();

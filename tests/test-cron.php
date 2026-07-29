@@ -10,7 +10,7 @@
  * change made any other way left the events pointing at the old interval.
  * It hangs off the option now, which is what most of this file checks.
  */
-class Test_DBManager_Cron extends WP_DBManager_TestCase {
+class WP_DBManager_Cron_Test extends WP_DBManager_TestCase {
 
 	/**
 	 * Set up.

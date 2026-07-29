@@ -8,7 +8,7 @@
 /**
  * Constants, hook registration and the shared helpers on the main class.
  */
-class Test_DBManager_Plugin extends WP_DBManager_TestCase {
+class WP_DBManager_Plugin_Test extends WP_DBManager_TestCase {
 
 	/**
 	 * The constants the rest of the plugin builds paths from exist.

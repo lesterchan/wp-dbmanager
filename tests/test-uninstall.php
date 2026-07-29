@@ -12,7 +12,7 @@
  * instead. That is deliberately a source-level guard: it cannot prove the loop
  * works, only that the argument which makes it correct has not been dropped.
  */
-class Test_DBManager_Uninstall extends WP_DBManager_TestCase {
+class WP_DBManager_Uninstall_Test extends WP_DBManager_TestCase {
 
 	/**
 	 * The uninstall script's source.
@@ -134,7 +134,7 @@ class Test_DBManager_Uninstall extends WP_DBManager_TestCase {
 		$this->load_uninstall();
 
 		$backup = $this->backup_dir . '/a_-_1700000000_-_db.sql';
-		file_put_contents( $backup, 'dump' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents
+		self::write_file( $backup, 'dump' );
 
 		wp_dbmanager_uninstall_site();
 
