@@ -284,7 +284,12 @@ class WP_DBManager_Metadata_Test extends WP_DBManager_TestCase {
 
 	public function test_the_guards_use_the_docblock_form() {
 		foreach ( $this->php_directories() as $directory ) {
-			$guard = wp_dbmanager_test_read( str_replace( dirname( __DIR__ ) . '/', '', $directory ) . '/index.php' );
+			// Read the absolute path directly. Making it relative in order to
+			// hand it back to a reader that prepends the root again fails for
+			// the plugin root itself, where $directory has no trailing slash
+			// and so the str_replace() matched nothing -- producing a doubled
+			// path and a "failed to open stream".
+			$guard = (string) file_get_contents( $directory . '/index.php' );
 
 			// phpcbf cannot fix the one-line "// Silence is golden." form.
 			$this->assertStringContainsString( '/**', $guard, "{$directory}/index.php must use the docblock form." );

@@ -250,9 +250,15 @@ class WP_DBManager_Settings_Test extends WP_DBManager_TestCase {
 	public function test_the_screen_does_not_hand_roll_a_form_table() {
 		$source = wp_dbmanager_test_read( 'includes/class-wp-dbmanager-settings.php' );
 
+		// Comments stripped first. The class docblock explains that 3.0.0 printed
+		// its own <table class="form-table"> rows and 4.0.0 does not, so leaving
+		// the prose in means the file describing the fix reads as the fix being
+		// absent. Match code, not English.
+		$code = php_strip_whitespace( dirname( __DIR__ ) . '/includes/class-wp-dbmanager-settings.php' );
+
 		$this->assertStringNotContainsString(
 			'<table class="form-table"',
-			$source,
+			$code,
 			'Section 4.2 allows zero hand-written form tables.'
 		);
 		$this->assertStringContainsString( 'do_settings_sections(', $source );
