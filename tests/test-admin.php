@@ -76,7 +76,7 @@ class WP_DBManager_Admin_Test extends WP_DBManager_TestCase {
 		$menu    = array();
 		$submenu = array();
 
-		wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
+		wp_set_current_user( $this->create_admin() );
 		WP_DBManager_Admin::menu();
 
 		$pages = WP_DBManager_Admin::pages();

@@ -26,6 +26,28 @@ abstract class WP_DBManager_TestCase extends WP_UnitTestCase {
 	protected $backup_dir = '';
 
 	/**
+	 * Creates a user who may actually reach the screens.
+	 *
+	 * A site administrator is enough on a single site and is *not* enough on a
+	 * network. These screens take install_plugins, and core's map_meta_cap()
+	 * adds do_not_allow to that capability under multisite for anyone who is not
+	 * a super admin. That refusal is correct — this plugin dumps, drops and
+	 * restores tables — so the test needs the privilege the real operator would
+	 * have rather than a weaker capability on the plugin's side.
+	 *
+	 * @return int The new user's ID.
+	 */
+	protected function create_admin() {
+		$user_id = self::factory()->user->create( array( 'role' => 'administrator' ) );
+
+		if ( is_multisite() ) {
+			grant_super_admin( $user_id );
+		}
+
+		return $user_id;
+	}
+
+	/**
 	 * Set up.
 	 */
 	public function set_up() {
@@ -33,7 +55,7 @@ abstract class WP_DBManager_TestCase extends WP_UnitTestCase {
 
 		// Every screen calls wp_die() without the capability, which would take
 		// the runner down with it.
-		wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
+		wp_set_current_user( $this->create_admin() );
 
 		$this->backup_dir = get_temp_dir() . 'wp-dbmanager-tests-' . wp_generate_password( 8, false );
 		wp_mkdir_p( $this->backup_dir );
