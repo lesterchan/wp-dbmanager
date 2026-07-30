@@ -335,7 +335,6 @@ class WP_DBManager_Database_Test extends WP_DBManager_TestCase {
 		$this->assertGreaterThan( 0, filesize( $path ), 'An empty gzip stream is still a non-empty file.' );
 
 		$method = new ReflectionMethod( 'WP_DBManager_Database', 'dump_has_content' );
-		$method->setAccessible( true );
 
 		$this->assertFalse( $method->invoke( null, $path, true ) );
 	}
@@ -348,7 +347,6 @@ class WP_DBManager_Database_Test extends WP_DBManager_TestCase {
 		self::write_file( $path, gzencode( "-- MariaDB dump\nCREATE TABLE x (id INT);\n" ) );
 
 		$method = new ReflectionMethod( 'WP_DBManager_Database', 'dump_has_content' );
-		$method->setAccessible( true );
 
 		$this->assertTrue( $method->invoke( null, $path, true ) );
 	}
@@ -361,7 +359,6 @@ class WP_DBManager_Database_Test extends WP_DBManager_TestCase {
 		self::write_file( $path, gzencode( "\n\n   \n" ) );
 
 		$method = new ReflectionMethod( 'WP_DBManager_Database', 'dump_has_content' );
-		$method->setAccessible( true );
 
 		$this->assertFalse( $method->invoke( null, $path, true ) );
 	}
@@ -371,7 +368,6 @@ class WP_DBManager_Database_Test extends WP_DBManager_TestCase {
 	 */
 	public function test_plain_dump_content_is_judged_on_size() {
 		$method = new ReflectionMethod( 'WP_DBManager_Database', 'dump_has_content' );
-		$method->setAccessible( true );
 
 		$empty = $this->backup_dir . '/empty.sql';
 		self::write_file( $empty, '' );

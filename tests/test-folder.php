@@ -178,7 +178,6 @@ class WP_DBManager_Folder_Test extends WP_DBManager_TestCase {
 	 */
 	public function test_the_probe_prefers_a_real_backup() {
 		$method = new ReflectionMethod( 'WP_DBManager_Folder', 'probe_target' );
-		$method->setAccessible( true );
 
 		// Nothing at all to ask for.
 		$this->assertSame( '', $method->invoke( null, $this->backup_dir ) );
