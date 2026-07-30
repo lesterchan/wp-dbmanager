@@ -236,12 +236,11 @@ The `Backup DB` page requests a file from the folder and reports what the server
 
 ## Upgrade Notice
 
-### 4.0.0
-Everything below is written against **3.0.0**, the version currently on WordPress.org. If you are updating from 2.x, read the 3.0.0 notes first — the admin page addresses, the pre-selected tables on `Optimize DB` and `Repair DB`, and the gzipped-backup fix all landed there.
+### 4.0.0. Everything below is written against **3.0.0**, the version currently on WordPress.org. If you are updating from 2.x, read the 3.0.0 notes first — the admin page addresses, the pre-selected tables on `Optimize DB` and `Repair DB`, and the gzipped-backup fix all landed there.
 
 **This release is 4.0.0, not 3.0.0.** 3.0.0 shipped to WordPress.org already, so the number could not be reused. Nothing was skipped: 4.0.0 is simply the next release after 3.0.0.
 
-**WP-DBManager now requires WordPress 6.8 and PHP 8.2**, up from 4.0 and 5.2. This is the change most likely to affect you, and it affects you before anything else does: if your site is on an older WordPress or an older PHP, WordPress will not offer you this update at all, and you will stay on 3.0.0. Check `WP-Admin -> Tools -> Site Health -> Info -> Server` for your PHP version. If it is below 8.2, ask your host to move you up — every host offers it, and PHP 8.1 and everything before it stopped getting security fixes some time ago. Nothing in the plugin changes what your database backups contain, so there is no rush beyond the usual one.
+**WP-DBManager now requires WordPress 6.8 and PHP 8.2**. This is the change most likely to affect you, and it affects you before anything else does: if your site is on an older WordPress or an older PHP, WordPress will not offer you this update at all, and you will stay on 3.0.0. Check `WP-Admin -> Tools -> Site Health -> Info -> Server` for your PHP version. If it is below 8.2, ask your host to move you up — every host offers it, and PHP 8.1 and everything before it stopped getting security fixes some time ago. Nothing in the plugin changes what your database backups contain, so there is no rush beyond the usual one.
 
 **Your settings move to a new row, by themselves.** The `dbmanager_options` row in `wp_options` becomes `wp_dbmanager_options`, and a second row, `wp_dbmanager_version`, is added to record which version last ran. The first time the plugin loads after the update it copies your settings across and deletes the old row. You do not have to do anything, and your `DB Options` screen will look exactly as you left it. If you had code of your own calling `get_option( 'dbmanager_options' )`, point it at `wp_dbmanager_options`.
 
