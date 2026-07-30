@@ -71,7 +71,8 @@ class WP_DBManager_Uninstall_Test extends WP_DBManager_TestCase {
 	}
 
 	/**
-	 * The function removed from WordPress in 5.1 is not called.
+	 * The function deprecated in WordPress 4.6, and capped at 100 sites, is not
+	 * called.
 	 */
 	public function test_uninstall_does_not_call_wp_get_sites() {
 		$this->assertStringNotContainsString( 'wp_get_sites', $this->uninstall_source() );
