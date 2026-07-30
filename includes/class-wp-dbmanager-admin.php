@@ -94,7 +94,7 @@ class WP_DBManager_Admin {
 
 		add_menu_page(
 			__( 'Database', 'wp-dbmanager' ),
-			__( 'Database', 'wp-dbmanager' ),
+			__( 'WP-DBManager', 'wp-dbmanager' ),
 			$cap,
 			$pages['manager'],
 			array( 'WP_DBManager_Screens', 'manager' ),
