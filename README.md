@@ -91,7 +91,7 @@ The `Backup DB` page requests a file from the folder and reports what the server
 
 ## Changelog
 ### 4.0.0
-* BREAKING: Requires WordPress 6.8 or later, up from 4.0, and PHP 8.2 or later, up from 5.2. Sites on an older stack will not be offered the update at all.
+* BREAKING: Requires WordPress 6.8 and PHP 8.2, up from 4.0 and 5.2.
 * BREAKING: The settings row is renamed from `dbmanager_options` to `wp_dbmanager_options`, and a second row, `wp_dbmanager_version`, records the plugin and schema versions. The rename happens by itself the first time the plugin loads.
 * BREAKING: The three cron hooks are renamed `wp_dbmanager_cron_backup`, `wp_dbmanager_cron_optimize` and `wp_dbmanager_cron_repair`, and their recurrences `wp_dbmanager_backup`, `wp_dbmanager_optimize` and `wp_dbmanager_repair`. The scheduled events are rebuilt automatically.
 * BREAKING: The Database admin pages have new addresses. `admin.php?page=wp-dbmanager/database-backup.php` is now `admin.php?page=wp-dbmanager-backup`, and so on for every screen. Update any bookmarks. The menu itself is unchanged, and the plugin no longer cares what its folder is called.
@@ -137,21 +137,21 @@ The `Backup DB` page requests a file from the folder and reports what the server
 
 ## Upgrade Notice
 
-### 4.0.0. Everything below is written against **3.0.0**, the version currently on WordPress.org. If you are updating from 2.x, read the 3.0.0 notes first — the admin page addresses, the pre-selected tables on `Optimize DB` and `Repair DB`, and the gzipped-backup fix all landed there.
+### 4.0.0
 
-**This release is 4.0.0, not 3.0.0.** 3.0.0 shipped to WordPress.org already, so the number could not be reused. Nothing was skipped: 4.0.0 is simply the next release after 3.0.0.
+Requires WordPress 6.8 and PHP 8.2.
 
-**WP-DBManager now requires WordPress 6.8 and PHP 8.2**. This is the change most likely to affect you, and it affects you before anything else does: if your site is on an older WordPress or an older PHP, WordPress will not offer you this update at all, and you will stay on 3.0.0. Check `WP-Admin -> Tools -> Site Health -> Info -> Server` for your PHP version. If it is below 8.2, ask your host to move you up — every host offers it, and PHP 8.1 and everything before it stopped getting security fixes some time ago. Nothing in the plugin changes what your database backups contain, so there is no rush beyond the usual one.
+Written against 3.0.0, the version currently on WordPress.org. It is 4.0.0 rather than 3.0.1 because 3.0.0 had already shipped; nothing was skipped.
 
-**Your settings move to a new row, by themselves.** The `dbmanager_options` row in `wp_options` becomes `wp_dbmanager_options`, and a second row, `wp_dbmanager_version`, is added to record which version last ran. The first time the plugin loads after the update it copies your settings across and deletes the old row. You do not have to do anything, and your `DB Options` screen will look exactly as you left it. If you had code of your own calling `get_option( 'dbmanager_options' )`, point it at `wp_dbmanager_options`.
+**Settings migrate on the first load after updating.** `dbmanager_options` becomes `wp_dbmanager_options`, and a second row, `wp_dbmanager_version`, records which version last ran. The old row is deleted once copied. Point any code calling `get_option( 'dbmanager_options' )` at the new name.
 
-**The plugin's PHP classes are renamed** from `DBManager_*` to `WP_DBManager_*` — `DBManager_Options` is `WP_DBManager_Options`, and so on for all thirteen. Only code of your own that referenced them directly is affected; nothing in WordPress does.
+**All thirteen classes are renamed** from `DBManager_*` to `WP_DBManager_*`.
 
-**The three scheduled jobs have new hook names.** `dbmanager_cron_backup`, `dbmanager_cron_optimize` and `dbmanager_cron_repair` are now `wp_dbmanager_cron_backup`, `wp_dbmanager_cron_optimize` and `wp_dbmanager_cron_repair`, and the recurrences behind them, `dbmanager_backup`, `dbmanager_optimize` and `dbmanager_repair`, are now `wp_dbmanager_backup`, `wp_dbmanager_optimize` and `wp_dbmanager_repair`. You do not have to do anything: the first time the plugin loads after the update it clears the old events and rebuilds the schedule from your `DB Options` settings. Check `WP-Admin -> Database -> DB Options` afterwards and confirm the three "Next ... date" lines look right. If you had `wp_schedule_event()` or a WP-CLI cron entry of your own hanging off the old names, point it at the new ones.
+**The three scheduled jobs have new hook names.** `dbmanager_cron_backup`, `dbmanager_cron_optimize` and `dbmanager_cron_repair` are now `wp_dbmanager_cron_backup`, `wp_dbmanager_cron_optimize` and `wp_dbmanager_cron_repair`; the recurrences behind them — `dbmanager_backup`, `dbmanager_optimize`, `dbmanager_repair` — are now `wp_dbmanager_backup`, `wp_dbmanager_optimize` and `wp_dbmanager_repair`. The plugin clears the old events and rebuilds the schedule from your `DB Options` settings on first load; check the three "Next ... date" lines afterwards. Point any `wp_schedule_event()` call or WP-CLI cron entry of your own at the new names.
 
-**The `wp_dbmanager_before_escapeshellcmd` action is unchanged.** It was already prefixed and keeps its name.
+**`wp_dbmanager_before_escapeshellcmd` is unchanged.**
 
-**There is a new `wp_dbmanager_capability` filter.** WP-DBManager has required the `install_plugins` capability since 2.80.7 and still does — these screens restore, empty and drop tables, so the gate is deliberately as high as installing code. If you need to hand the Database menu to somebody else, filter it in one place rather than editing the plugin:
+**New `wp_dbmanager_capability` filter.** The screens still require `install_plugins`, as they have since 2.80.7 — they restore, empty and drop tables, so the gate is deliberately as high as installing code. To delegate the Database menu:
 
 ```php
 add_filter( 'wp_dbmanager_capability', function ( $capability, $context ) {
