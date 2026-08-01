@@ -57,7 +57,7 @@ class WP_DBManager_Metadata_Test extends WP_DBManager_TestCase {
 			$path = $file->getPathname();
 
 			// vendor/ and node_modules/ are not ours and never ship.
-			if ( false !== strpos( $path, '/vendor/' ) || false !== strpos( $path, '/node_modules/' ) ) {
+			if ( false !== strpos( $path, '/vendor/' ) || false !== strpos( $path, '/node_modules/' ) || false !== strpos( $path, '/artifacts/' ) ) {
 				continue;
 			}
 
