@@ -128,8 +128,8 @@ class WP_DBManager_Admin {
 
 		add_submenu_page(
 			$pages['manager'],
-			__( 'DB Options', 'wp-dbmanager' ),
-			__( 'DB Options', 'wp-dbmanager' ),
+			__( 'Settings', 'wp-dbmanager' ),
+			__( 'Settings', 'wp-dbmanager' ),
 			$cap,
 			$pages['options'],
 			array( 'WP_DBManager_Settings', 'render' )
@@ -329,7 +329,7 @@ class WP_DBManager_Admin {
 
 		if ( true === $is_public ) {
 			echo '<p><strong>' . esc_html__( 'Your backup folder is visible to the public', 'wp-dbmanager' ) . '</strong></p>';
-			echo '<p>' . esc_html__( 'Anyone who guesses a backup file name can download your entire database. Move the backup folder outside your web root under DB Options.', 'wp-dbmanager' ) . '</p>';
+			echo '<p>' . esc_html__( 'Anyone who guesses a backup file name can download your entire database. Move the backup folder outside your web root under Database -> Settings.', 'wp-dbmanager' ) . '</p>';
 		}
 
 		if ( ! $indexed ) {

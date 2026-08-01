@@ -1,6 +1,6 @@
 <?php
 /**
- * The DB Options screen.
+ * The Settings screen.
  *
  * @package WP-DBManager
  */
@@ -61,7 +61,7 @@ class WP_DBManager_Settings {
 	}
 
 	/**
-	 * The settings page slug, which is the DB Options submenu.
+	 * The settings page slug, which is the Settings submenu.
 	 *
 	 * @return string
 	 */
@@ -534,7 +534,7 @@ class WP_DBManager_Settings {
 	}
 
 	/**
-	 * Render the DB Options screen.
+	 * Render the Settings screen.
 	 *
 	 * @return void
 	 */
@@ -542,7 +542,7 @@ class WP_DBManager_Settings {
 		WP_DBManager_Admin::check_capability( 'options' );
 		?>
 <div class="wrap">
-	<h1><?php esc_html_e( 'Database Options', 'wp-dbmanager' ); ?></h1>
+	<h1><?php esc_html_e( 'Database Settings', 'wp-dbmanager' ); ?></h1>
 	<form method="post" action="options.php">
 		<?php
 		settings_fields( self::GROUP );
@@ -551,7 +551,7 @@ class WP_DBManager_Settings {
 		// under the 'general' slug rather than under the option being saved, so
 		// passing the option name here shows the validation errors and silently
 		// swallows the confirmation - the screen saves and says nothing at all,
-		// where it used to say "Database Options Updated".
+		// where it used to say "Database Settings Updated".
 		settings_errors();
 
 		do_settings_sections( self::page() );

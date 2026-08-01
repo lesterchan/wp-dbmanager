@@ -20,14 +20,14 @@ I spent most of my free time creating, updating, maintaining and supporting thes
 ## Usage
 1. Activate `WP-DBManager` Plugin
 1. The script will automatically create a folder called `backup-db` in the wp-content folder if that folder is writable. If it is not created, please create the folder and ensure that the folder is writable
-1. Go to `WP-Admin -> Database -> DB Options` to configure the database options
+1. Go to `WP-Admin -> Database -> Settings` to configure the database options
 1. Secure the backup folder, see below
 1. Go to `WP-Admin -> Database -> Backup DB`, which checks whether the folder is actually reachable over HTTP and tells you if it is
 
 ### Securing The Backup Folder
 A database backup contains everything, including your users table. Anyone who can guess a backup file name can download the lot, so the folder must not be served over HTTP.
 
-**The reliable option, on any server:** set `Path To Backup` under `WP-Admin -> Database -> DB Options` to a folder outside your web root, for example `/var/www/example.com/backup-db` when WordPress lives in `/var/www/example.com/public_html`. Nothing served, nothing to configure.
+**The reliable option, on any server:** set `Path To Backup` under `WP-Admin -> Database -> Settings` to a folder outside your web root, for example `/var/www/example.com/backup-db` when WordPress lives in `/var/www/example.com/public_html`. Nothing served, nothing to configure.
 
 If the folder has to stay inside the web root:
 
@@ -47,7 +47,7 @@ The `Backup DB` page requests a file from the folder and reports what the server
 
 ### My database is not backed up / My backup file is 0Kb
 * Go to `WP-Admin -> Database -> Backup DB`. The top of that page checks the backup folder, both binary paths, and whether `passthru()`, `system()` and `exec()` are available, and tells you which one is the problem.
-* The usual answer is that the host does not allow `mysqldump` to be run at all, or that the path under `WP-Admin -> Database -> DB Options` is wrong. Your host can tell you the correct path.
+* The usual answer is that the host does not allow `mysqldump` to be run at all, or that the path under `WP-Admin -> Database -> Settings` is wrong. Your host can tell you the correct path.
 * If you added extra flags to the mysqldump or mysql path, remove them. From 3.0.0 the path is passed as a single argument, so anything after the binary name is treated as part of the file name.
 
 ### My gzipped backup file is about 20 bytes
@@ -73,9 +73,9 @@ The `Backup DB` page requests a file from the folder and reports what the server
 
 ### My backup folder is reported as visible to the public
 * Anyone who guesses a backup file name can download your entire database, including your users table, so this is worth fixing rather than hiding.
-* The most reliable fix on any server is to move the folder outside your web root — set `Path To Backup` under `WP-Admin -> Database -> DB Options` to something like `/var/www/example.com/backup-db`. Nothing is served, so there is nothing to protect.
+* The most reliable fix on any server is to move the folder outside your web root — set `Path To Backup` under `WP-Admin -> Database -> Settings` to something like `/var/www/example.com/backup-db`. Nothing is served, so there is nothing to protect.
 * If it has to stay inside the web root, see *Securing The Backup Folder* above. On nginx the bundled `.htaccess` does nothing at all; you need a `location` block.
-* The `Backup DB` page requests a file from the folder and reports what your server actually returned, so it is telling you what a visitor would get rather than guessing. If you have verified it yourself and want the notice gone anyway, set `Hide Admin Notices` to `Yes` under `DB Options`.
+* The `Backup DB` page requests a file from the folder and reports what your server actually returned, so it is telling you what a visitor would get rather than guessing. If you have verified it yourself and want the notice gone anyway, set `Hide Admin Notices` to `Yes` under `Settings`.
 
 ## Screenshots
 
@@ -84,8 +84,8 @@ The `Backup DB` page requests a file from the folder and reports what the server
 3. Admin - DB Information
 4. Admin - Manage DB
 5. Admin - Optimize DB
-6. Admin - DB Options
-7. Admin - DB Options
+6. Admin - Settings
+7. Admin - Settings
 8. Admin - Repair DB
 9. Admin - Run Query in DB
 
@@ -102,7 +102,7 @@ The `Backup DB` page requests a file from the folder and reports what the server
 * NEW: A `wp_dbmanager_capability` filter. Every capability check in the plugin goes through it, so the Database screens can be handed to another role in one place. The default is still `install_plugins`.
 * NEW: Every table on the Database, Manage Backup DB, Optimize, Repair and Empty/Drop screens is now a standard WordPress list table. Columns sort, the select-all box works, and the Optimize and Repair screens show each table's size and overhead so you can see what is actually worth acting on.
 * NEW: Several backups can be deleted or e-mailed in one go. Restore and Download still act on one at a time, and say so rather than guessing.
-* NEW: DB Options is a Settings API screen, built from registered sections and fields, and the backup, optimize and repair schedules now follow the settings however they are changed, including from WP-CLI.
+* NEW: Settings is a Settings API screen, built from registered sections and fields, and the backup, optimize and repair schedules now follow the settings however they are changed, including from WP-CLI.
 * NEW: The Backup Database page now asks the server whether the backup folder is actually reachable over HTTP, instead of assuming a dropped in .htaccess protects it. nginx is detected and given a configuration snippet that works.
 * NEW: 'Attach Backup File' option to control whether the scheduled backup e-mail carries the database file. Existing sites keep attaching it.
 * NEW: New backups are gzipped by default.
@@ -113,7 +113,7 @@ The `Backup DB` page requests a file from the folder and reports what the server
 * CHANGED: Translations now come from the WordPress.org language packs. The bundled .pot file and the load_plugin_textdomain() call are gone, both were redundant.
 * FIXED: A failed gzipped backup is no longer passed off as a real one. `mysqldump | gzip` reports gzip's exit status rather than mysqldump's, and gzip turns empty input into a valid 20 byte file, so the old size check never saw the failure. Gzip is the default, so this was the common case.
 * FIXED: The confirmation dialogs before restoring, dropping and emptying showed `Database.nThis Action Is Not Reversible.` instead of proper line breaks.
-* FIXED: The Windows and Linux path hints under DB Options displayed `'<strong>mysqldump.exe</strong>'` as literal text.
+* FIXED: The Windows and Linux path hints under Settings displayed `'<strong>mysqldump.exe</strong>'` as literal text.
 * FIXED: Backups larger than 1 GiB reported their size in the wrong unit, so a 2 GiB backup showed as `2048.0 GiB`.
 * FIXED: The mysqldump command, its connection arguments and the restore command were written out three separate times and had drifted apart; only two of the three checked that the dump had produced a file.
 * FIXED: Escape all output on the admin screens to prevent XSS.
@@ -131,7 +131,7 @@ The `Backup DB` page requests a file from the folder and reports what the server
 * FIXED: Uninstalling on multisite no longer overwrites the current site ID while it works.
 * FIXED: Removed jQuery dependency.
 * NOTE: This release is numbered 4.0.0. 3.0.0 is already on WordPress.org, so the work that was going to be 3.0.0 ships as 4.0.0 instead.
-* NOTE: The mysqldump and mysql paths are now passed as a single argument. If you added extra flags to either path under DB Options, move them out or your backups will fail.
+* NOTE: The mysqldump and mysql paths are now passed as a single argument. If you added extra flags to either path under Settings, move them out or your backups will fail.
 * NOTE: Backup file names now carry a real Unix timestamp. Backups taken before this release will show a date shifted by your timezone offset. The files themselves are fine.
 * NOTE: The plugin's PHP functions are no longer global. Everything now lives in `WP_DBManager_*` classes under `includes/`. The `wp_dbmanager_before_escapeshellcmd` action is unchanged.
 
@@ -147,7 +147,7 @@ Written against 3.0.0, the version currently on WordPress.org. It is 4.0.0 rathe
 
 **All thirteen classes are renamed** from `DBManager_*` to `WP_DBManager_*`.
 
-**The three scheduled jobs have new hook names.** `dbmanager_cron_backup`, `dbmanager_cron_optimize` and `dbmanager_cron_repair` are now `wp_dbmanager_cron_backup`, `wp_dbmanager_cron_optimize` and `wp_dbmanager_cron_repair`; the recurrences behind them — `dbmanager_backup`, `dbmanager_optimize`, `dbmanager_repair` — are now `wp_dbmanager_backup`, `wp_dbmanager_optimize` and `wp_dbmanager_repair`. The plugin clears the old events and rebuilds the schedule from your `DB Options` settings on first load; check the three "Next ... date" lines afterwards. Point any `wp_schedule_event()` call or WP-CLI cron entry of your own at the new names.
+**The three scheduled jobs have new hook names.** `dbmanager_cron_backup`, `dbmanager_cron_optimize` and `dbmanager_cron_repair` are now `wp_dbmanager_cron_backup`, `wp_dbmanager_cron_optimize` and `wp_dbmanager_cron_repair`; the recurrences behind them — `dbmanager_backup`, `dbmanager_optimize`, `dbmanager_repair` — are now `wp_dbmanager_backup`, `wp_dbmanager_optimize` and `wp_dbmanager_repair`. The plugin clears the old events and rebuilds the schedule from your `Settings` settings on first load; check the three "Next ... date" lines afterwards. Point any `wp_schedule_event()` call or WP-CLI cron entry of your own at the new names.
 
 **`wp_dbmanager_before_escapeshellcmd` is unchanged.**
 

@@ -180,7 +180,7 @@ class WP_DBManager_Settings_Test extends WP_DBManager_TestCase {
 	}
 
 	/**
-	 * Four sections are registered against the DB Options page.
+	 * Four sections are registered against the Settings page.
 	 */
 	public function test_the_sections_are_registered_against_the_options_page() {
 		global $wp_settings_sections;

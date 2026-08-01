@@ -1,5 +1,5 @@
 /**
- * DB Options, and what each option changes.
+ * The Settings screen, and what each option changes.
  *
  * Every setting on this screen decides something about a backup: where it is
  * written, how many are kept, whether it is compressed, when it happens on its
@@ -22,7 +22,7 @@ const {
 } = require( './helpers.js' );
 
 /**
- * Open the DB Options screen.
+ * Open the Settings screen.
  *
  * @param {import('@playwright/test').Page} page Page under test.
  * @return {Promise<void>} Resolves once the screen is up.
@@ -30,7 +30,7 @@ const {
 async function openSettings( page ) {
 	await page.goto( OPTIONS_URL );
 
-	await expect( page.getByRole( 'heading', { name: 'Database Options' } ) ).toBeVisible();
+	await expect( page.getByRole( 'heading', { name: 'Database Settings' } ) ).toBeVisible();
 }
 
 /**
@@ -375,7 +375,7 @@ test.describe( 'Database options', () => {
 		).toHaveCount( 0 );
 	} );
 
-	test( 'the DB Options screen is shut to an editor and open to an admin', async ( {
+	test( 'the Settings screen is shut to an editor and open to an admin', async ( {
 		page,
 		requestUtils,
 	} ) => {
@@ -395,7 +395,7 @@ test.describe( 'Database options', () => {
 		);
 
 		await page.goto( OPTIONS_URL );
-		await expect( page.getByRole( 'heading', { name: 'Database Options' } ) ).toBeVisible();
+		await expect( page.getByRole( 'heading', { name: 'Database Settings' } ) ).toBeVisible();
 
 		await editor.context.close();
 	} );

@@ -164,7 +164,7 @@ class WP_DBManager_Screens {
 
 			if ( 'nginx' === $server_type ) {
 				WP_DBManager_Admin::render_status( 'error', __( 'This site runs on nginx, which ignores .htaccess files. No file placed in the backup folder can protect it.', 'wp-dbmanager' ) );
-				printf( '<p>%s</p>', esc_html__( 'Move the backup folder outside your web root under DB Options, or add this to your nginx server block:', 'wp-dbmanager' ) );
+				printf( '<p>%s</p>', esc_html__( 'Move the backup folder outside your web root under Database -> Settings, or add this to your nginx server block:', 'wp-dbmanager' ) );
 				$backup_uri = wp_parse_url( $backup_url, PHP_URL_PATH );
 				echo '<pre dir="ltr"><code>location ^~ ' . esc_html( trailingslashit( $backup_uri ) ) . ' { deny all; }</code></pre>';
 			}
@@ -240,7 +240,7 @@ class WP_DBManager_Screens {
 			if ( file_exists( $options['mysqldumppath'] ) ) {
 				WP_DBManager_Admin::render_status( 'success', __( 'MYSQL dump path exists.', 'wp-dbmanager' ) );
 			} else {
-				WP_DBManager_Admin::render_status( 'error', __( 'MYSQL dump path does NOT exist. Please check your mysqldump path under DB Options. If uncertain, contact your server administrator.', 'wp-dbmanager' ) );
+				WP_DBManager_Admin::render_status( 'error', __( 'MYSQL dump path does NOT exist. Please check your mysqldump path under Database -> Settings. If uncertain, contact your server administrator.', 'wp-dbmanager' ) );
 				$has_error = true;
 			}
 		}
@@ -259,7 +259,7 @@ class WP_DBManager_Screens {
 			if ( file_exists( $options['mysqlpath'] ) ) {
 				WP_DBManager_Admin::render_status( 'success', __( 'MYSQL path exists.', 'wp-dbmanager' ) );
 			} else {
-				WP_DBManager_Admin::render_status( 'error', __( 'MYSQL path does NOT exist. Please check your mysql path under DB Options. If uncertain, contact your server administrator.', 'wp-dbmanager' ) );
+				WP_DBManager_Admin::render_status( 'error', __( 'MYSQL path does NOT exist. Please check your mysql path under Database -> Settings. If uncertain, contact your server administrator.', 'wp-dbmanager' ) );
 				$has_error = true;
 			}
 		}

@@ -68,7 +68,7 @@ class WP_DBManager_Screens_Test extends WP_DBManager_TestCase {
 		$html = $this->render( array( 'WP_DBManager_Settings', 'render' ) );
 
 		$this->assertScreenIsClean( $html );
-		$this->assertStringContainsString( 'Database Options', $html );
+		$this->assertStringContainsString( 'Database Settings', $html );
 		// Settings API, not a hand-rolled form posting back to itself.
 		$this->assertStringContainsString( 'action="options.php"', $html );
 		$this->assertStringContainsString( 'wp_dbmanager_options[mysqldumppath]', $html );
