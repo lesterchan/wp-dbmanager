@@ -357,8 +357,27 @@ test.describe( 'Backing the database up', () => {
 
 		// And the password never reaches the command line, where `ps` would show
 		// it to every other user on the host.
-		expect( plain ).not.toContain( '--password=' );
-		expect( plain ).toContain( '--defaults-extra-file=' );
+		//
+		// Built the way the plugin builds it. restore_command()'s second
+		// argument *is* the option file, and `false` is its documented "no
+		// option file could be written, fall back to the old command line
+		// password" path (class-wp-dbmanager-database.php:177-186) -- so the
+		// calls above ask for the fallback, and asking for it and then
+		// forbidding it is a test that can never pass. The real caller at
+		// :481-488 writes a file first, and that is the command a site runs.
+		const secure = wpEval(
+			`$file = WP_DBManager_Database::write_defaults_file();
+			$command = WP_DBManager_Database::restore_command( '/tmp/example.sql', $file );
+			WP_DBManager_Database::delete_defaults_file( $file );
+			echo '<<<' . $command . '>>>';`,
+		);
+
+		expect( secure ).not.toContain( '--password=' );
+		expect( secure ).toContain( '--defaults-extra-file=' );
+
+		// The fallback is still the fallback, and it is still only reached when
+		// no option file could be written.
+		expect( plain ).toContain( '--password=' );
 	} );
 
 	test( 'a backup file name that climbs out of the folder is refused', async ( { page } ) => {
@@ -389,7 +408,28 @@ test.describe( 'Backing the database up', () => {
 			return response.text();
 		} );
 
+		// The half that matters, and it holds: wp-config.php was not served.
 		expect( answer ).not.toContain( 'DB_PASSWORD' );
-		expect( answer ).toContain( 'Invalid Database Backup File' );
+		expect( answer ).not.toContain( 'DB_NAME' );
+
+		// And the refusal is said out loud somewhere. It currently is not, on
+		// either request, and this is the assertion that says so:
+		// WP_DBManager_Backups::maybe_download() exits unconditionally
+		// (class-wp-dbmanager-backups.php:297 -- the `exit;` sits outside the
+		// `if ( false !== $file_path )` that streams the file), so a name it
+		// refuses ends the request with a 200 and an empty body and the
+		// administrator gets a blank page. It also makes the
+		// `case 'download':` arm at class-wp-dbmanager-screens.php:495-501
+		// unreachable, though that arm's comment states the opposite: "A real
+		// download exits during init, so reaching here means the file could not
+		// be resolved inside the backup folder."
+		//
+		// Left failing on purpose. The security half above passes -- nothing
+		// outside the backup folder is served -- so this is a blank page rather
+		// than a leak.
+		await page.goto( MANAGE_URL );
+		await expect( page.locator( '.notice-error' ) ).toContainText(
+			'Invalid Database Backup File',
+		);
 	} );
 } );

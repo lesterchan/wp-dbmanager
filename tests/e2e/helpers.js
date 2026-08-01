@@ -36,6 +36,18 @@ const RUN_URL = '/wp-admin/admin.php?page=wp-dbmanager-run';
 const OPTIONS_URL = '/wp-admin/admin.php?page=wp-dbmanager-options';
 
 /**
+ * The error notices an administrator can actually see.
+ *
+ * The Dashboard carries one of core's own: the community-events widget prints
+ * a `.notice.notice-error.community-events-errors` up front and leaves it
+ * `aria-hidden="true"` until its script has something to put in it. A bare
+ * `.notice-error` therefore matches two elements on wp-admin/index.php and
+ * every assertion against it dies of Playwright strict mode rather than of
+ * anything being wrong with this plugin's warning.
+ */
+const VISIBLE_ERROR_NOTICE = '#wpbody-content .notice-error:not([aria-hidden="true"])';
+
+/**
  * The scratch table every destructive test works on.
  *
  * Prefixed like a site table so it turns up in SHOW TABLES -- which is the list
@@ -399,6 +411,7 @@ async function logInAs( page, requestUtils, username, role ) {
 }
 
 module.exports = {
+	VISIBLE_ERROR_NOTICE,
 	BACKUP_URL,
 	EMPTY_URL,
 	MANAGER_URL,

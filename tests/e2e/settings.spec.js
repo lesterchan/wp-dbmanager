@@ -10,11 +10,13 @@
 
 const { test, expect } = require( '@wordpress/e2e-test-utils-playwright' );
 const {
+	VISIBLE_ERROR_NOTICE,
 	BACKUP_URL,
 	OPTIONS_URL,
 	backupFiles,
 	clearBackups,
 	installMailInterceptor,
+	lastMail,
 	logInAs,
 	resetPlugin,
 	setting,
@@ -249,12 +251,12 @@ test.describe( 'Database options', () => {
 
 		expect( backupFiles() ).toHaveLength( 1 );
 
-		const mail = JSON.parse(
-			wpEval(
-				`$mail = get_option( 'wp_dbmanager_e2e_last_mail', null );
-				echo '<<<' . wp_json_encode( null === $mail ? null : $mail ) . '>>>';`,
-			),
-		);
+		// lastMail(), which reads the option the interceptor this file already
+		// installs actually writes. These two tests hand-rolled a read of
+		// `wp_dbmanager_e2e_last_mail`, a row nothing in the suite has ever
+		// written -- installMailInterceptor() stores to `e2e_intercepted_mail` --
+		// so `mail` was always null and both died on the first property access.
+		const mail = lastMail();
 
 		expect( mail.to ).toBe( 'nightly@example.com' );
 		expect( mail.message ).toContain( 'Backup File MD5 Checksum:' );
@@ -276,12 +278,12 @@ test.describe( 'Database options', () => {
 
 		wpEval( `WP_DBManager_Cron::backup(); echo '<<<done>>>';` );
 
-		const mail = JSON.parse(
-			wpEval(
-				`$mail = get_option( 'wp_dbmanager_e2e_last_mail', null );
-				echo '<<<' . wp_json_encode( null === $mail ? null : $mail ) . '>>>';`,
-			),
-		);
+		// lastMail(), which reads the option the interceptor this file already
+		// installs actually writes. These two tests hand-rolled a read of
+		// `wp_dbmanager_e2e_last_mail`, a row nothing in the suite has ever
+		// written -- installMailInterceptor() stores to `e2e_intercepted_mail` --
+		// so `mail` was always null and both died on the first property access.
+		const mail = lastMail();
 
 		expect( mail.subject ).toContain( 'Nightly dump of Test Blog on' );
 		expect( mail.subject ).not.toContain( '%SITE_NAME%' );
@@ -319,7 +321,12 @@ test.describe( 'Database options', () => {
 		);
 
 		await page.goto( '/wp-admin/index.php' );
-		await expect( page.locator( '#wpbody-content .notice-error' ) ).toContainText(
+		// The error notices an administrator can actually see. The Dashboard
+		// also carries core's community-events widget, whose
+		// .notice.notice-error.community-events-errors is markup its script
+		// reveals on failure and is aria-hidden until then -- so the bare
+		// selector matched two elements and died of strict mode.
+		await expect( page.locator( VISIBLE_ERROR_NOTICE ) ).toContainText(
 			'To correct this issue, move the file',
 		);
 

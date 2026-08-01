@@ -20,6 +20,7 @@
 
 const { test, expect } = require( '@wordpress/e2e-test-utils-playwright' );
 const {
+	VISIBLE_ERROR_NOTICE,
 	BACKUP_URL,
 	EMPTY_URL,
 	MANAGER_URL,
@@ -323,7 +324,10 @@ test.describe( 'Stored names stay inert', () => {
 		await page.goto( '/wp-admin/index.php' );
 
 		expect( await pwned( page ) ).toBe( false );
-		await expect( page.locator( '#wpbody-content .notice-error' ) ).toContainText(
+		// See VISIBLE_ERROR_NOTICE: the Dashboard also carries core's
+		// community-events error notice, which is aria-hidden until its script
+		// reveals it, so the bare selector matches two elements.
+		await expect( page.locator( VISIBLE_ERROR_NOTICE ) ).toContainText(
 			'onmouseover',
 		);
 		await expect( page.locator( '#wpbody-content img[onerror]' ) ).toHaveCount( 0 );

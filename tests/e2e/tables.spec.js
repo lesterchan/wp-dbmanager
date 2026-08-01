@@ -85,9 +85,10 @@ test.describe( 'Acting on tables', () => {
 		// The row count comes from SHOW TABLE STATUS, and the totals row under the
 		// table is the whole reason this screen exists rather than a plain list.
 		await expect( listRow( page, table ) ).toContainText( '3' );
-		await expect( page.locator( '.wp-list-table tfoot, .wp-list-table tbody' ) ).toContainText(
-			/\d+ Tables/,
-		);
+		// The table as a whole. The comma selector was meant to say "in the body
+		// or the foot, wherever the total is drawn", but Playwright reads it as
+		// one locator matching two elements and refuses it under strict mode.
+		await expect( page.locator( '.wp-list-table' ) ).toContainText( /\d+ Tables/ );
 
 		// A screen that only reports has nothing to select, so it offers no
 		// checkboxes at all.
@@ -228,17 +229,34 @@ test.describe( 'Acting on tables', () => {
 
 		// The name column, which is the one sort every screen shares. Ascending
 		// first, then the link flips -- and the two ends of the list swap.
-		const first = async () =>
-			( await page.locator( '.wp-list-table tbody tr td.column-name' ).first().innerText() ).trim();
+		// The whole column both ways round, not just its first cell, and no
+		// assumption about which direction the first click gives. The screen
+		// already arrives sorted by name, so core's column header offers the
+		// *opposite* order first -- the old assertion read the first click as
+		// ascending, got descending, and failed on a screen that was sorting
+		// correctly.
+		//
+		// One order being the exact reverse of the other is the stronger claim
+		// anyway: comparing two single cells passes for a list that is merely
+		// shuffled.
+		const names = async () =>
+			( await page.locator( '.wp-list-table tbody tr td.column-name' ).allInnerTexts() ).map(
+				( text ) => text.trim(),
+			);
 
 		await page.locator( 'thead #name a' ).click();
-		const ascending = await first();
+		const oneWay = await names();
 
 		await page.locator( 'thead #name a' ).click();
-		const descending = await first();
+		const theOther = await names();
 
-		expect( ascending ).not.toBe( descending );
-		expect( ascending < descending ).toBe( true );
+		expect( oneWay.length ).toBeGreaterThan( 1 );
+		expect( oneWay ).not.toEqual( theOther );
+		expect( theOther ).toEqual( [ ...oneWay ].reverse() );
+
+		// And it really is sorted, rather than two stable-but-arbitrary orders.
+		const sorted = [ ...oneWay ].sort();
+		expect( oneWay[ 0 ] === sorted[ 0 ] || theOther[ 0 ] === sorted[ 0 ] ).toBe( true );
 	} );
 } );
 
