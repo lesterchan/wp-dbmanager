@@ -101,6 +101,45 @@ abstract class WP_DBManager_TestCase extends WP_UnitTestCase {
 	}
 
 	/**
+	 * Run uninstall.php the way WordPress does, repeatably.
+	 *
+	 * The uninstaller touches no schema, so it can be included - but it guards
+	 * itself with a bare exit() when WP_UNINSTALL_PLUGIN is missing, which would
+	 * take the runner down with it, and its function is declared unguarded, so
+	 * the include has to be a require_once. That makes the second caller's
+	 * include a silent no-op, which proves nothing; the deletion is therefore
+	 * driven by calling the function afterwards, once per site.
+	 *
+	 * @return void
+	 */
+	protected function run_uninstall() {
+		if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
+			define( 'WP_UNINSTALL_PLUGIN', 'wp-dbmanager/wp-dbmanager.php' );
+		}
+
+		require_once WP_DBMANAGER_DIR . 'uninstall.php';
+
+		if ( is_multisite() ) {
+			$site_ids = get_sites(
+				array(
+					'fields' => 'ids',
+					'number' => 0,
+				)
+			);
+
+			foreach ( $site_ids as $site_id ) {
+				switch_to_blog( (int) $site_id );
+				wp_dbmanager_uninstall_site();
+				restore_current_blog();
+			}
+
+			return;
+		}
+
+		wp_dbmanager_uninstall_site();
+	}
+
+	/**
 	 * The WordPress filesystem abstraction.
 	 *
 	 * The suite writes fixture files constantly, and doing that with
