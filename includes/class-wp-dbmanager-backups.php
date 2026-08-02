@@ -312,13 +312,24 @@ class WP_DBManager_Backups {
 			return false;
 		}
 
-		header( 'Pragma: public' );
-		header( 'Expires: 0' );
-		header( 'Cache-Control: must-revalidate, post-check=0, pre-check=0' );
-		header( 'Content-Type: application/octet-stream' );
-		header( 'Content-Disposition: attachment; filename=' . basename( $file_path ) . ';' );
-		header( 'Content-Transfer-Encoding: binary' );
-		header( 'Content-Length: ' . filesize( $file_path ) );
+		// Guarded the way wp-polls and wp-postratings guard setcookie(). header()
+		// does nothing once output has begun except raise a warning, so this
+		// changes nothing about what reaches the browser: on a real request
+		// maybe_download() answers during init and nothing has printed yet, and
+		// on a request where something already has, the download was going to be
+		// malformed with or without the warning. What it does buy is that the
+		// streaming half is reachable from a test at all -- the PHPUnit bootstrap
+		// has written to stdout long before any test runs, so an unguarded
+		// header() is a warning, and the shared config makes a warning fatal.
+		if ( ! headers_sent() ) {
+			header( 'Pragma: public' );
+			header( 'Expires: 0' );
+			header( 'Cache-Control: must-revalidate, post-check=0, pre-check=0' );
+			header( 'Content-Type: application/octet-stream' );
+			header( 'Content-Disposition: attachment; filename=' . basename( $file_path ) . ';' );
+			header( 'Content-Transfer-Encoding: binary' );
+			header( 'Content-Length: ' . filesize( $file_path ) );
+		}
 
 		// readfile() streams; every alternative buffers. WP_Filesystem's
 		// get_contents() and file_get_contents() both pull the whole dump
