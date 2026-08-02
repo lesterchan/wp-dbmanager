@@ -145,6 +145,43 @@ class WP_DBManager_Options {
 	}
 
 	/**
+	 * Write the settings row from inside an upgrade.
+	 *
+	 * `update_option()` declines to write a value equal to the one
+	 * `get_option()` would return, and `register_setting()` is passed a
+	 * `default`, which installs a `default_option_wp_dbmanager_options` filter answering with
+	 * the shipped defaults for a row that does not exist. So on an admin request
+	 * -- the path every real update takes, because activation hooks do not fire
+	 * on an update -- a migration whose result happens to equal the defaults
+	 * writes nothing at all, while the legacy rows it read are deleted anyway.
+	 *
+	 * Passing an explicit default to `get_option()` defeats the registered one,
+	 * because `filter_default_option()` returns early when a default was passed.
+	 * That is what lets an absent row be told from a defaulted one and added
+	 * outright. `add_option()` runs the sanitize callback exactly as
+	 * `update_option()` does, so nothing else about the write changes.
+	 *
+	 * Latent here rather than live: `get()` merges over the defaults, so a
+	 * missing row and a defaults row read identically and nothing is lost today.
+	 * It stops being latent the moment this plugin gains a setting whose
+	 * *absence* means something other than its default -- and then the failure is
+	 * silent, browser-only, and the legacy rows are already gone. §7.6.1 has the
+	 * three plugins this shape has already bitten.
+	 *
+	 * @param array $options The settings to store.
+	 * @return void
+	 */
+	private static function write( array $options ) {
+		if ( false === get_option( self::OPTION, false ) ) {
+			add_option( self::OPTION, $options );
+
+			return;
+		}
+
+		update_option( self::OPTION, $options );
+	}
+
+	/**
 	 * Move an older install onto the current row names and record the version.
 	 *
 	 * Everything up to and including the released 3.0.0 stored its settings in
@@ -176,7 +213,7 @@ class WP_DBManager_Options {
 			// The new row wins if both somehow exist: it is the one the settings
 			// screen has been writing to since the migration first ran.
 			if ( ! is_array( $current ) ) {
-				update_option( self::OPTION, array_merge( self::defaults(), $legacy ), true );
+				self::write( array_merge( self::defaults(), $legacy ) );
 			}
 		}
 
