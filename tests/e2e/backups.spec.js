@@ -412,24 +412,22 @@ test.describe( 'Backing the database up', () => {
 		expect( answer ).not.toContain( 'DB_PASSWORD' );
 		expect( answer ).not.toContain( 'DB_NAME' );
 
-		// And the refusal is said out loud somewhere. It currently is not, on
-		// either request, and this is the assertion that says so:
-		// WP_DBManager_Backups::maybe_download() exits unconditionally
-		// (class-wp-dbmanager-backups.php:297 -- the `exit;` sits outside the
-		// `if ( false !== $file_path )` that streams the file), so a name it
-		// refuses ends the request with a 200 and an empty body and the
-		// administrator gets a blank page. It also makes the
-		// `case 'download':` arm at class-wp-dbmanager-screens.php:495-501
-		// unreachable, though that arm's comment states the opposite: "A real
-		// download exits during init, so reaching here means the file could not
-		// be resolved inside the backup folder."
+		// And the refusal is said out loud rather than being a blank page.
 		//
-		// Left failing on purpose. The security half above passes -- nothing
-		// outside the backup folder is served -- so this is a blank page rather
-		// than a leak.
-		await page.goto( MANAGE_URL );
-		await expect( page.locator( '.notice-error' ) ).toContainText(
-			'Invalid Database Backup File',
-		);
+		// Asserted on the response to the POST that was refused, which is where
+		// the screen renders it -- the same shape as every other refusal in this
+		// suite and in tables.spec.js ("No Tables Selected"). This used to look
+		// for a .notice-error on a *later* GET of the manage screen, which no
+		// standard WordPress design would satisfy: a per-request refusal is not
+		// persisted anywhere, so nothing could carry it across to a fresh page
+		// load. It passed for nobody and was never going to.
+		//
+		// Until 4.0.0 there was no message on either request:
+		// WP_DBManager_Backups::maybe_download() exited unconditionally, so a
+		// name it refused ended the request with a 200 and an empty body, and
+		// that also made the `case 'download':` arm on the screen unreachable --
+		// though the arm's own comment described exactly this case. It returns
+		// on a refusal now and only exits once a file has actually been sent.
+		expect( answer ).toContain( 'Invalid Database Backup File' );
 	} );
 } );
