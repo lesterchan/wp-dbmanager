@@ -346,6 +346,80 @@ class WP_DBManager_Backups_Test extends WP_DBManager_TestCase {
 	}
 
 	/**
+	 * An allowed download sends the file, and sends that file.
+	 *
+	 * A download that streamed the wrong dump would still look like a working
+	 * download, so the bytes are compared rather than counted.
+	 */
+	public function test_an_allowed_download_sends_the_file() {
+		$this->make_backup( 'a_-_1700000000_-_db.sql', null, '-- the dump body' );
+
+		ob_start();
+		$sent = WP_DBManager_Backups::send( 'a_-_1700000000_-_db.sql' );
+		$body = ob_get_clean();
+
+		$this->assertTrue( $sent, 'A real backup inside the backup folder was not sent.' );
+		$this->assertSame( '-- the dump body', $body, 'The bytes sent are not the bytes on disk.' );
+	}
+
+	/**
+	 * A refused download sends nothing at all.
+	 *
+	 * The name arrives as a checkbox value, so it is whatever the request says
+	 * it is, and a dump holds the users table. resolve() lives inside send() so
+	 * that a caller cannot skip it.
+	 *
+	 * @dataProvider data_bad_names
+	 *
+	 * @param string $name Submitted file name.
+	 */
+	public function test_a_refused_download_sends_nothing( $name ) {
+		$this->make_backup( 'a_-_1700000000_-_db.sql', null, '-- the dump body' );
+
+		ob_start();
+		$sent = WP_DBManager_Backups::send( $name );
+		$body = ob_get_clean();
+
+		$this->assertFalse( $sent, 'A name that resolves to nothing was reported as sent.' );
+		$this->assertSame( '', $body, 'A refused download still wrote a body.' );
+	}
+
+	/**
+	 * A refused download hands the request back rather than ending it.
+	 *
+	 * This is the whole of the bug: the exit() used to sit outside the branch
+	 * that streams, so a name the plugin was right to refuse ended the request
+	 * with a 200 and an empty body. The administrator was told nothing, and the
+	 * Manage screen's "Invalid Database Backup File" - written for exactly this
+	 * case - could never be reached. Returning is what makes it reachable, and
+	 * test-screens.php asserts the message that then appears.
+	 */
+	public function test_a_refused_download_leaves_the_request_to_the_screen() {
+		$this->make_backup( 'a_-_1700000000_-_db.sql', null, '-- the dump body' );
+
+		$_POST = array(
+			'action'   => 'download',
+			'backups'  => array( '../../../wp-config.php' ),
+			'_wpnonce' => wp_create_nonce( WP_DBManager_Backups_Table::nonce_action() ),
+		);
+		// check_admin_referer() reads the nonce from $_REQUEST, which wp-admin
+		// has already merged by the time init runs.
+		$_REQUEST = $_POST;
+
+		try {
+			ob_start();
+			$returned = WP_DBManager_Backups::maybe_download();
+			$body     = ob_get_clean();
+
+			$this->assertNull( $returned, 'The download handler did not fall through.' );
+			$this->assertSame( '', $body, 'A refused download wrote a body of its own.' );
+		} finally {
+			$_POST    = array();
+			$_REQUEST = array();
+		}
+	}
+
+	/**
 	 * An empty backup folder is still a valid one.
 	 *
 	 * The old check tried to reject it, which would have stopped scheduled

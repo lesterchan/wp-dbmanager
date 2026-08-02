@@ -494,7 +494,10 @@ class WP_DBManager_Screens {
 
 			case 'download':
 				// A real download exits during init, so reaching here means the
-				// file could not be resolved inside the backup folder.
+				// file could not be resolved inside the backup folder and
+				// WP_DBManager_Backups::maybe_download() handed the request back
+				// for this screen to explain. It is the only explanation the user
+				// gets: init has no screen to print to.
 				$messages[] = array(
 					'type' => 'error',
 					'text' => __( 'Invalid Database Backup File', 'wp-dbmanager' ),

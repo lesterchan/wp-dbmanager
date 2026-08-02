@@ -267,6 +267,29 @@ class WP_DBManager_Screens_Test extends WP_DBManager_TestCase {
 	}
 
 	/**
+	 * A download the init handler refused is explained here.
+	 *
+	 * WP_DBManager_Backups::maybe_download() answers on init, where there is no
+	 * screen to print to, so a name it cannot resolve is handed back and this is
+	 * the only place the administrator hears about it. It used to exit instead,
+	 * which returned a 200 with an empty body and made this branch unreachable.
+	 */
+	public function test_a_refused_download_is_explained_on_the_screen() {
+		$html = $this->render(
+			array( 'WP_DBManager_Screens', 'manage' ),
+			array(
+				'action'   => 'download',
+				'backups'  => array( '../../../wp-config.php' ),
+				'_wpnonce' => wp_create_nonce( WP_DBManager_Backups_Table::nonce_action() ),
+			)
+		);
+
+		$this->assertScreenIsClean( $html );
+		$this->assertStringContainsString( 'Invalid Database Backup File', $html, 'A refused download said nothing at all.' );
+		$this->assertStringNotContainsString( 'DB_PASSWORD', $html, 'The screen printed something it read from outside the backup folder.' );
+	}
+
+	/**
 	 * E-mailing a selected backup reports where it went.
 	 */
 	public function test_emailing_a_backup_reports_the_recipient() {

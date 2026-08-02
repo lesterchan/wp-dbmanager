@@ -121,6 +121,7 @@ The `Backup DB` page requests a file from the folder and reports what the server
 * FIXED: The database password is no longer passed on the command line.
 * FIXED: Require the `install_plugins` capability for the backup folder notice, the download and the folder fix.
 * FIXED: Only download backup files that resolve inside the backup folder.
+* FIXED: A download the plugin refuses no longer ends in a blank page. `Manage Backup DB` now reports `Invalid Database Backup File` instead of returning an empty response with no explanation.
 * FIXED: Validate the mysqldump, mysql and backup paths independently.
 * FIXED: Every file now refuses to run when loaded directly.
 * FIXED: Cron backups no longer rename and e-mail a dump that failed, an empty file is no longer passed off as a backup.

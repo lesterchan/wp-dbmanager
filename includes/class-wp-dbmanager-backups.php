@@ -243,6 +243,10 @@ class WP_DBManager_Backups {
 	/**
 	 * Send a backup file to the browser as a download.
 	 *
+	 * Runs on init, because a file download has to answer before a single byte
+	 * of an admin screen has been printed. Every request it does not recognise,
+	 * and every one it refuses, is handed back for the screen to deal with.
+	 *
 	 * @return void
 	 */
 	public static function maybe_download() {
@@ -272,27 +276,59 @@ class WP_DBManager_Backups {
 
 		check_admin_referer( WP_DBManager_Backups_Table::nonce_action() );
 
-		$file_path = self::resolve( sanitize_file_name( reset( $selected ) ) );
-
-		if ( false !== $file_path ) {
-			header( 'Pragma: public' );
-			header( 'Expires: 0' );
-			header( 'Cache-Control: must-revalidate, post-check=0, pre-check=0' );
-			header( 'Content-Type: application/octet-stream' );
-			header( 'Content-Disposition: attachment; filename=' . basename( $file_path ) . ';' );
-			header( 'Content-Transfer-Encoding: binary' );
-			header( 'Content-Length: ' . filesize( $file_path ) );
-
-			// readfile() streams; every alternative buffers. WP_Filesystem's
-			// get_contents() and file_get_contents() both pull the whole dump
-			// into memory first, and a database backup is routinely larger than
-			// the PHP memory limit -- which turns a working download into a
-			// fatal. The file has already been resolved to inside the backup
-			// folder by resolve().
-			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_readfile -- See above: the sniff's alternatives cannot stream, and this response is a multi-gigabyte file.
-			readfile( $file_path );
+		// A name that does not resolve to a file inside the backup folder is not
+		// a download, and this is not the place that can say so: init runs before
+		// any screen has been chosen, so there is nowhere to print to. Returning
+		// leaves the request to finish as the ordinary Manage screen submit it
+		// already is, and that screen raises "Invalid Database Backup File" for
+		// exactly this case. Exiting here instead - which is what this did until
+		// 4.0.0 - answered a refused download with a 200 and an empty body, so a
+		// name the plugin was right to refuse looked like a broken site.
+		if ( ! self::send( reset( $selected ) ) ) {
+			return;
 		}
 
 		exit;
+	}
+
+	/**
+	 * Stream one backup file to the browser as an attachment.
+	 *
+	 * The name is resolved here rather than by the caller so that no later
+	 * caller can hand this method a path nothing has checked. A dump holds the
+	 * users table and the name arrives as a checkbox value, which makes it
+	 * whatever the request says it is.
+	 *
+	 * It is also the half of maybe_download() a test can reach: that method ends
+	 * the request, and a test cannot follow it there.
+	 *
+	 * @param string $filename Submitted backup file name.
+	 * @return bool Whether a file was sent.
+	 */
+	public static function send( $filename ) {
+		$file_path = self::resolve( sanitize_file_name( $filename ) );
+
+		if ( false === $file_path ) {
+			return false;
+		}
+
+		header( 'Pragma: public' );
+		header( 'Expires: 0' );
+		header( 'Cache-Control: must-revalidate, post-check=0, pre-check=0' );
+		header( 'Content-Type: application/octet-stream' );
+		header( 'Content-Disposition: attachment; filename=' . basename( $file_path ) . ';' );
+		header( 'Content-Transfer-Encoding: binary' );
+		header( 'Content-Length: ' . filesize( $file_path ) );
+
+		// readfile() streams; every alternative buffers. WP_Filesystem's
+		// get_contents() and file_get_contents() both pull the whole dump
+		// into memory first, and a database backup is routinely larger than
+		// the PHP memory limit -- which turns a working download into a
+		// fatal. The file has already been resolved to inside the backup
+		// folder by resolve() above.
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_readfile -- See above: the sniff's alternatives cannot stream, and this response is a multi-gigabyte file.
+		readfile( $file_path );
+
+		return true;
 	}
 }
