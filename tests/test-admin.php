@@ -32,7 +32,7 @@ class WP_DBManager_Admin_Test extends WP_DBManager_TestCase {
 	public function test_pages_are_slugs_not_file_paths() {
 		$pages = WP_DBManager_Admin::pages();
 
-		$this->assertCount( 8, $pages );
+		$this->assertCount( 8, $pages, 'All eight screens are listed, or the loop below checks a short list.' );
 
 		foreach ( $pages as $key => $slug ) {
 			$this->assertStringNotContainsString( '.php', $slug, $key );
@@ -81,7 +81,7 @@ class WP_DBManager_Admin_Test extends WP_DBManager_TestCase {
 
 		$pages = WP_DBManager_Admin::pages();
 
-		$this->assertArrayHasKey( $pages['manager'], $submenu );
+		$this->assertArrayHasKey( $pages['manager'], $submenu, 'The manager screen is registered in the submenu.' );
 
 		$registered = wp_list_pluck( $submenu[ $pages['manager'] ], 2 );
 
@@ -102,7 +102,7 @@ class WP_DBManager_Admin_Test extends WP_DBManager_TestCase {
 		WP_DBManager_Admin::menu();
 
 		foreach ( $submenu[ WP_DBManager_Admin::pages()['manager'] ] as $entry ) {
-			$this->assertSame( 'install_plugins', $entry[1] );
+			$this->assertSame( 'install_plugins', $entry[1], 'Every screen requires install_plugins, not a weaker capability.' );
 		}
 	}
 
@@ -152,7 +152,7 @@ class WP_DBManager_Admin_Test extends WP_DBManager_TestCase {
 		WP_DBManager_Admin::menu();
 
 		foreach ( $submenu[ WP_DBManager_Admin::pages()['manager'] ] as $entry ) {
-			$this->assertSame( 'edit_posts', $entry[1] );
+			$this->assertSame( 'edit_posts', $entry[1], 'The capability filter is honoured by the menu registration.' );
 		}
 	}
 
@@ -165,7 +165,7 @@ class WP_DBManager_Admin_Test extends WP_DBManager_TestCase {
 		$this->assertFalse( wp_script_is( 'wp-dbmanager', 'enqueued' ), 'The script loaded on the dashboard.' );
 
 		WP_DBManager_Admin::enqueue( 'database_page_wp-dbmanager-manage' );
-		$this->assertTrue( wp_script_is( 'wp-dbmanager', 'enqueued' ) );
+		$this->assertTrue( wp_script_is( 'wp-dbmanager', 'enqueued' ), 'The script is enqueued on this plugin screen.' );
 	}
 
 	/**
@@ -177,7 +177,7 @@ class WP_DBManager_Admin_Test extends WP_DBManager_TestCase {
 		wp_dequeue_script( 'wp-dbmanager' );
 		wp_deregister_script( 'wp-dbmanager' );
 		WP_DBManager_Admin::enqueue( 'database_page_wp-dbmanager-repair' );
-		$this->assertEmpty( wp_scripts()->get_data( 'wp-dbmanager', 'data' ) );
+		$this->assertEmpty( wp_scripts()->get_data( 'wp-dbmanager', 'data' ), 'The detected paths are localised on the options screen only.' );
 
 		wp_dequeue_script( 'wp-dbmanager' );
 		wp_deregister_script( 'wp-dbmanager' );
@@ -418,7 +418,7 @@ class WP_DBManager_Admin_Test extends WP_DBManager_TestCase {
 	public function test_check_capability_allows_an_administrator() {
 		WP_DBManager_Admin::check_capability();
 
-		$this->assertTrue( current_user_can( 'install_plugins' ) );
+		$this->assertTrue( current_user_can( 'install_plugins' ), 'The fixture user really is an administrator, or the allow below proves nothing.' );
 	}
 
 	/**

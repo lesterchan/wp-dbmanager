@@ -70,7 +70,7 @@ class WP_DBManager_Folder_Test extends WP_DBManager_TestCase {
 		$options['path'] = $outside;
 		update_option( WP_DBManager_Options::OPTION, $options );
 
-		$this->assertFalse( WP_DBManager_Folder::url() );
+		$this->assertFalse( WP_DBManager_Folder::url(), 'A folder outside the web root has no URL to serve it from.' );
 
 		self::remove_directory( $outside );
 	}
@@ -88,7 +88,7 @@ class WP_DBManager_Folder_Test extends WP_DBManager_TestCase {
 
 		$url = WP_DBManager_Folder::url();
 
-		$this->assertNotFalse( $url );
+		$this->assertNotFalse( $url, 'A folder inside wp-content does have a URL.' );
 		$this->assertStringStartsWith( content_url(), $url );
 
 		self::remove_directory( $inside );
@@ -107,7 +107,7 @@ class WP_DBManager_Folder_Test extends WP_DBManager_TestCase {
 
 		WP_DBManager_Folder::flush();
 
-		$this->assertFalse( WP_DBManager_Folder::is_public() );
+		$this->assertFalse( WP_DBManager_Folder::is_public(), 'A folder outside the web root is not reachable by a visitor.' );
 
 		self::remove_directory( $outside );
 	}
@@ -117,13 +117,13 @@ class WP_DBManager_Folder_Test extends WP_DBManager_TestCase {
 	 */
 	public function test_the_cached_answer_is_reused() {
 		set_transient( WP_DBManager_Folder::TRANSIENT, 'public', HOUR_IN_SECONDS );
-		$this->assertTrue( WP_DBManager_Folder::is_public( false ) );
+		$this->assertTrue( WP_DBManager_Folder::is_public( false ), 'A cached true is reused rather than probed again.' );
 
 		set_transient( WP_DBManager_Folder::TRANSIENT, 'protected', HOUR_IN_SECONDS );
-		$this->assertFalse( WP_DBManager_Folder::is_public( false ) );
+		$this->assertFalse( WP_DBManager_Folder::is_public( false ), 'A cached false is reused rather than probed again.' );
 
 		set_transient( WP_DBManager_Folder::TRANSIENT, 'unknown', HOUR_IN_SECONDS );
-		$this->assertNull( WP_DBManager_Folder::is_public( false ) );
+		$this->assertNull( WP_DBManager_Folder::is_public( false ), 'A cached undetermined answer is reused rather than probed again.' );
 	}
 
 	/**
@@ -135,7 +135,7 @@ class WP_DBManager_Folder_Test extends WP_DBManager_TestCase {
 	public function test_no_cache_and_no_probe_is_undetermined() {
 		WP_DBManager_Folder::flush();
 
-		$this->assertNull( WP_DBManager_Folder::is_public( false ) );
+		$this->assertNull( WP_DBManager_Folder::is_public( false ), 'With no cache and no probe the answer is undetermined, not a guess.' );
 	}
 
 	/**
@@ -151,9 +151,9 @@ class WP_DBManager_Folder_Test extends WP_DBManager_TestCase {
 		$this->pretend_server( 'Apache/2.4.57' );
 		WP_DBManager_Folder::create();
 
-		$this->assertDirectoryExists( $fresh );
-		$this->assertFileExists( $fresh . '/index.php' );
-		$this->assertFileExists( $fresh . '/.htaccess' );
+		$this->assertDirectoryExists( $fresh, 'The folder is created.' );
+		$this->assertFileExists( $fresh . '/index.php', 'The folder gets its index.php, so a listing shows nothing.' );
+		$this->assertFileExists( $fresh . '/.htaccess', 'The folder gets its .htaccess, so a dump cannot be fetched.' );
 
 		self::remove_directory( $fresh );
 	}
@@ -163,10 +163,10 @@ class WP_DBManager_Folder_Test extends WP_DBManager_TestCase {
 	 */
 	public function test_is_iis() {
 		$this->pretend_server( 'Microsoft-IIS/10.0' );
-		$this->assertTrue( WP_DBManager_Folder::is_iis() );
+		$this->assertTrue( WP_DBManager_Folder::is_iis(), 'An IIS server string is recognised.' );
 
 		$this->pretend_server( 'nginx/1.24.0' );
-		$this->assertFalse( WP_DBManager_Folder::is_iis() );
+		$this->assertFalse( WP_DBManager_Folder::is_iis(), 'A non-IIS server string is not.' );
 	}
 
 	/**
@@ -197,10 +197,10 @@ class WP_DBManager_Folder_Test extends WP_DBManager_TestCase {
 	 */
 	public function test_maybe_fix_ignores_other_requests() {
 		$_GET = array();
-		$this->assertNull( WP_DBManager_Folder::maybe_fix() );
+		$this->assertNull( WP_DBManager_Folder::maybe_fix(), 'A request that is not a fix is ignored.' );
 
 		$_GET = array( 'try_fix' => '0' );
-		$this->assertNull( WP_DBManager_Folder::maybe_fix() );
+		$this->assertNull( WP_DBManager_Folder::maybe_fix(), 'A fix request without a nonce is ignored.' );
 
 		$_GET = array();
 	}
@@ -263,8 +263,8 @@ class WP_DBManager_Folder_Test extends WP_DBManager_TestCase {
 		$_GET     = array();
 		$_REQUEST = array();
 
-		$this->assertDirectoryExists( $fresh );
-		$this->assertFileExists( $fresh . '/index.php' );
+		$this->assertDirectoryExists( $fresh, 'The missing folder is recreated.' );
+		$this->assertFileExists( $fresh . '/index.php', 'The recreated folder gets its index.php back too.' );
 		$this->assertFalse( get_transient( WP_DBManager_Folder::TRANSIENT ), 'The stale verdict survived the fix.' );
 
 		self::remove_directory( $fresh );
@@ -283,8 +283,8 @@ class WP_DBManager_Folder_Test extends WP_DBManager_TestCase {
 		$this->pretend_server( 'Microsoft-IIS/10.0' );
 		WP_DBManager_Folder::create();
 
-		$this->assertFileExists( $fresh . '/Web.config' );
-		$this->assertFileDoesNotExist( $fresh . '/.htaccess' );
+		$this->assertFileExists( $fresh . '/Web.config', 'On IIS the folder is protected with a Web.config.' );
+		$this->assertFileDoesNotExist( $fresh . '/.htaccess', 'On IIS no .htaccess is written; the server would ignore it.' );
 
 		self::remove_directory( $fresh );
 	}

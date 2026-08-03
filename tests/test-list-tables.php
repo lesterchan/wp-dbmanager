@@ -51,7 +51,7 @@ class WP_DBManager_List_Tables_Test extends WP_DBManager_TestCase {
 	public function test_the_information_table_has_no_checkboxes() {
 		$table = new WP_DBManager_Tables_Table( 'info' );
 
-		$this->assertArrayNotHasKey( 'cb', $table->get_columns() );
+		$this->assertArrayNotHasKey( 'cb', $table->get_columns(), 'The information table offers no checkboxes; it acts on nothing.' );
 		$this->assertSame( array(), $table->get_bulk_actions() );
 	}
 
@@ -69,7 +69,7 @@ class WP_DBManager_List_Tables_Test extends WP_DBManager_TestCase {
 		$table = new WP_DBManager_Tables_Table( $mode );
 
 		$this->assertSame( $actions, array_keys( $table->get_bulk_actions() ) );
-		$this->assertArrayHasKey( 'cb', $table->get_columns() );
+		$this->assertArrayHasKey( 'cb', $table->get_columns(), 'An action table offers checkboxes, since it acts on what is ticked.' );
 	}
 
 	/**
@@ -108,8 +108,8 @@ class WP_DBManager_List_Tables_Test extends WP_DBManager_TestCase {
 		$html  = $this->render_table( $table );
 
 		$this->assertScreenIsClean( $html );
-		$this->assertMatchesRegularExpression( '/[0-9,]+ Tables?/', $html );
-		$this->assertMatchesRegularExpression( '/[0-9,]+ Records?/', $html );
+		$this->assertMatchesRegularExpression( '/[0-9,]+ Tables?/', $html, 'The information table totals its table count.' );
+		$this->assertMatchesRegularExpression( '/[0-9,]+ Records?/', $html, 'The information table totals its record count.' );
 	}
 
 	/**
@@ -118,7 +118,7 @@ class WP_DBManager_List_Tables_Test extends WP_DBManager_TestCase {
 	public function test_the_action_tables_have_no_totals_row() {
 		$html = $this->render_table( new WP_DBManager_Tables_Table( 'optimize' ) );
 
-		$this->assertDoesNotMatchRegularExpression( '/[0-9,]+ Tables?</', $html );
+		$this->assertDoesNotMatchRegularExpression( '/[0-9,]+ Tables?</', $html, 'An action table draws no totals row; the numbers belong to the information screen.' );
 	}
 
 	/**

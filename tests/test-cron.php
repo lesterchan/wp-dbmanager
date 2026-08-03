@@ -64,7 +64,7 @@ class WP_DBManager_Cron_Test extends WP_DBManager_TestCase {
 
 		$schedules = WP_DBManager_Cron::schedules( array() );
 
-		$this->assertArrayHasKey( 'wp_dbmanager_backup', $schedules );
+		$this->assertArrayHasKey( 'wp_dbmanager_backup', $schedules, 'A disabled job still declares its schedule, so re-enabling it needs no new interval.' );
 		$this->assertSame( YEAR_IN_SECONDS, $schedules['wp_dbmanager_backup']['interval'] );
 	}
 
@@ -74,7 +74,7 @@ class WP_DBManager_Cron_Test extends WP_DBManager_TestCase {
 	public function test_schedules_preserves_what_it_was_given() {
 		$schedules = WP_DBManager_Cron::schedules( array( 'someone_else' => array( 'interval' => 60 ) ) );
 
-		$this->assertArrayHasKey( 'someone_else', $schedules );
+		$this->assertArrayHasKey( 'someone_else', $schedules, 'Another plugin schedule passed in survives.' );
 	}
 
 	/**
@@ -89,9 +89,9 @@ class WP_DBManager_Cron_Test extends WP_DBManager_TestCase {
 			)
 		);
 
-		$this->assertNotFalse( wp_next_scheduled( 'wp_dbmanager_cron_backup' ) );
-		$this->assertNotFalse( wp_next_scheduled( 'wp_dbmanager_cron_optimize' ) );
-		$this->assertNotFalse( wp_next_scheduled( 'wp_dbmanager_cron_repair' ) );
+		$this->assertNotFalse( wp_next_scheduled( 'wp_dbmanager_cron_backup' ), 'Saving schedules the backup job.' );
+		$this->assertNotFalse( wp_next_scheduled( 'wp_dbmanager_cron_optimize' ), 'Saving schedules the optimize job.' );
+		$this->assertNotFalse( wp_next_scheduled( 'wp_dbmanager_cron_repair' ), 'Saving schedules the repair job.' );
 	}
 
 	/**
@@ -99,10 +99,10 @@ class WP_DBManager_Cron_Test extends WP_DBManager_TestCase {
 	 */
 	public function test_disabling_a_job_unschedules_it() {
 		$this->save( array( 'backup_period' => 86400 ) );
-		$this->assertNotFalse( wp_next_scheduled( 'wp_dbmanager_cron_backup' ) );
+		$this->assertNotFalse( wp_next_scheduled( 'wp_dbmanager_cron_backup' ), 'The job is scheduled to begin with, or the unschedule below proves nothing.' );
 
 		$this->save( array( 'backup_period' => 0 ) );
-		$this->assertFalse( wp_next_scheduled( 'wp_dbmanager_cron_backup' ) );
+		$this->assertFalse( wp_next_scheduled( 'wp_dbmanager_cron_backup' ), 'Disabling the job unschedules it.' );
 	}
 
 	/**
@@ -115,11 +115,11 @@ class WP_DBManager_Cron_Test extends WP_DBManager_TestCase {
 		$this->save( array( 'optimize_period' => 3600 ) );
 		$first = wp_next_scheduled( 'wp_dbmanager_cron_optimize' );
 
-		$this->assertNotFalse( $first );
+		$this->assertNotFalse( $first, 'The job was scheduled to begin with, or the reschedule below proves nothing.' );
 
 		$this->save( array( 'optimize_period' => 0 ) );
 
-		$this->assertFalse( wp_next_scheduled( 'wp_dbmanager_cron_optimize' ) );
+		$this->assertFalse( wp_next_scheduled( 'wp_dbmanager_cron_optimize' ), 'A programmatic write unschedules the job it disabled.' );
 	}
 
 	/**
@@ -242,7 +242,7 @@ class WP_DBManager_Cron_Test extends WP_DBManager_TestCase {
 
 		WP_DBManager_Cron::backup();
 
-		$this->assertCount( 1, WP_DBManager_Backups::all( $this->backup_dir ) );
+		$this->assertCount( 1, WP_DBManager_Backups::all( $this->backup_dir ), 'The scheduled backup wrote a dump.' );
 	}
 
 	/**
@@ -393,7 +393,7 @@ class WP_DBManager_Cron_Test extends WP_DBManager_TestCase {
 
 		WP_DBManager_Cron::backup();
 
-		$this->assertCount( 1, WP_DBManager_Backups::all( $this->backup_dir ) );
+		$this->assertCount( 1, WP_DBManager_Backups::all( $this->backup_dir ), 'The backup still ran; only the mail was skipped.' );
 		$this->assertSame( 0, $mails );
 	}
 

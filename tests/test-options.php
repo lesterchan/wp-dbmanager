@@ -76,7 +76,7 @@ class WP_DBManager_Options_Test extends WP_DBManager_TestCase {
 		WP_DBManager_Options::maybe_upgrade();
 
 		$this->assertSame( 8, WP_DBManager_Options::get( 'max_backup' ) );
-		$this->assertFalse( get_option( WP_DBManager_Options::LEGACY_OPTION ) );
+		$this->assertFalse( get_option( WP_DBManager_Options::LEGACY_OPTION ), 'The legacy row is deleted once the new row has won.' );
 	}
 
 	/**
@@ -102,7 +102,7 @@ class WP_DBManager_Options_Test extends WP_DBManager_TestCase {
 
 		$this->assertSame( 3, WP_DBManager_Options::get( 'max_backup' ) );
 		$this->assertSame( WP_DBManager_Options::defaults()['backup_period'], WP_DBManager_Options::get( 'backup_period' ) );
-		$this->assertArrayHasKey( 'hide_admin_notices', WP_DBManager_Options::get() );
+		$this->assertArrayHasKey( 'hide_admin_notices', WP_DBManager_Options::get(), 'A key absent from the stored row falls back to its shipped default.' );
 	}
 
 	/**
@@ -118,7 +118,7 @@ class WP_DBManager_Options_Test extends WP_DBManager_TestCase {
 	 * An unknown key reads as null rather than warning.
 	 */
 	public function test_an_unknown_key_is_null() {
-		$this->assertNull( WP_DBManager_Options::get( 'no_such_setting' ) );
+		$this->assertNull( WP_DBManager_Options::get( 'no_such_setting' ), 'An unknown key reads back null rather than raising a notice.' );
 	}
 
 	/**
@@ -148,10 +148,10 @@ class WP_DBManager_Options_Test extends WP_DBManager_TestCase {
 	public function test_periods_cover_the_offered_intervals() {
 		$periods = WP_DBManager_Options::periods();
 
-		$this->assertArrayHasKey( 0, $periods );
+		$this->assertArrayHasKey( 0, $periods, 'The periods list offers a zero, which is how a job is disabled.' );
 
 		foreach ( array( 60, 3600, 86400, 604800, 2592000 ) as $seconds ) {
-			$this->assertArrayHasKey( $seconds, $periods );
+			$this->assertArrayHasKey( $seconds, $periods, 'The periods list is missing the ' . $seconds . ' second interval it offers.' );
 		}
 	}
 
@@ -162,14 +162,14 @@ class WP_DBManager_Options_Test extends WP_DBManager_TestCase {
 	 * half-written option row would become "/index.php" at the filesystem root.
 	 */
 	public function test_backup_path_is_always_a_string() {
-		$this->assertIsString( WP_DBManager_Options::backup_path() );
+		$this->assertIsString( WP_DBManager_Options::backup_path(), 'The backup path is a string even before anything is stored.' );
 		$this->assertSame( WP_DBManager_Options::get( 'path' ), WP_DBManager_Options::backup_path() );
 
 		update_option( WP_DBManager_Options::OPTION, array( 'path' => '/somewhere/else' ) );
 		$this->assertSame( '/somewhere/else', WP_DBManager_Options::backup_path() );
 
 		update_option( WP_DBManager_Options::OPTION, 'not an array' );
-		$this->assertIsString( WP_DBManager_Options::backup_path() );
+		$this->assertIsString( WP_DBManager_Options::backup_path(), 'The backup path is a string even when the stored value is junk.' );
 	}
 
 	/**

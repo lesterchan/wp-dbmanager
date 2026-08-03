@@ -109,7 +109,7 @@ class WP_DBManager_Backups_Test extends WP_DBManager_TestCase {
 		$this->make_backup( 'a_-_1700000000_-_db.sql', 1700000000 );
 		$this->make_backup( 'b_-_1700000000_-_db.sql', 1700000000 );
 
-		$this->assertCount( 2, WP_DBManager_Backups::all( $this->backup_dir ) );
+		$this->assertCount( 2, WP_DBManager_Backups::all( $this->backup_dir ), 'Two backups sharing an mtime are both listed, not collapsed to one.' );
 	}
 
 	/**
@@ -142,7 +142,7 @@ class WP_DBManager_Backups_Test extends WP_DBManager_TestCase {
 		WP_DBManager_Backups::prune();
 
 		// Two left, so the third slot is free for the backup about to be taken.
-		$this->assertCount( 2, WP_DBManager_Backups::all( $this->backup_dir ) );
+		$this->assertCount( 2, WP_DBManager_Backups::all( $this->backup_dir ), 'Pruning leaves room for the next backup rather than filling the quota.' );
 	}
 
 	/**
@@ -200,7 +200,7 @@ class WP_DBManager_Backups_Test extends WP_DBManager_TestCase {
 	public function test_resolve_refuses( $name ) {
 		$this->make_backup( 'a_-_1700000000_-_db.sql' );
 
-		$this->assertFalse( WP_DBManager_Backups::resolve( $name ) );
+		$this->assertFalse( WP_DBManager_Backups::resolve( $name ), 'resolve() accepted ' . $name . ', which is not a name it should take.' );
 	}
 
 	/**
@@ -242,8 +242,8 @@ class WP_DBManager_Backups_Test extends WP_DBManager_TestCase {
 			'mtime' => 200,
 		);
 
-		$this->assertLessThan( 0, WP_DBManager_Backups::compare( $older, $newer ) );
-		$this->assertGreaterThan( 0, WP_DBManager_Backups::compare( $newer, $older ) );
+		$this->assertLessThan( 0, WP_DBManager_Backups::compare( $older, $newer ), 'The older backup sorts before the newer.' );
+		$this->assertGreaterThan( 0, WP_DBManager_Backups::compare( $newer, $older ), 'The comparison is symmetric.' );
 
 		$same_a = array(
 			'name'  => 'a',
@@ -254,7 +254,7 @@ class WP_DBManager_Backups_Test extends WP_DBManager_TestCase {
 			'mtime' => 100,
 		);
 
-		$this->assertLessThan( 0, WP_DBManager_Backups::compare( $same_a, $same_b ) );
+		$this->assertLessThan( 0, WP_DBManager_Backups::compare( $same_a, $same_b ), 'Backups sharing a time fall back to sorting by name.' );
 		$this->assertSame( 0, WP_DBManager_Backups::compare( $same_a, $same_a ) );
 	}
 
@@ -281,10 +281,10 @@ class WP_DBManager_Backups_Test extends WP_DBManager_TestCase {
 	 */
 	public function test_download_ignores_other_requests() {
 		$_POST = array();
-		$this->assertNull( WP_DBManager_Backups::maybe_download() );
+		$this->assertNull( WP_DBManager_Backups::maybe_download(), 'A request that is not a download is ignored.' );
 
 		$_POST = array( 'action' => 'delete' );
-		$this->assertNull( WP_DBManager_Backups::maybe_download() );
+		$this->assertNull( WP_DBManager_Backups::maybe_download(), 'A download request without a nonce is ignored.' );
 
 		$_POST = array( 'action' => 'download' );
 		$this->assertNull( WP_DBManager_Backups::maybe_download(), 'A download with nothing selected should fall through.' );
@@ -295,7 +295,7 @@ class WP_DBManager_Backups_Test extends WP_DBManager_TestCase {
 			'action'  => 'download',
 			'backups' => array( 'a_-_1700000000_-_db.sql', 'b_-_1700000000_-_db.sql' ),
 		);
-		$this->assertNull( WP_DBManager_Backups::maybe_download() );
+		$this->assertNull( WP_DBManager_Backups::maybe_download(), 'A download request for a name outside the folder is ignored.' );
 
 		$_POST = array();
 	}
@@ -426,14 +426,14 @@ class WP_DBManager_Backups_Test extends WP_DBManager_TestCase {
 	 * backups on every site that had not taken one yet.
 	 */
 	public function test_an_empty_folder_is_valid() {
-		$this->assertTrue( WP_DBManager_Backups::is_folder_valid( $this->backup_dir ) );
+		$this->assertTrue( WP_DBManager_Backups::is_folder_valid( $this->backup_dir ), 'An empty folder is a valid backup folder.' );
 	}
 
 	/**
 	 * A folder that is not there is not valid.
 	 */
 	public function test_a_missing_folder_is_not_valid() {
-		$this->assertFalse( WP_DBManager_Backups::is_folder_valid( $this->backup_dir . '/nope' ) );
-		$this->assertFalse( WP_DBManager_Backups::is_folder_valid( '' ) );
+		$this->assertFalse( WP_DBManager_Backups::is_folder_valid( $this->backup_dir . '/nope' ), 'A folder that does not exist is not valid.' );
+		$this->assertFalse( WP_DBManager_Backups::is_folder_valid( '' ), 'An empty path is not valid.' );
 	}
 }

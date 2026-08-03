@@ -58,7 +58,7 @@ class WP_DBManager_Settings_Test extends WP_DBManager_TestCase {
 		$result = WP_DBManager_Settings::sanitize( array( 'path' => '/no/such/directory/anywhere' ) );
 
 		$this->assertSame( $this->backup_dir, $result['path'] );
-		$this->assertNotEmpty( get_settings_errors( WP_DBManager_Options::OPTION ) );
+		$this->assertNotEmpty( get_settings_errors( WP_DBManager_Options::OPTION ), 'An unresolvable backup path is refused with a message rather than saved.' );
 	}
 
 	/**
@@ -157,7 +157,7 @@ class WP_DBManager_Settings_Test extends WP_DBManager_TestCase {
 
 		WP_DBManager_Settings::sanitize( array( 'max_backup' => '4' ) );
 
-		$this->assertFalse( get_transient( WP_DBManager_Folder::TRANSIENT ) );
+		$this->assertFalse( get_transient( WP_DBManager_Folder::TRANSIENT ), 'Saving flushes the reachability cache, so a moved folder is probed again.' );
 	}
 
 	/**
@@ -168,7 +168,7 @@ class WP_DBManager_Settings_Test extends WP_DBManager_TestCase {
 
 		$registered = get_registered_settings();
 
-		$this->assertArrayHasKey( WP_DBManager_Options::OPTION, $registered );
+		$this->assertArrayHasKey( WP_DBManager_Options::OPTION, $registered, 'The settings row is registered, so its sanitise callback is attached.' );
 	}
 
 	/**
@@ -192,7 +192,7 @@ class WP_DBManager_Settings_Test extends WP_DBManager_TestCase {
 		$page = WP_DBManager_Settings::page();
 
 		$this->assertSame( 'wp-dbmanager-options', $page );
-		$this->assertArrayHasKey( $page, $wp_settings_sections );
+		$this->assertArrayHasKey( $page, $wp_settings_sections, 'The sections are registered against the options page.' );
 
 		$this->assertSame(
 			array(
@@ -221,7 +221,7 @@ class WP_DBManager_Settings_Test extends WP_DBManager_TestCase {
 
 		$page = WP_DBManager_Settings::page();
 
-		$this->assertArrayHasKey( $page, $wp_settings_fields );
+		$this->assertArrayHasKey( $page, $wp_settings_fields, 'The fields are registered against the options page.' );
 
 		$seen = 0;
 

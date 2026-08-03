@@ -69,9 +69,9 @@ class WP_DBManager_Mailer_Test extends WP_DBManager_TestCase {
 	 * A backup is mailed to the address given.
 	 */
 	public function test_a_backup_is_mailed() {
-		$this->assertTrue( WP_DBManager_Mailer::send( 'someone@example.com', $this->make_backup() ) );
+		$this->assertTrue( WP_DBManager_Mailer::send( 'someone@example.com', $this->make_backup() ), 'A backup is mailed to a valid address.' );
 
-		$this->assertCount( 1, $this->sent );
+		$this->assertCount( 1, $this->sent, 'Exactly one message was sent.' );
 		$this->assertSame( 'someone@example.com', $this->last_mail()['to'] );
 	}
 
@@ -88,7 +88,7 @@ class WP_DBManager_Mailer_Test extends WP_DBManager_TestCase {
 	 * Nothing is sent to an address that is not one.
 	 */
 	public function test_an_invalid_address_sends_nothing() {
-		$this->assertFalse( WP_DBManager_Mailer::send( 'not-an-address', $this->make_backup() ) );
+		$this->assertFalse( WP_DBManager_Mailer::send( 'not-an-address', $this->make_backup() ), 'An invalid address sends nothing rather than failing later.' );
 		$this->assertSame( array(), $this->sent );
 	}
 
@@ -98,7 +98,7 @@ class WP_DBManager_Mailer_Test extends WP_DBManager_TestCase {
 	 * Otherwise a failed backup still produces a reassuring e-mail.
 	 */
 	public function test_a_missing_backup_sends_nothing() {
-		$this->assertFalse( WP_DBManager_Mailer::send( 'someone@example.com', $this->backup_dir . '/nope.sql' ) );
+		$this->assertFalse( WP_DBManager_Mailer::send( 'someone@example.com', $this->backup_dir . '/nope.sql' ), 'A missing backup sends nothing rather than an empty attachment.' );
 		$this->assertSame( array(), $this->sent );
 	}
 

@@ -247,7 +247,7 @@ class WP_DBManager_Screens_Test extends WP_DBManager_TestCase {
 
 		$this->assertScreenIsClean( $html );
 		$this->assertStringContainsString( 'Deleted Successfully', $html );
-		$this->assertFileDoesNotExist( $path );
+		$this->assertFileDoesNotExist( $path, 'Deleting a backup removes the file, not only the row on screen.' );
 	}
 
 	/**
@@ -357,8 +357,8 @@ class WP_DBManager_Screens_Test extends WP_DBManager_TestCase {
 		$html = $this->render( array( 'WP_DBManager_Screens', 'manager' ) );
 
 		$this->assertStringContainsString( $wpdb->posts, $html );
-		$this->assertMatchesRegularExpression( '/[0-9,]+ Tables?/', $html );
-		$this->assertMatchesRegularExpression( '/[0-9,]+ Records?/', $html );
+		$this->assertMatchesRegularExpression( '/[0-9,]+ Tables?/', $html, 'The information screen totals its table count.' );
+		$this->assertMatchesRegularExpression( '/[0-9,]+ Records?/', $html, 'The information screen totals its record count.' );
 		$this->assertStringContainsString( DB_NAME, $html );
 	}
 
@@ -382,9 +382,9 @@ class WP_DBManager_Screens_Test extends WP_DBManager_TestCase {
 		preg_match( '/data-dbmanager-confirm-actions="([^"]+)"/', $html, $m );
 		$messages = json_decode( html_entity_decode( $m[1] ), true );
 
-		$this->assertIsArray( $messages );
-		$this->assertArrayHasKey( 'restore', $messages );
-		$this->assertArrayHasKey( 'delete', $messages );
+		$this->assertIsArray( $messages, 'The confirmations are an array the screen can render as attributes.' );
+		$this->assertArrayHasKey( 'restore', $messages, 'A restore carries its own confirmation message.' );
+		$this->assertArrayHasKey( 'delete', $messages, 'A delete carries its own confirmation message.' );
 
 		// The \n survives as two characters, which the script turns into a real
 		// line break. Before 3.0.0 esc_js() ate it, so the dialog showed an n

@@ -17,15 +17,15 @@ class WP_DBManager_Plugin_Test extends WP_DBManager_TestCase {
 	 * worked when installed as "wp-dbmanager".
 	 */
 	public function test_path_constants_are_defined() {
-		$this->assertTrue( defined( 'WP_DBMANAGER_VERSION' ) );
-		$this->assertTrue( defined( 'WP_DBMANAGER_MAIN_FILE' ) );
-		$this->assertTrue( defined( 'WP_DBMANAGER_DIR' ) );
-		$this->assertTrue( defined( 'WP_DBMANAGER_URL' ) );
+		$this->assertTrue( defined( 'WP_DBMANAGER_VERSION' ), 'The version constant is defined.' );
+		$this->assertTrue( defined( 'WP_DBMANAGER_MAIN_FILE' ), 'The main file constant is defined.' );
+		$this->assertTrue( defined( 'WP_DBMANAGER_DIR' ), 'The directory constant is defined.' );
+		$this->assertTrue( defined( 'WP_DBMANAGER_URL' ), 'The URL constant is defined.' );
 
 		$this->assertStringEndsWith( '/', WP_DBMANAGER_DIR );
 		$this->assertStringEndsWith( '/', WP_DBMANAGER_URL );
-		$this->assertFileExists( WP_DBMANAGER_DIR . 'wp-dbmanager.php' );
-		$this->assertFileExists( WP_DBMANAGER_MAIN_FILE );
+		$this->assertFileExists( WP_DBMANAGER_DIR . 'wp-dbmanager.php', 'The directory constant points at the directory the plugin file is in.' );
+		$this->assertFileExists( WP_DBMANAGER_MAIN_FILE, 'The main file constant points at a file that exists.' );
 	}
 
 	/**
@@ -54,7 +54,7 @@ class WP_DBManager_Plugin_Test extends WP_DBManager_TestCase {
 	 */
 	public function test_get_instance_is_a_singleton() {
 		$this->assertSame( WP_DBManager::get_instance(), WP_DBManager::get_instance() );
-		$this->assertInstanceOf( 'WP_DBManager', WP_DBManager::get_instance() );
+		$this->assertInstanceOf( 'WP_DBManager', WP_DBManager::get_instance(), 'get_instance() answers with the plugin, and the same one each time.' );
 	}
 
 	/**
@@ -63,21 +63,21 @@ class WP_DBManager_Plugin_Test extends WP_DBManager_TestCase {
 	public function test_sql_uploads_are_allowed() {
 		$mimes = WP_DBManager::get_instance()->upload_mimes( array() );
 
-		$this->assertArrayHasKey( 'sql', $mimes );
+		$this->assertArrayHasKey( 'sql', $mimes, 'A .sql upload is allowed, which is how a restore is fed.' );
 		$this->assertSame( 'application/sql', $mimes['sql'] );
 
 		// Whatever was already allowed stays allowed.
-		$this->assertArrayHasKey( 'jpg|jpeg|jpe', WP_DBManager::get_instance()->upload_mimes( array( 'jpg|jpeg|jpe' => 'image/jpeg' ) ) );
+		$this->assertArrayHasKey( 'jpg|jpeg|jpe', WP_DBManager::get_instance()->upload_mimes( array( 'jpg|jpeg|jpe' => 'image/jpeg' ) ), 'The existing mime list survives; sql is added to it rather than replacing it.' );
 	}
 
 	/**
 	 * The filter is actually wired up, not merely available.
 	 */
 	public function test_the_hooks_are_registered() {
-		$this->assertNotFalse( has_filter( 'upload_mimes' ) );
-		$this->assertNotFalse( has_action( 'init', array( 'WP_DBManager_Backups', 'maybe_download' ) ) );
-		$this->assertNotFalse( has_action( 'init', array( 'WP_DBManager_Folder', 'maybe_fix' ) ) );
-		$this->assertNotFalse( has_filter( 'cron_schedules' ) );
+		$this->assertNotFalse( has_filter( 'upload_mimes' ), 'The mime filter is registered.' );
+		$this->assertNotFalse( has_action( 'init', array( 'WP_DBManager_Backups', 'maybe_download' ) ), 'The download handler is registered on init.' );
+		$this->assertNotFalse( has_action( 'init', array( 'WP_DBManager_Folder', 'maybe_fix' ) ), 'The folder repair handler is registered on init.' );
+		$this->assertNotFalse( has_filter( 'cron_schedules' ), 'The schedules filter is registered.' );
 	}
 
 	/**
@@ -92,10 +92,10 @@ class WP_DBManager_Plugin_Test extends WP_DBManager_TestCase {
 		WP_DBManager_Admin::init();
 		WP_DBManager_Settings::init();
 
-		$this->assertNotFalse( has_action( 'admin_menu', array( 'WP_DBManager_Admin', 'menu' ) ) );
-		$this->assertNotFalse( has_action( 'admin_notices', array( 'WP_DBManager_Admin', 'notices' ) ) );
-		$this->assertNotFalse( has_action( 'admin_enqueue_scripts', array( 'WP_DBManager_Admin', 'enqueue' ) ) );
-		$this->assertNotFalse( has_action( 'admin_init', array( 'WP_DBManager_Settings', 'register' ) ) );
+		$this->assertNotFalse( has_action( 'admin_menu', array( 'WP_DBManager_Admin', 'menu' ) ), 'The menu is registered on admin_menu.' );
+		$this->assertNotFalse( has_action( 'admin_notices', array( 'WP_DBManager_Admin', 'notices' ) ), 'The notices are registered on admin_notices.' );
+		$this->assertNotFalse( has_action( 'admin_enqueue_scripts', array( 'WP_DBManager_Admin', 'enqueue' ) ), 'The enqueue is registered on admin_enqueue_scripts.' );
+		$this->assertNotFalse( has_action( 'admin_init', array( 'WP_DBManager_Settings', 'register' ) ), 'The settings registration is on admin_init.' );
 	}
 
 	/**
@@ -106,7 +106,7 @@ class WP_DBManager_Plugin_Test extends WP_DBManager_TestCase {
 
 		WP_DBManager::get_instance()->activate( false );
 
-		$this->assertIsArray( get_option( WP_DBManager_Options::OPTION ) );
+		$this->assertIsArray( get_option( WP_DBManager_Options::OPTION ), 'Activation seeds a settings row rather than leaving the option absent.' );
 	}
 
 	/**
@@ -120,15 +120,15 @@ class WP_DBManager_Plugin_Test extends WP_DBManager_TestCase {
 	public function test_network_activation_lifts_the_site_query_cap() {
 		$source = file_get_contents( WP_DBMANAGER_DIR . 'includes/class-wp-dbmanager.php' );
 
-		$this->assertMatchesRegularExpression( "/'number'\s*=>\s*0/", $source );
-		$this->assertMatchesRegularExpression( "/'fields'\s*=>\s*'ids'/", $source );
+		$this->assertMatchesRegularExpression( "/'number'\s*=>\s*0/", $source, 'Network activation lifts the site query cap, or a network past the default is half-activated.' );
+		$this->assertMatchesRegularExpression( "/'fields'\s*=>\s*'ids'/", $source, 'Network activation asks for ids only, which is what makes the query affordable.' );
 
 		// Paired inside the loop: switch_to_blog() pushes onto a stack.
 		$restore = strpos( $source, 'restore_current_blog(' );
 		$closing = strpos( $source, 'return;', $restore );
 
-		$this->assertNotFalse( $restore );
-		$this->assertLessThan( $closing, $restore );
+		$this->assertNotFalse( $restore, 'The activation calls restore_current_blog at all.' );
+		$this->assertLessThan( $closing, $restore, 'The restore is inside the loop; once after it leaves the stack unwound by one.' );
 	}
 
 	/**

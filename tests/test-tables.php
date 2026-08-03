@@ -142,17 +142,17 @@ class WP_DBManager_Tables_Test extends WP_DBManager_TestCase {
 	 * Optimize and repair run against a real table.
 	 */
 	public function test_optimize_and_repair_run() {
-		$this->assertTrue( WP_DBManager_Tables::optimize( array( $this->scratch ) ) );
-		$this->assertTrue( WP_DBManager_Tables::repair( array( $this->scratch ) ) );
+		$this->assertTrue( WP_DBManager_Tables::optimize( array( $this->scratch ) ), 'Optimize runs against a real table.' );
+		$this->assertTrue( WP_DBManager_Tables::repair( array( $this->scratch ) ), 'Repair runs against a real table.' );
 	}
 
 	/**
 	 * An empty list is a no-op rather than a malformed query.
 	 */
 	public function test_operations_on_an_empty_list_do_nothing() {
-		$this->assertFalse( WP_DBManager_Tables::optimize( array() ) );
-		$this->assertFalse( WP_DBManager_Tables::repair( array() ) );
-		$this->assertFalse( WP_DBManager_Tables::drop( array() ) );
+		$this->assertFalse( WP_DBManager_Tables::optimize( array() ), 'Optimize on an empty list does nothing rather than everything.' );
+		$this->assertFalse( WP_DBManager_Tables::repair( array() ), 'Repair on an empty list does nothing rather than everything.' );
+		$this->assertFalse( WP_DBManager_Tables::drop( array() ), 'Drop on an empty list does nothing rather than everything.' );
 	}
 
 	/**
@@ -164,7 +164,7 @@ class WP_DBManager_Tables_Test extends WP_DBManager_TestCase {
 	public function test_status_returns_the_columns_the_screen_uses() {
 		$rows = WP_DBManager_Tables::status();
 
-		$this->assertNotEmpty( $rows );
+		$this->assertNotEmpty( $rows, 'Status returns rows, or the column assertions below are vacuous.' );
 
 		$row = $rows[0];
 
@@ -181,8 +181,8 @@ class WP_DBManager_Tables_Test extends WP_DBManager_TestCase {
 	public function test_version_is_reported() {
 		$version = WP_DBManager_Tables::version();
 
-		$this->assertNotEmpty( $version );
-		$this->assertMatchesRegularExpression( '/^\d+\.\d+/', $version );
+		$this->assertNotEmpty( $version, 'The MySQL version is reported.' );
+		$this->assertMatchesRegularExpression( '/^\d+\.\d+/', $version, 'The version reads as a version number rather than a server banner.' );
 	}
 
 	/**

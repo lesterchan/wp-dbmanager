@@ -49,7 +49,7 @@ class WP_DBManager_Uninstall_Test extends WP_DBManager_TestCase {
 	 * reports success.
 	 */
 	public function test_uninstall_lifts_the_site_query_cap() {
-		$this->assertMatchesRegularExpression( "/'number'\s*=>\s*0/", $this->uninstall_source() );
+		$this->assertMatchesRegularExpression( "/'number'\s*=>\s*0/", $this->uninstall_source(), 'uninstall.php lifts the site query cap, or a network past the default is half-uninstalled.' );
 	}
 
 	/**
@@ -65,8 +65,8 @@ class WP_DBManager_Uninstall_Test extends WP_DBManager_TestCase {
 		$restore = strpos( $source, 'restore_current_blog(' );
 		$closing = strpos( $source, '} else {' );
 
-		$this->assertNotFalse( $switch );
-		$this->assertNotFalse( $restore );
+		$this->assertNotFalse( $switch, 'uninstall.php calls switch_to_blog at all.' );
+		$this->assertNotFalse( $restore, 'uninstall.php calls restore_current_blog at all.' );
 		$this->assertLessThan( $closing, $restore, 'restore_current_blog() is outside the foreach.' );
 	}
 
@@ -82,7 +82,7 @@ class WP_DBManager_Uninstall_Test extends WP_DBManager_TestCase {
 	 * Only site ids are fetched, not a hydrated WP_Site each.
 	 */
 	public function test_uninstall_asks_for_ids_only() {
-		$this->assertMatchesRegularExpression( "/'fields'\s*=>\s*'ids'/", $this->uninstall_source() );
+		$this->assertMatchesRegularExpression( "/'fields'\s*=>\s*'ids'/", $this->uninstall_source(), 'uninstall.php asks for ids only, which is what makes the unlimited query affordable.' );
 	}
 
 	/**
@@ -98,10 +98,10 @@ class WP_DBManager_Uninstall_Test extends WP_DBManager_TestCase {
 
 		wp_dbmanager_uninstall_site();
 
-		$this->assertFalse( get_option( WP_DBManager_Options::OPTION ) );
-		$this->assertFalse( get_option( WP_DBManager_Options::VERSION ) );
-		$this->assertFalse( get_transient( WP_DBManager_Folder::TRANSIENT ) );
-		$this->assertFalse( wp_next_scheduled( 'wp_dbmanager_cron_backup' ) );
+		$this->assertFalse( get_option( WP_DBManager_Options::OPTION ), 'Uninstall deletes the settings row.' );
+		$this->assertFalse( get_option( WP_DBManager_Options::VERSION ), 'Uninstall deletes the version row.' );
+		$this->assertFalse( get_transient( WP_DBManager_Folder::TRANSIENT ), 'Uninstall deletes the reachability transient.' );
+		$this->assertFalse( wp_next_scheduled( 'wp_dbmanager_cron_backup' ), 'Uninstall unschedules the backup job.' );
 	}
 
 	/**
@@ -120,9 +120,9 @@ class WP_DBManager_Uninstall_Test extends WP_DBManager_TestCase {
 
 		wp_dbmanager_uninstall_site();
 
-		$this->assertFalse( get_option( 'dbmanager_options' ) );
-		$this->assertFalse( get_transient( 'dbmanager_backup_folder_public' ) );
-		$this->assertFalse( wp_next_scheduled( 'dbmanager_cron_repair' ) );
+		$this->assertFalse( get_option( 'dbmanager_options' ), 'Uninstall clears the pre-4.0.0 settings row as well.' );
+		$this->assertFalse( get_transient( 'dbmanager_backup_folder_public' ), 'Uninstall clears the pre-4.0.0 transient as well.' );
+		$this->assertFalse( wp_next_scheduled( 'dbmanager_cron_repair' ), 'Uninstall unschedules the pre-4.0.0 job as well.' );
 	}
 
 	/**
@@ -139,7 +139,7 @@ class WP_DBManager_Uninstall_Test extends WP_DBManager_TestCase {
 
 		wp_dbmanager_uninstall_site();
 
-		$this->assertFileExists( $backup );
+		$this->assertFileExists( $backup, 'Uninstall leaves the backup files alone; they are the point of the plugin.' );
 	}
 
 	/**
@@ -152,9 +152,9 @@ class WP_DBManager_Uninstall_Test extends WP_DBManager_TestCase {
 
 		$stored = get_option( WP_DBManager_Options::OPTION );
 
-		$this->assertIsArray( $stored );
-		$this->assertArrayHasKey( 'mysqldumppath', $stored );
-		$this->assertArrayHasKey( 'path', $stored );
+		$this->assertIsArray( $stored, 'Activation stores what it detected rather than leaving the option absent.' );
+		$this->assertArrayHasKey( 'mysqldumppath', $stored, 'The detected mysqldump path is stored.' );
+		$this->assertArrayHasKey( 'path', $stored, 'The detected mysql path is stored.' );
 	}
 
 	/**
@@ -179,6 +179,6 @@ class WP_DBManager_Uninstall_Test extends WP_DBManager_TestCase {
 
 		WP_DBManager::activate_site();
 
-		$this->assertFalse( get_role( 'administrator' )->has_cap( 'manage_database' ) );
+		$this->assertFalse( get_role( 'administrator' )->has_cap( 'manage_database' ), 'Activation drops the retired capability rather than leaving it granted.' );
 	}
 }
