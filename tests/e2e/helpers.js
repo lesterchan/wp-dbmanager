@@ -44,8 +44,17 @@ const OPTIONS_URL = '/wp-admin/admin.php?page=wp-dbmanager-options';
  * `.notice-error` therefore matches two elements on wp-admin/index.php and
  * every assertion against it dies of Playwright strict mode rather than of
  * anything being wrong with this plugin's warning.
+ *
+ * Excluded by class as well as by aria-hidden, and the class is the half that
+ * matters. Hiding is only its resting state: the widget asks api.wordpress.org
+ * where the reader is, and when that request fails the script *reveals* the
+ * notice. On a developer's machine it succeeds and the notice stays hidden;
+ * on a CI runner with no outbound network it fails, the notice appears, and the
+ * aria-hidden exclusion stops excluding it. That is a strict-mode violation
+ * that only ever happens in CI, which is the worst place to debug it.
  */
-const VISIBLE_ERROR_NOTICE = '#wpbody-content .notice-error:not([aria-hidden="true"])';
+const VISIBLE_ERROR_NOTICE =
+	'#wpbody-content .notice-error:not([aria-hidden="true"]):not(.community-events-errors)';
 
 /**
  * The scratch table every destructive test works on.
