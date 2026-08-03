@@ -285,7 +285,15 @@ test.describe( 'Database options', () => {
 		// so `mail` was always null and both died on the first property access.
 		const mail = lastMail();
 
-		expect( mail.subject ).toContain( 'Nightly dump of Test Blog on' );
+		// Asked of WordPress rather than spelled out here, because %SITE_NAME%
+		// resolves to whatever the install is called and no two installs agree:
+		// wp-env names the site after the directory it started in, so this is
+		// 'wp-dbmanager' on CI and whatever a developer's long-lived container
+		// was first called locally. The template is what is under test, not the
+		// title somebody happened to type in.
+		const siteName = wpEval( `echo '<<<' . get_bloginfo( 'name' ) . '>>>';` );
+
+		expect( mail.subject ).toContain( `Nightly dump of ${ siteName } on` );
 		expect( mail.subject ).not.toContain( '%SITE_NAME%' );
 		expect( mail.subject ).not.toContain( '%POST_DATE%' );
 	} );

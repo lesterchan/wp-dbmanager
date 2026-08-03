@@ -45,16 +45,23 @@ const OPTIONS_URL = '/wp-admin/admin.php?page=wp-dbmanager-options';
  * every assertion against it dies of Playwright strict mode rather than of
  * anything being wrong with this plugin's warning.
  *
- * Excluded by class as well as by aria-hidden, and the class is the half that
- * matters. Hiding is only its resting state: the widget asks api.wordpress.org
- * where the reader is, and when that request fails the script *reveals* the
- * notice. On a developer's machine it succeeds and the notice stays hidden;
- * on a CI runner with no outbound network it fails, the notice appears, and the
- * aria-hidden exclusion stops excluding it. That is a strict-mode violation
- * that only ever happens in CI, which is the worst place to debug it.
+ * Excluded by class rather than by whether it is hidden, because hiding is only
+ * its resting state: the widget asks api.wordpress.org where the reader is, and
+ * when that request fails the script *reveals* the notice. On a developer's
+ * machine it succeeds and the notice stays hidden; on a CI runner with no
+ * outbound network it fails and the notice appears. Anything keyed on its
+ * hidden-ness therefore stops excluding it exactly in CI, which is the worst
+ * place to debug a strict-mode violation.
+ *
+ * `:visible` covers the rest of the screen. Core also prints an empty
+ * `.notice-error.notice-alt.inline.hidden` for its own scripts to fill in, on
+ * the Dashboard and elsewhere, and that one is display:none rather than
+ * aria-hidden -- so an aria-hidden exclusion never caught it. Asking for the
+ * notices that are on screen says what these assertions mean anyway: an
+ * administrator can see this warning.
  */
 const VISIBLE_ERROR_NOTICE =
-	'#wpbody-content .notice-error:not([aria-hidden="true"]):not(.community-events-errors)';
+	'#wpbody-content .notice-error:not(.community-events-errors):visible';
 
 /**
  * The scratch table every destructive test works on.
