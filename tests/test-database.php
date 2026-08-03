@@ -27,11 +27,11 @@ class WP_DBManager_Database_Test extends WP_DBManager_TestCase {
 
 		$command = WP_DBManager_Database::dump_command( $this->backup_dir . '/out.sql', false, $defaults_file );
 
-		$this->assertStringContainsString( '--defaults-extra-file=', $command );
-		$this->assertStringNotContainsString( '--password=', $command );
+		$this->assertStringContainsString( '--defaults-extra-file=', $command, 'The credentials go in a defaults file.' );
+		$this->assertStringNotContainsString( '--password=', $command, 'So the command line carries no password flag.' );
 
 		if ( '' !== DB_PASSWORD ) {
-			$this->assertStringNotContainsString( DB_PASSWORD, $command );
+			$this->assertStringNotContainsString( DB_PASSWORD, $command, 'And the password itself never appears in the process list.' );
 		}
 
 		WP_DBManager_Database::delete_defaults_file( $defaults_file );
@@ -44,8 +44,8 @@ class WP_DBManager_Database_Test extends WP_DBManager_TestCase {
 		$defaults_file = WP_DBManager_Database::write_defaults_file();
 
 		$this->assertFileExists( $defaults_file, 'The defaults file is written, or the removal below proves nothing.' );
-		$this->assertSame( '0600', substr( sprintf( '%o', fileperms( $defaults_file ) ), -4 ) );
-		$this->assertStringContainsString( '[client]', file_get_contents( $defaults_file ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_get_contents
+		$this->assertSame( '0600', substr( sprintf( '%o', fileperms( $defaults_file ) ), -4 ), 'The defaults file is readable only by its owner.' );
+		$this->assertStringContainsString( '[client]', file_get_contents( $defaults_file ), 'And is a MySQL option file, which is what the flag expects.' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_get_contents
 
 		WP_DBManager_Database::delete_defaults_file( $defaults_file );
 
@@ -56,17 +56,17 @@ class WP_DBManager_Database_Test extends WP_DBManager_TestCase {
 	 * With no option file the command falls back to --password.
 	 */
 	public function test_credential_args_fall_back_to_the_command_line() {
-		$this->assertStringContainsString( '--defaults-extra-file=', WP_DBManager_Database::credential_args( '/tmp/x' ) );
-		$this->assertStringContainsString( '--password=', WP_DBManager_Database::credential_args( false ) );
+		$this->assertStringContainsString( '--defaults-extra-file=', WP_DBManager_Database::credential_args( '/tmp/x' ), 'Given a defaults file, that is what is passed.' );
+		$this->assertStringContainsString( '--password=', WP_DBManager_Database::credential_args( false ), 'Without one it falls back to the command line rather than connecting anonymously.' );
 	}
 
 	/**
 	 * Values in the option file are quoted and their backslashes doubled.
 	 */
 	public function test_option_file_values_are_escaped() {
-		$this->assertSame( '"plain"', WP_DBManager_Database::escape_option_file_value( 'plain' ) );
-		$this->assertSame( '"a\\\\b"', WP_DBManager_Database::escape_option_file_value( 'a\\b' ) );
-		$this->assertSame( '"a\\"b"', WP_DBManager_Database::escape_option_file_value( 'a"b' ) );
+		$this->assertSame( '"plain"', WP_DBManager_Database::escape_option_file_value( 'plain' ), 'A plain value is quoted.' );
+		$this->assertSame( '"a\\\\b"', WP_DBManager_Database::escape_option_file_value( 'a\\b' ), 'A backslash is doubled.' );
+		$this->assertSame( '"a\\"b"', WP_DBManager_Database::escape_option_file_value( 'a"b' ), 'And a quote is escaped, so it cannot close the value early.' );
 	}
 
 	/**
@@ -76,8 +76,8 @@ class WP_DBManager_Database_Test extends WP_DBManager_TestCase {
 		$plain = WP_DBManager_Database::dump_command( $this->backup_dir . '/out.sql', false, false );
 		$gzip  = WP_DBManager_Database::dump_command( $this->backup_dir . '/out.sql.gz', true, false );
 
-		$this->assertStringNotContainsString( '| gzip', $plain );
-		$this->assertStringContainsString( '| gzip >', $gzip );
+		$this->assertStringNotContainsString( '| gzip', $plain, 'A plain dump is not piped through gzip.' );
+		$this->assertStringContainsString( '| gzip >', $gzip, 'While a compressed one is.' );
 
 		foreach ( array( $plain, $gzip ) as $command ) {
 			$this->assertStringContainsString( '--add-drop-table', $command, 'The dump command drops tables before recreating them.' );
@@ -93,9 +93,9 @@ class WP_DBManager_Database_Test extends WP_DBManager_TestCase {
 		$plain = WP_DBManager_Database::restore_command( $this->backup_dir . '/in.sql', false );
 		$gzip  = WP_DBManager_Database::restore_command( $this->backup_dir . '/in.sql.gz', false );
 
-		$this->assertStringStartsWith( 'gunzip <', $gzip );
-		$this->assertStringNotContainsString( 'gunzip', $plain );
-		$this->assertStringContainsString( ' < ', $plain );
+		$this->assertStringStartsWith( 'gunzip <', $gzip, 'A compressed restore is decompressed first.' );
+		$this->assertStringNotContainsString( 'gunzip', $plain, 'A plain one is not.' );
+		$this->assertStringContainsString( ' < ', $plain, 'It is redirected in as it stands.' );
 	}
 
 	/**
@@ -114,7 +114,7 @@ class WP_DBManager_Database_Test extends WP_DBManager_TestCase {
 		WP_DBManager_Database::dump_command( $this->backup_dir . '/out.sql', false, false );
 		WP_DBManager_Database::restore_command( $this->backup_dir . '/in.sql', false );
 
-		$this->assertSame( 2, $fired );
+		$this->assertSame( 2, $fired, 'The action fires for each command, so a filter can see both.' );
 	}
 
 	/**
@@ -130,12 +130,12 @@ class WP_DBManager_Database_Test extends WP_DBManager_TestCase {
 		if ( false !== strpos( DB_HOST, ':' ) ) {
 			$parts = explode( ':', DB_HOST );
 
-			$this->assertSame( $parts[0], $args['host'] );
-			$this->assertNotSame( '', $args['port'] . $args['sock'] );
+			$this->assertSame( $parts[0], $args['host'], 'The host is the part of DB_HOST before the separator.' );
+			$this->assertNotSame( '', $args['port'] . $args['sock'], 'And the part after it becomes a port or a socket.' );
 		} else {
-			$this->assertSame( DB_HOST, $args['host'] );
-			$this->assertSame( '', $args['port'] );
-			$this->assertSame( '', $args['sock'] );
+			$this->assertSame( DB_HOST, $args['host'], 'A plain host is the host.' );
+			$this->assertSame( '', $args['port'], 'With no port to derive.' );
+			$this->assertSame( '', $args['sock'], 'And no socket.' );
 		}
 	}
 
@@ -148,7 +148,7 @@ class WP_DBManager_Database_Test extends WP_DBManager_TestCase {
 	 * @param int    $expected 1 when acceptable.
 	 */
 	public function test_is_valid_path( $path, $expected ) {
-		$this->assertSame( $expected, WP_DBManager_Database::is_valid_path( $path ) );
+		$this->assertSame( $expected, WP_DBManager_Database::is_valid_path( $path ), 'A path is only valid when it names a binary that can be run.' );
 	}
 
 	/**
@@ -186,7 +186,7 @@ class WP_DBManager_Database_Test extends WP_DBManager_TestCase {
 	 * A healthy configuration reports nothing.
 	 */
 	public function test_path_errors_is_empty_when_everything_is_fine() {
-		$this->assertSame( array(), WP_DBManager_Database::path_errors() );
+		$this->assertSame( array(), WP_DBManager_Database::path_errors(), 'With everything in place there is nothing to report.' );
 	}
 
 	/**
@@ -208,10 +208,11 @@ class WP_DBManager_Database_Test extends WP_DBManager_TestCase {
 		// The name carries the file's own md5, so it cannot be guessed.
 		$this->assertSame(
 			md5_file( $result['filepath'] ),
-			substr( basename( $result['filepath'] ), 0, 32 )
+			substr( basename( $result['filepath'] ), 0, 32 ),
+			'The checksum in the name is the checksum of the file.'
 		);
 
-		$this->assertStringContainsString( 'CREATE TABLE', file_get_contents( $result['filepath'] ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_get_contents
+		$this->assertStringContainsString( 'CREATE TABLE', file_get_contents( $result['filepath'] ), 'And the file is a dump rather than an empty one.' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_get_contents
 	}
 
 	/**
@@ -227,14 +228,14 @@ class WP_DBManager_Database_Test extends WP_DBManager_TestCase {
 		$result = WP_DBManager_Database::backup( true );
 
 		$this->assertTrue( $result['success'], 'A gzip backup reports success.' );
-		$this->assertStringEndsWith( '.sql.gz', $result['filepath'] );
+		$this->assertStringEndsWith( '.sql.gz', $result['filepath'], 'A compressed backup is named as one.' );
 
 		// The gzip magic number.
 		$handle = fopen( $result['filepath'], 'rb' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fopen
 		$magic  = fread( $handle, 2 ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fread
 		fclose( $handle ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose
 
-		$this->assertSame( "\x1f\x8b", $magic );
+		$this->assertSame( "\x1f\x8b", $magic, 'And really is gzip, rather than a plain dump under a gz name.' );
 	}
 
 	/**
@@ -251,8 +252,8 @@ class WP_DBManager_Database_Test extends WP_DBManager_TestCase {
 		$result = WP_DBManager_Database::backup( false );
 
 		$this->assertFalse( $result['success'], 'A failed dump reports failure rather than a false success.' );
-		$this->assertSame( '', $result['filepath'] );
-		$this->assertSame( array(), WP_DBManager_Backups::all( $this->backup_dir ) );
+		$this->assertSame( '', $result['filepath'], 'A failed dump reports no path.' );
+		$this->assertSame( array(), WP_DBManager_Backups::all( $this->backup_dir ), 'And leaves no half written file behind.' );
 	}
 
 	/**
@@ -272,8 +273,8 @@ class WP_DBManager_Database_Test extends WP_DBManager_TestCase {
 		$result = WP_DBManager_Database::backup( true );
 
 		$this->assertFalse( $result['success'], 'An empty gzip stream was accepted as a backup.' );
-		$this->assertSame( 'empty', $result['reason'] );
-		$this->assertSame( array(), WP_DBManager_Backups::all( $this->backup_dir ) );
+		$this->assertSame( 'empty', $result['reason'], 'A gzip dump that produced nothing is reported as empty.' );
+		$this->assertSame( array(), WP_DBManager_Backups::all( $this->backup_dir ), 'And leaves no half written file behind.' );
 	}
 
 	/**
@@ -291,7 +292,7 @@ class WP_DBManager_Database_Test extends WP_DBManager_TestCase {
 		$result = WP_DBManager_Database::backup( true );
 
 		$this->assertTrue( $result['success'], 'A real gzip dump is accepted.' );
-		$this->assertStringContainsString( 'CREATE TABLE', (string) gzdecode( file_get_contents( $result['filepath'] ) ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_get_contents
+		$this->assertStringContainsString( 'CREATE TABLE', (string) gzdecode( file_get_contents( $result['filepath'] ) ), 'A real gzip dump decompresses to the dump it wrapped.' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_get_contents
 	}
 
 	/**
@@ -391,7 +392,7 @@ class WP_DBManager_Database_Test extends WP_DBManager_TestCase {
 		$result = WP_DBManager_Database::execute( 'true' );
 
 		$this->assertIsString( $result, 'A path error should come back as a message, not an exit code.' );
-		$this->assertStringContainsString( 'not a valid mysqldump path', $result );
+		$this->assertStringContainsString( 'not a valid mysqldump path', $result, 'An invalid configuration is refused with the reason, rather than run.' );
 	}
 
 	/**

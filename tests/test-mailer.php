@@ -72,7 +72,7 @@ class WP_DBManager_Mailer_Test extends WP_DBManager_TestCase {
 		$this->assertTrue( WP_DBManager_Mailer::send( 'someone@example.com', $this->make_backup() ), 'A backup is mailed to a valid address.' );
 
 		$this->assertCount( 1, $this->sent, 'Exactly one message was sent.' );
-		$this->assertSame( 'someone@example.com', $this->last_mail()['to'] );
+		$this->assertSame( 'someone@example.com', $this->last_mail()['to'], 'The backup goes to the configured address.' );
 	}
 
 	/**
@@ -81,7 +81,7 @@ class WP_DBManager_Mailer_Test extends WP_DBManager_TestCase {
 	public function test_an_empty_recipient_falls_back_to_the_admin() {
 		WP_DBManager_Mailer::send( '', $this->make_backup() );
 
-		$this->assertSame( get_option( 'admin_email' ), $this->last_mail()['to'] );
+		$this->assertSame( get_option( 'admin_email' ), $this->last_mail()['to'], 'With none configured it goes to the site admin rather than nowhere.' );
 	}
 
 	/**
@@ -89,7 +89,7 @@ class WP_DBManager_Mailer_Test extends WP_DBManager_TestCase {
 	 */
 	public function test_an_invalid_address_sends_nothing() {
 		$this->assertFalse( WP_DBManager_Mailer::send( 'not-an-address', $this->make_backup() ), 'An invalid address sends nothing rather than failing later.' );
-		$this->assertSame( array(), $this->sent );
+		$this->assertSame( array(), $this->sent, 'An invalid address sends nothing rather than bouncing.' );
 	}
 
 	/**
@@ -99,7 +99,7 @@ class WP_DBManager_Mailer_Test extends WP_DBManager_TestCase {
 	 */
 	public function test_a_missing_backup_sends_nothing() {
 		$this->assertFalse( WP_DBManager_Mailer::send( 'someone@example.com', $this->backup_dir . '/nope.sql' ), 'A missing backup sends nothing rather than an empty attachment.' );
-		$this->assertSame( array(), $this->sent );
+		$this->assertSame( array(), $this->sent, 'And a missing backup sends nothing rather than an empty mail.' );
 	}
 
 	/**
@@ -110,7 +110,7 @@ class WP_DBManager_Mailer_Test extends WP_DBManager_TestCase {
 
 		WP_DBManager_Mailer::send( 'someone@example.com', $path );
 
-		$this->assertSame( $path, $this->last_mail()['attachments'] );
+		$this->assertSame( $path, $this->last_mail()['attachments'], 'The dump is attached by default.' );
 	}
 
 	/**
@@ -122,7 +122,7 @@ class WP_DBManager_Mailer_Test extends WP_DBManager_TestCase {
 	public function test_declining_the_attachment_sends_no_file() {
 		WP_DBManager_Mailer::send( 'someone@example.com', $this->make_backup(), false );
 
-		$this->assertSame( array(), $this->last_mail()['attachments'] );
+		$this->assertSame( array(), $this->last_mail()['attachments'], 'Declining the attachment sends the mail without the file.' );
 	}
 
 	/**
@@ -135,9 +135,9 @@ class WP_DBManager_Mailer_Test extends WP_DBManager_TestCase {
 
 		$message = $this->last_mail()['message'];
 
-		$this->assertStringContainsString( basename( $path ), $message );
+		$this->assertStringContainsString( basename( $path ), $message, 'The body names the backup.' );
 		$this->assertStringContainsString( str_repeat( 'a', 32 ), $message, 'The checksum is missing.' );
-		$this->assertStringContainsString( get_bloginfo( 'url' ), $message );
+		$this->assertStringContainsString( get_bloginfo( 'url' ), $message, 'And the site it came from, so a mailbox of them can be told apart.' );
 		$this->assertStringContainsString( '8 bytes', $message, 'The size is missing.' );
 	}
 
@@ -153,10 +153,10 @@ class WP_DBManager_Mailer_Test extends WP_DBManager_TestCase {
 
 		$subject = $this->last_mail()['subject'];
 
-		$this->assertStringNotContainsString( '%SITE_NAME%', $subject );
-		$this->assertStringNotContainsString( '%POST_DATE%', $subject );
-		$this->assertStringNotContainsString( '%POST_TIME%', $subject );
-		$this->assertStringContainsString( get_bloginfo( 'name' ), $subject );
+		$this->assertStringNotContainsString( '%SITE_NAME%', $subject, 'The site name token is replaced.' );
+		$this->assertStringNotContainsString( '%POST_DATE%', $subject, 'The date token.' );
+		$this->assertStringNotContainsString( '%POST_TIME%', $subject, 'And the time token.' );
+		$this->assertStringContainsString( get_bloginfo( 'name' ), $subject, 'With the site name really substituted, not just removed.' );
 	}
 
 	/**
@@ -169,7 +169,7 @@ class WP_DBManager_Mailer_Test extends WP_DBManager_TestCase {
 
 		WP_DBManager_Mailer::send( 'someone@example.com', $this->make_backup() );
 
-		$this->assertNotSame( '', trim( $this->last_mail()['subject'] ) );
+		$this->assertNotSame( '', trim( $this->last_mail()['subject'] ), 'A blank subject falls back to the default rather than sending an unsubjected mail.' );
 	}
 
 	/**
@@ -185,7 +185,7 @@ class WP_DBManager_Mailer_Test extends WP_DBManager_TestCase {
 
 		$headers = (array) $this->last_mail()['headers'];
 
-		$this->assertStringContainsString( 'From: "Backup Robot" <backups@example.com>', implode( "\n", $headers ) );
+		$this->assertStringContainsString( 'From: "Backup Robot" <backups@example.com>', implode( "\n", $headers ), 'The From header carries the configured name and address.' );
 	}
 
 	/**
@@ -207,6 +207,6 @@ class WP_DBManager_Mailer_Test extends WP_DBManager_TestCase {
 
 		// Quoted, so the comma cannot be read as a separator, and the entity is
 		// decoded rather than shown raw.
-		$this->assertStringContainsString( 'From: "Lester, Chan & Co"', $headers );
+		$this->assertStringContainsString( 'From: "Lester, Chan & Co"', $headers, 'A comma in the site title is quoted, so it does not read as a second address.' );
 	}
 }

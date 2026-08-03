@@ -52,7 +52,7 @@ class WP_DBManager_List_Tables_Test extends WP_DBManager_TestCase {
 		$table = new WP_DBManager_Tables_Table( 'info' );
 
 		$this->assertArrayNotHasKey( 'cb', $table->get_columns(), 'The information table offers no checkboxes; it acts on nothing.' );
-		$this->assertSame( array(), $table->get_bulk_actions() );
+		$this->assertSame( array(), $table->get_bulk_actions(), 'The information table is read only, so it offers no bulk actions.' );
 	}
 
 	/**
@@ -68,7 +68,7 @@ class WP_DBManager_List_Tables_Test extends WP_DBManager_TestCase {
 	public function test_each_mode_offers_its_own_actions( $mode, $actions ) {
 		$table = new WP_DBManager_Tables_Table( $mode );
 
-		$this->assertSame( $actions, array_keys( $table->get_bulk_actions() ) );
+		$this->assertSame( $actions, array_keys( $table->get_bulk_actions() ), 'Each mode offers exactly its own actions.' );
 		$this->assertArrayHasKey( 'cb', $table->get_columns(), 'An action table offers checkboxes, since it acts on what is ticked.' );
 	}
 
@@ -95,9 +95,9 @@ class WP_DBManager_List_Tables_Test extends WP_DBManager_TestCase {
 		$html  = $this->render_table( $table );
 
 		$this->assertScreenIsClean( $html );
-		$this->assertStringContainsString( $wpdb->posts, $html );
-		$this->assertStringContainsString( 'name="tables[]"', $html );
-		$this->assertStringContainsString( 'value="' . $wpdb->posts . '"', $html );
+		$this->assertStringContainsString( $wpdb->posts, $html, 'The tables table lists the tables.' );
+		$this->assertStringContainsString( 'name="tables[]"', $html, 'With a checkbox per row.' );
+		$this->assertStringContainsString( 'value="' . $wpdb->posts . '"', $html, 'Carrying the table name the bulk action will be given.' );
 	}
 
 	/**
@@ -132,7 +132,7 @@ class WP_DBManager_List_Tables_Test extends WP_DBManager_TestCase {
 
 		$sorted = $ascending;
 		sort( $sorted );
-		$this->assertSame( $sorted, $ascending );
+		$this->assertSame( $sorted, $ascending, 'Ascending order is the names sorted.' );
 
 		$_GET  = array(
 			'orderby' => 'name',
@@ -141,7 +141,7 @@ class WP_DBManager_List_Tables_Test extends WP_DBManager_TestCase {
 		$table = new WP_DBManager_Tables_Table( 'info' );
 		$table->prepare_items();
 
-		$this->assertSame( array_reverse( $ascending ), wp_list_pluck( $table->items, 'name' ) );
+		$this->assertSame( array_reverse( $ascending ), wp_list_pluck( $table->items, 'name' ), 'And descending is the reverse of it.' );
 
 		$_GET = array();
 	}
@@ -158,7 +158,7 @@ class WP_DBManager_List_Tables_Test extends WP_DBManager_TestCase {
 		$sorted = $names;
 		sort( $sorted );
 
-		$this->assertSame( $sorted, $names );
+		$this->assertSame( $sorted, $names, 'An unknown orderby falls back to the name rather than to no order at all.' );
 
 		$_GET = array();
 	}
@@ -174,10 +174,10 @@ class WP_DBManager_List_Tables_Test extends WP_DBManager_TestCase {
 		$html  = $this->render_table( $table );
 
 		$this->assertScreenIsClean( $html );
-		$this->assertStringContainsString( 'sitedb.sql', $html );
-		$this->assertStringContainsString( str_repeat( 'a', 32 ), $html );
-		$this->assertStringContainsString( 'name="backups[]"', $html );
-		$this->assertSame( 8, $table->total_size() );
+		$this->assertStringContainsString( 'sitedb.sql', $html, 'The backups table lists the backups.' );
+		$this->assertStringContainsString( str_repeat( 'a', 32 ), $html, 'With the checksum, which is what tells two of them apart.' );
+		$this->assertStringContainsString( 'name="backups[]"', $html, 'And a checkbox per row.' );
+		$this->assertSame( 8, $table->total_size(), 'The total is the sizes added up.' );
 	}
 
 	/**
@@ -186,7 +186,7 @@ class WP_DBManager_List_Tables_Test extends WP_DBManager_TestCase {
 	public function test_the_backups_table_reports_an_empty_folder() {
 		$html = $this->render_table( new WP_DBManager_Backups_Table() );
 
-		$this->assertStringContainsString( 'There Are No Database Backup Files Available.', $html );
+		$this->assertStringContainsString( 'There Are No Database Backup Files Available.', $html, 'An empty folder says so rather than rendering an empty table.' );
 	}
 
 	/**
@@ -203,8 +203,8 @@ class WP_DBManager_List_Tables_Test extends WP_DBManager_TestCase {
 		$table = new WP_DBManager_Backups_Table();
 		$table->prepare_items();
 
-		$this->assertSame( 'newer.sql', $table->items[0]['database'] );
-		$this->assertSame( 'older.sql', $table->items[1]['database'] );
+		$this->assertSame( 'newer.sql', $table->items[0]['database'], 'The newest backup is listed first.' );
+		$this->assertSame( 'older.sql', $table->items[1]['database'], 'And the older one after it.' );
 	}
 
 	/**
@@ -221,7 +221,7 @@ class WP_DBManager_List_Tables_Test extends WP_DBManager_TestCase {
 		$table = new WP_DBManager_Backups_Table();
 		$table->prepare_items();
 
-		$this->assertSame( 'small.sql', $table->items[0]['database'] );
+		$this->assertSame( 'small.sql', $table->items[0]['database'], 'Sorted by size, the smallest is first.' );
 
 		$_GET = array();
 	}
@@ -234,7 +234,7 @@ class WP_DBManager_List_Tables_Test extends WP_DBManager_TestCase {
 
 		sort( $actions );
 
-		$this->assertSame( array( 'delete', 'download', 'email', 'restore' ), $actions );
+		$this->assertSame( array( 'delete', 'download', 'email', 'restore' ), $actions, 'The backups table offers every action, in this order.' );
 	}
 
 	/**
@@ -244,11 +244,11 @@ class WP_DBManager_List_Tables_Test extends WP_DBManager_TestCase {
 	 * handler checking anything else rejects every submission.
 	 */
 	public function test_the_nonce_actions_match_the_rendered_field() {
-		$this->assertSame( 'bulk-backups', WP_DBManager_Backups_Table::nonce_action() );
-		$this->assertSame( 'bulk-tables', WP_DBManager_Tables_Table::nonce_action() );
+		$this->assertSame( 'bulk-backups', WP_DBManager_Backups_Table::nonce_action(), 'The backups table nonces its bulk actions under its own name.' );
+		$this->assertSame( 'bulk-tables', WP_DBManager_Tables_Table::nonce_action(), 'And the tables table under its own, so one cannot be replayed at the other.' );
 
 		$html = $this->render_table( new WP_DBManager_Backups_Table() );
-		$this->assertStringContainsString( 'name="_wpnonce"', $html );
+		$this->assertStringContainsString( 'name="_wpnonce"', $html, 'And the field is really rendered, so the check has something to check.' );
 
 		$this->assertNotFalse(
 			wp_verify_nonce(

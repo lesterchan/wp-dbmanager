@@ -41,7 +41,7 @@ class WP_DBManager_Folder_Test extends WP_DBManager_TestCase {
 	public function test_server_type( $software, $expected ) {
 		$this->pretend_server( $software );
 
-		$this->assertSame( $expected, WP_DBManager_Folder::server_type() );
+		$this->assertSame( $expected, WP_DBManager_Folder::server_type(), 'The protection file to write follows from the server type.' );
 	}
 
 	/**
@@ -89,7 +89,7 @@ class WP_DBManager_Folder_Test extends WP_DBManager_TestCase {
 		$url = WP_DBManager_Folder::url();
 
 		$this->assertNotFalse( $url, 'A folder inside wp-content does have a URL.' );
-		$this->assertStringStartsWith( content_url(), $url );
+		$this->assertStringStartsWith( content_url(), $url, 'A folder inside wp-content has a URL under the content URL.' );
 
 		self::remove_directory( $inside );
 	}
@@ -180,16 +180,16 @@ class WP_DBManager_Folder_Test extends WP_DBManager_TestCase {
 		$method = new ReflectionMethod( 'WP_DBManager_Folder', 'probe_target' );
 
 		// Nothing at all to ask for.
-		$this->assertSame( '', $method->invoke( null, $this->backup_dir ) );
+		$this->assertSame( '', $method->invoke( null, $this->backup_dir ), 'A folder holding a real backup needs nothing else to probe with.' );
 
 		// Only the silence guard.
 		self::write_file( $this->backup_dir . '/index.php', '<?php' );
-		$this->assertSame( 'index.php', $method->invoke( null, $this->backup_dir ) );
+		$this->assertSame( 'index.php', $method->invoke( null, $this->backup_dir ), 'Without one the index file is what is probed for.' );
 
 		// A real dump wins.
 		$name = str_repeat( 'f', 32 ) . '_-_1700000000_-_db.sql';
 		self::write_file( $this->backup_dir . '/' . $name, 'SOME SQL' );
-		$this->assertSame( $name, $method->invoke( null, $this->backup_dir ) );
+		$this->assertSame( $name, $method->invoke( null, $this->backup_dir ), 'And a real backup is preferred over it once there is one.' );
 	}
 
 	/**

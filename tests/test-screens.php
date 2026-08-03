@@ -41,7 +41,7 @@ class WP_DBManager_Screens_Test extends WP_DBManager_TestCase {
 		$html = $this->render( array( 'WP_DBManager_Screens', $method ) );
 
 		$this->assertScreenIsClean( $html );
-		$this->assertStringContainsString( $expect, $html );
+		$this->assertStringContainsString( $expect, $html, 'The default view renders what it is there to show.' );
 	}
 
 	/**
@@ -68,10 +68,10 @@ class WP_DBManager_Screens_Test extends WP_DBManager_TestCase {
 		$html = $this->render( array( 'WP_DBManager_Settings', 'render' ) );
 
 		$this->assertScreenIsClean( $html );
-		$this->assertStringContainsString( 'Database Settings', $html );
+		$this->assertStringContainsString( 'Database Settings', $html, 'The settings screen is titled.' );
 		// Settings API, not a hand-rolled form posting back to itself.
-		$this->assertStringContainsString( 'action="options.php"', $html );
-		$this->assertStringContainsString( 'wp_dbmanager_options[mysqldumppath]', $html );
+		$this->assertStringContainsString( 'action="options.php"', $html, 'Its form posts to options.php, so core handles the save.' );
+		$this->assertStringContainsString( 'wp_dbmanager_options[mysqldumppath]', $html, 'And the fields are named for the option row.' );
 	}
 
 	/**
@@ -100,7 +100,7 @@ class WP_DBManager_Screens_Test extends WP_DBManager_TestCase {
 		$html = $this->render( array( 'WP_DBManager_Settings', 'render' ), array(), array( 'settings-updated' => 'true' ) );
 
 		$this->assertScreenIsClean( $html );
-		$this->assertStringContainsString( 'Settings saved.', $html );
+		$this->assertStringContainsString( 'Settings saved.', $html, 'A completed save is confirmed.' );
 	}
 
 	/**
@@ -111,7 +111,7 @@ class WP_DBManager_Screens_Test extends WP_DBManager_TestCase {
 
 		$html = $this->render( array( 'WP_DBManager_Settings', 'render' ) );
 
-		$this->assertStringContainsString( 'That backup path is no good.', $html );
+		$this->assertStringContainsString( 'That backup path is no good.', $html, 'And a rejected value says why.' );
 	}
 
 	/**
@@ -130,7 +130,7 @@ class WP_DBManager_Screens_Test extends WP_DBManager_TestCase {
 		$html = $this->render( array( 'WP_DBManager_Screens', $method ), $post );
 
 		$this->assertScreenIsClean( $html );
-		$this->assertStringContainsString( $expect, $html );
+		$this->assertStringContainsString( $expect, $html, 'The screen renders what it is there to show after a post.' );
 	}
 
 	/**
@@ -214,9 +214,9 @@ class WP_DBManager_Screens_Test extends WP_DBManager_TestCase {
 
 		$this->assertScreenIsClean( $html );
 		$this->assertStringContainsString( str_repeat( 'c', 32 ), $html, 'The checksum column is empty.' );
-		$this->assertStringContainsString( 'sitedb.sql', $html );
-		$this->assertStringContainsString( '1 backup file', $html );
-		$this->assertStringNotContainsString( 'There Are No Database Backup Files Available.', $html );
+		$this->assertStringContainsString( 'sitedb.sql', $html, 'The manage screen lists the backup.' );
+		$this->assertStringContainsString( '1 backup file', $html, 'And counts it.' );
+		$this->assertStringNotContainsString( 'There Are No Database Backup Files Available.', $html, 'So it does not also claim the folder is empty.' );
 	}
 
 	/**
@@ -225,7 +225,7 @@ class WP_DBManager_Screens_Test extends WP_DBManager_TestCase {
 	public function test_the_manage_screen_reports_an_empty_folder() {
 		$html = $this->render( array( 'WP_DBManager_Screens', 'manage' ) );
 
-		$this->assertStringContainsString( 'There Are No Database Backup Files Available.', $html );
+		$this->assertStringContainsString( 'There Are No Database Backup Files Available.', $html, 'An empty folder says so rather than rendering an empty table.' );
 	}
 
 	/**
@@ -246,7 +246,7 @@ class WP_DBManager_Screens_Test extends WP_DBManager_TestCase {
 		);
 
 		$this->assertScreenIsClean( $html );
-		$this->assertStringContainsString( 'Deleted Successfully', $html );
+		$this->assertStringContainsString( 'Deleted Successfully', $html, 'Deleting a backup is confirmed.' );
 		$this->assertFileDoesNotExist( $path, 'Deleting a backup removes the file, not only the row on screen.' );
 	}
 
@@ -263,7 +263,7 @@ class WP_DBManager_Screens_Test extends WP_DBManager_TestCase {
 			)
 		);
 
-		$this->assertStringContainsString( 'Invalid Database Backup File', $html );
+		$this->assertStringContainsString( 'Invalid Database Backup File', $html, 'While deleting one that is not there is refused rather than reported as done.' );
 	}
 
 	/**
@@ -309,8 +309,8 @@ class WP_DBManager_Screens_Test extends WP_DBManager_TestCase {
 		);
 
 		$this->assertScreenIsClean( $html );
-		$this->assertStringContainsString( 'someone@example.com', $html );
-		$this->assertStringContainsString( 'Successfully E-Mailed', $html );
+		$this->assertStringContainsString( 'someone@example.com', $html, 'Emailing a backup names the recipient.' );
+		$this->assertStringContainsString( 'Successfully E-Mailed', $html, 'And says it went.' );
 	}
 
 	/**
@@ -356,10 +356,10 @@ class WP_DBManager_Screens_Test extends WP_DBManager_TestCase {
 
 		$html = $this->render( array( 'WP_DBManager_Screens', 'manager' ) );
 
-		$this->assertStringContainsString( $wpdb->posts, $html );
+		$this->assertStringContainsString( $wpdb->posts, $html, 'The information screen lists the tables.' );
 		$this->assertMatchesRegularExpression( '/[0-9,]+ Tables?/', $html, 'The information screen totals its table count.' );
 		$this->assertMatchesRegularExpression( '/[0-9,]+ Records?/', $html, 'The information screen totals its record count.' );
-		$this->assertStringContainsString( DB_NAME, $html );
+		$this->assertStringContainsString( DB_NAME, $html, 'And names the database they are in.' );
 	}
 
 	/**
@@ -372,8 +372,8 @@ class WP_DBManager_Screens_Test extends WP_DBManager_TestCase {
 	public function test_confirmations_are_data_attributes() {
 		$html = $this->render( array( 'WP_DBManager_Screens', 'manage' ) );
 
-		$this->assertStringNotContainsString( 'onclick', $html );
-		$this->assertStringContainsString( 'data-dbmanager-confirm-actions="', $html );
+		$this->assertStringNotContainsString( 'onclick', $html, 'A confirmation is not an inline handler.' );
+		$this->assertStringContainsString( 'data-dbmanager-confirm-actions="', $html, 'It is carried as data for the script to read.' );
 
 		// The attribute is a JSON map of bulk action to message, so the script
 		// can confirm whichever action the dropdown happens to be on. Assert on
@@ -389,7 +389,7 @@ class WP_DBManager_Screens_Test extends WP_DBManager_TestCase {
 		// The \n survives as two characters, which the script turns into a real
 		// line break. Before 3.0.0 esc_js() ate it, so the dialog showed an n
 		// where the line break belonged.
-		$this->assertStringContainsString( 'Database.\nThis Action Is Not Reversible.', $messages['restore'] );
+		$this->assertStringContainsString( 'Database.\nThis Action Is Not Reversible.', $messages['restore'], 'And the restore confirmation says what cannot be undone.' );
 	}
 
 	/**

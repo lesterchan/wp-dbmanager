@@ -75,7 +75,7 @@ class WP_DBManager_Uninstall_Test extends WP_DBManager_TestCase {
 	 * called.
 	 */
 	public function test_uninstall_does_not_call_wp_get_sites() {
-		$this->assertStringNotContainsString( 'wp_get_sites', $this->uninstall_source() );
+		$this->assertStringNotContainsString( 'wp_get_sites', $this->uninstall_source(), 'The uninstaller does not call the function core removed.' );
 	}
 
 	/**
@@ -167,7 +167,7 @@ class WP_DBManager_Uninstall_Test extends WP_DBManager_TestCase {
 
 		WP_DBManager::activate_site();
 
-		$this->assertSame( 99, WP_DBManager_Options::get( 'max_backup' ) );
+		$this->assertSame( 99, WP_DBManager_Options::get( 'max_backup' ), 'Activating over an existing install leaves the settings alone.' );
 	}
 
 	/**

@@ -49,22 +49,22 @@ class WP_DBManager_Admin_Test extends WP_DBManager_TestCase {
 	public function test_page_url_builds_an_admin_url() {
 		$url = WP_DBManager_Admin::page_url( 'backup' );
 
-		$this->assertStringContainsString( 'admin.php', $url );
-		$this->assertStringContainsString( 'page=wp-dbmanager-backup', $url );
+		$this->assertStringContainsString( 'admin.php', $url, 'A page URL is an admin URL.' );
+		$this->assertStringContainsString( 'page=wp-dbmanager-backup', $url, 'Carrying the slug of the screen asked for.' );
 	}
 
 	/**
 	 * Extra query arguments survive.
 	 */
 	public function test_page_url_carries_extra_arguments() {
-		$this->assertStringContainsString( 'try_fix=1', WP_DBManager_Admin::page_url( 'backup', array( 'try_fix' => 1 ) ) );
+		$this->assertStringContainsString( 'try_fix=1', WP_DBManager_Admin::page_url( 'backup', array( 'try_fix' => 1 ) ), 'Extra arguments are appended to the page URL.' );
 	}
 
 	/**
 	 * An unknown key falls back to the top level page rather than a broken URL.
 	 */
 	public function test_page_url_falls_back_for_an_unknown_key() {
-		$this->assertStringContainsString( 'page=wp-dbmanager', WP_DBManager_Admin::page_url( 'no-such-page' ) );
+		$this->assertStringContainsString( 'page=wp-dbmanager', WP_DBManager_Admin::page_url( 'no-such-page' ), 'An unknown key falls back to the top level screen rather than a broken URL.' );
 	}
 
 	/**
@@ -113,8 +113,8 @@ class WP_DBManager_Admin_Test extends WP_DBManager_TestCase {
 	 * to manage_options: these screens restore, empty and drop tables.
 	 */
 	public function test_the_capability_is_filterable_and_defaults_to_install_plugins() {
-		$this->assertSame( 'install_plugins', WP_DBManager_Admin::CAPABILITY );
-		$this->assertSame( 'install_plugins', WP_DBManager_Admin::capability( 'manage' ) );
+		$this->assertSame( 'install_plugins', WP_DBManager_Admin::CAPABILITY, 'The default capability is install_plugins.' );
+		$this->assertSame( 'install_plugins', WP_DBManager_Admin::capability( 'manage' ), 'And that is what the manage screen asks for.' );
 
 		$seen = array();
 
@@ -129,7 +129,7 @@ class WP_DBManager_Admin_Test extends WP_DBManager_TestCase {
 			2
 		);
 
-		$this->assertSame( 'manage_options', WP_DBManager_Admin::capability( 'download' ) );
+		$this->assertSame( 'manage_options', WP_DBManager_Admin::capability( 'download' ), 'A filter can replace the capability for one screen.' );
 		$this->assertSame( array( 'download' ), $seen, 'The filter is handed the context it is gating.' );
 	}
 
@@ -182,7 +182,7 @@ class WP_DBManager_Admin_Test extends WP_DBManager_TestCase {
 		wp_dequeue_script( 'wp-dbmanager' );
 		wp_deregister_script( 'wp-dbmanager' );
 		WP_DBManager_Admin::enqueue( 'database_page_wp-dbmanager-options' );
-		$this->assertStringContainsString( 'wpDBManagerL10n', (string) wp_scripts()->get_data( 'wp-dbmanager', 'data' ) );
+		$this->assertStringContainsString( 'wpDBManagerL10n', (string) wp_scripts()->get_data( 'wp-dbmanager', 'data' ), 'The detected paths are localised on the options screen, under the name the script reads.' );
 	}
 
 	/**
@@ -202,8 +202,8 @@ class WP_DBManager_Admin_Test extends WP_DBManager_TestCase {
 			}
 		);
 
-		$this->assertStringNotContainsString( '<script>', $html );
-		$this->assertStringContainsString( '&lt;script&gt;', $html );
+		$this->assertStringNotContainsString( '<script>', $html, 'A message cannot carry markup onto the screen.' );
+		$this->assertStringContainsString( '&lt;script&gt;', $html, 'It is escaped and shown as text instead.' );
 	}
 
 	/**
@@ -235,16 +235,16 @@ class WP_DBManager_Admin_Test extends WP_DBManager_TestCase {
 			}
 		);
 
-		$this->assertStringContainsString( 'notice notice-success inline', $html );
-		$this->assertStringContainsString( 'notice notice-info inline', $html );
-		$this->assertStringContainsString( 'notice notice-error inline', $html );
+		$this->assertStringContainsString( 'notice notice-success inline', $html, 'A success message uses the core success notice.' );
+		$this->assertStringContainsString( 'notice notice-info inline', $html, 'An info message the info notice.' );
+		$this->assertStringContainsString( 'notice notice-error inline', $html, 'And an error message the error notice.' );
 
 		// The unknown type falls back to error rather than emitting notice-nonsense.
-		$this->assertStringNotContainsString( 'notice-nonsense', $html );
-		$this->assertSame( 2, substr_count( $html, 'notice notice-error inline' ) );
+		$this->assertStringNotContainsString( 'notice-nonsense', $html, 'An unknown type does not invent a class of its own.' );
+		$this->assertSame( 2, substr_count( $html, 'notice notice-error inline' ), 'It renders as an error, so both error messages are accounted for.' );
 
 		// Section 4.4: core classes only, and no inline styling anywhere.
-		$this->assertStringNotContainsString( 'style=', $html );
+		$this->assertStringNotContainsString( 'style=', $html, 'None of them carry inline styles.' );
 		$this->assertScreenIsClean( $html );
 	}
 
@@ -258,8 +258,8 @@ class WP_DBManager_Admin_Test extends WP_DBManager_TestCase {
 			}
 		);
 
-		$this->assertStringContainsString( 'notice notice-error inline', $html );
-		$this->assertStringContainsString( 'something happened', $html );
+		$this->assertStringContainsString( 'notice notice-error inline', $html, 'An unknown status type renders as an error.' );
+		$this->assertStringContainsString( 'something happened', $html, 'And still says what happened.' );
 	}
 
 	/**
@@ -272,8 +272,8 @@ class WP_DBManager_Admin_Test extends WP_DBManager_TestCase {
 			}
 		);
 
-		$this->assertStringNotContainsString( '<script>', $html );
-		$this->assertStringContainsString( '&lt;script&gt;', $html );
+		$this->assertStringNotContainsString( '<script>', $html, 'Status text cannot carry markup onto the screen.' );
+		$this->assertStringContainsString( '&lt;script&gt;', $html, 'It is escaped and shown as text instead.' );
 	}
 
 	/**
@@ -281,22 +281,22 @@ class WP_DBManager_Admin_Test extends WP_DBManager_TestCase {
 	 */
 	public function test_sort_arg_reads_the_query_string_and_falls_back() {
 		$_GET = array();
-		$this->assertSame( 'date', WP_DBManager_Admin::sort_arg( 'orderby', 'date' ) );
-		$this->assertSame( 'asc', WP_DBManager_Admin::sort_arg( 'order', 'asc' ) );
+		$this->assertSame( 'date', WP_DBManager_Admin::sort_arg( 'orderby', 'date' ), 'With nothing in the query string the fallback column is used.' );
+		$this->assertSame( 'asc', WP_DBManager_Admin::sort_arg( 'order', 'asc' ), 'And the fallback direction.' );
 
 		$_GET = array(
 			'orderby' => 'size',
 			'order'   => 'DESC',
 		);
 
-		$this->assertSame( 'size', WP_DBManager_Admin::sort_arg( 'orderby', 'date' ) );
+		$this->assertSame( 'size', WP_DBManager_Admin::sort_arg( 'orderby', 'date' ), 'A column in the query string wins over the fallback.' );
 		// sanitize_key() lowercases, which is what lets the callers compare
 		// against 'desc' without lowercasing again.
-		$this->assertSame( 'desc', WP_DBManager_Admin::sort_arg( 'order', 'asc' ) );
+		$this->assertSame( 'desc', WP_DBManager_Admin::sort_arg( 'order', 'asc' ), 'And so does a direction.' );
 
 		// An empty argument is not a column name; the fallback stands.
 		$_GET = array( 'orderby' => '' );
-		$this->assertSame( 'date', WP_DBManager_Admin::sort_arg( 'orderby', 'date' ) );
+		$this->assertSame( 'date', WP_DBManager_Admin::sort_arg( 'orderby', 'date' ), 'A value off the allow list falls back rather than reaching the query.' );
 
 		$_GET = array();
 	}
@@ -311,7 +311,8 @@ class WP_DBManager_Admin_Test extends WP_DBManager_TestCase {
 				function () {
 					WP_DBManager_Admin::render_messages( array() );
 				}
-			)
+			),
+			'With no messages there is nothing to render, not an empty notice.'
 		);
 	}
 
@@ -322,7 +323,7 @@ class WP_DBManager_Admin_Test extends WP_DBManager_TestCase {
 		self::write_file( $this->backup_dir . '/index.php', '<?php // Silence is golden.' );
 		set_transient( WP_DBManager_Folder::TRANSIENT, 'protected', HOUR_IN_SECONDS );
 
-		$this->assertSame( '', $this->notice() );
+		$this->assertSame( '', $this->notice(), 'A folder that is already protected raises no notice.' );
 	}
 
 	/**
@@ -333,7 +334,7 @@ class WP_DBManager_Admin_Test extends WP_DBManager_TestCase {
 
 		$html = $this->notice();
 
-		$this->assertStringContainsString( 'index.php', $html );
+		$this->assertStringContainsString( 'index.php', $html, 'A missing index file is named in the notice.' );
 		$this->assertScreenIsClean( $html );
 	}
 
@@ -346,8 +347,8 @@ class WP_DBManager_Admin_Test extends WP_DBManager_TestCase {
 
 		$html = $this->notice();
 
-		$this->assertStringContainsString( 'visible to the public', $html );
-		$this->assertStringContainsString( 'download your entire database', $html );
+		$this->assertStringContainsString( 'visible to the public', $html, 'A public folder is reported.' );
+		$this->assertStringContainsString( 'download your entire database', $html, 'In terms of what it would cost, not of what is missing.' );
 	}
 
 	/**
@@ -360,7 +361,7 @@ class WP_DBManager_Admin_Test extends WP_DBManager_TestCase {
 		$options['hide_admin_notices'] = 1;
 		update_option( WP_DBManager_Options::OPTION, $options );
 
-		$this->assertSame( '', $this->notice() );
+		$this->assertSame( '', $this->notice(), 'Once hidden, the notice stays hidden.' );
 	}
 
 	/**
@@ -372,7 +373,7 @@ class WP_DBManager_Admin_Test extends WP_DBManager_TestCase {
 		set_transient( WP_DBManager_Folder::TRANSIENT, 'public', HOUR_IN_SECONDS );
 		wp_set_current_user( self::factory()->user->create( array( 'role' => 'editor' ) ) );
 
-		$this->assertSame( '', $this->notice() );
+		$this->assertSame( '', $this->notice(), 'A user who cannot fix it is not shown it.' );
 	}
 
 	/**
@@ -383,9 +384,9 @@ class WP_DBManager_Admin_Test extends WP_DBManager_TestCase {
 
 		$html = $this->notice();
 
-		$this->assertStringContainsString( 'try_fix=1', $html );
-		$this->assertStringContainsString( '_wpnonce=', $html );
-		$this->assertStringContainsString( 'page=wp-dbmanager-backup', $html );
+		$this->assertStringContainsString( 'try_fix=1', $html, 'The fix link asks for the fix.' );
+		$this->assertStringContainsString( '_wpnonce=', $html, 'And carries a nonce, so it cannot be triggered from elsewhere.' );
+		$this->assertStringContainsString( 'page=wp-dbmanager-backup', $html, 'Pointing at the screen that performs it.' );
 	}
 
 	/**
@@ -409,7 +410,7 @@ class WP_DBManager_Admin_Test extends WP_DBManager_TestCase {
 
 		$this->notice();
 
-		$this->assertSame( 0, $requests );
+		$this->assertSame( 0, $requests, 'The notice reaches its conclusion without making an HTTP request.' );
 	}
 
 	/**

@@ -289,10 +289,10 @@ abstract class WP_DBManager_TestCase extends WP_UnitTestCase {
 	protected function assertScreenIsClean( $html ) {
 		$this->assertNotEmpty( $html, 'The screen rendered nothing at all.' );
 		$this->assertSame( array(), $this->notices, 'The screen raised PHP diagnostics.' );
-		$this->assertStringNotContainsString( 'translators:', $html );
-		$this->assertStringNotContainsString( '<?php', $html );
-		$this->assertStringNotContainsString( '&amp;amp;', $html );
-		$this->assertStringNotContainsString( '&amp;nbsp;', $html );
-		$this->assertStringNotContainsString( 'Fatal error', $html );
+		$this->assertStringNotContainsString( 'translators:', $html, 'A translators comment reached the screen instead of the translator.' );
+		$this->assertStringNotContainsString( '<?php', $html, 'An unclosed PHP tag printed its own source.' );
+		$this->assertStringNotContainsString( '&amp;amp;', $html, 'An ampersand was escaped twice.' );
+		$this->assertStringNotContainsString( '&amp;nbsp;', $html, 'And so was a non-breaking space.' );
+		$this->assertStringNotContainsString( 'Fatal error', $html, 'The screen fatalled part way through rendering.' );
 	}
 }

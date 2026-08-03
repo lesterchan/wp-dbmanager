@@ -160,8 +160,8 @@ class WP_DBManager_Metadata_Test extends Plugin_Metadata_TestCase {
 		$this->assertFileExists( $root . '/htaccess.txt', 'Apache sites copy this in as .htaccess.' );
 		$this->assertFileExists( $root . '/Web.config.txt', 'IIS sites copy this in as Web.config.' );
 
-		$this->assertStringContainsString( 'deny from all', wp_dbmanager_test_read( 'htaccess.txt' ) );
-		$this->assertStringContainsString( 'requestFiltering', wp_dbmanager_test_read( 'Web.config.txt' ) );
+		$this->assertStringContainsString( 'deny from all', wp_dbmanager_test_read( 'htaccess.txt' ), 'The Apache protection file still ships.' );
+		$this->assertStringContainsString( 'requestFiltering', wp_dbmanager_test_read( 'Web.config.txt' ), 'And the IIS one.' );
 	}
 
 	/**
@@ -203,8 +203,8 @@ class WP_DBManager_Metadata_Test extends Plugin_Metadata_TestCase {
 		$readme = preg_replace( '/`[^`]*`/', '', $this->readme() );
 
 		$this->assertSame( 0, preg_match( '#http://#', $readme ), 'Every readme link must use https.' );
-		$this->assertSame( 0, preg_match( '#http://#', $this->plugin_file() ) );
-		$this->assertStringNotContainsString( 'forums.lesterchan.net', $readme );
+		$this->assertSame( 0, preg_match( '#http://#', $this->plugin_file() ), 'The plugin file has no insecure links left.' );
+		$this->assertStringNotContainsString( 'forums.lesterchan.net', $readme, 'And the readme does not point at the forum that closed.' );
 	}
 
 	/**
@@ -215,10 +215,10 @@ class WP_DBManager_Metadata_Test extends Plugin_Metadata_TestCase {
 	 * self-contradicting licence statement rather than a stylistic choice.
 	 */
 	public function test_the_licence_block_is_the_or_later_variant() {
-		$this->assertStringContainsString( 'either version 2 of the License, or', $this->plugin_file() );
-		$this->assertStringContainsString( '(at your option) any later version.', $this->plugin_file() );
-		$this->assertSame( 'GPLv2 or later', $this->header_field( 'License' ) );
-		$this->assertStringContainsString( '"license": "GPL-2.0-or-later"', wp_dbmanager_test_read( 'composer.json' ) );
+		$this->assertStringContainsString( 'either version 2 of the License, or', $this->plugin_file(), 'The licence block is the or-later variant.' );
+		$this->assertStringContainsString( '(at your option) any later version.', $this->plugin_file(), 'Which is what the second half of the sentence says.' );
+		$this->assertSame( 'GPLv2 or later', $this->header_field( 'License' ), 'The header says the same.' );
+		$this->assertStringContainsString( '"license": "GPL-2.0-or-later"', wp_dbmanager_test_read( 'composer.json' ), 'And so does composer.json, so the three cannot drift.' );
 	}
 
 	/**
@@ -232,9 +232,10 @@ class WP_DBManager_Metadata_Test extends Plugin_Metadata_TestCase {
 		$this->assertStringContainsString( '### Donations', $description, 'Donations belongs under Description.' );
 		$this->assertStringContainsString(
 			'I spent most of my free time creating, updating, maintaining and supporting these plugins, if you really love my plugins and could spare me a couple of bucks, I will really appreciate it. If not feel free to use it without any obligations.',
-			$description
+			$description,
+			'The donations section carries the shared wording.'
 		);
-		$this->assertStringNotContainsString( 'as my school allowance', $description );
+		$this->assertStringNotContainsString( 'as my school allowance', $description, 'And not the wording it replaced.' );
 		$this->assertStringNotContainsString(
 			'* I spent most of my free time',
 			$description,
@@ -246,8 +247,8 @@ class WP_DBManager_Metadata_Test extends Plugin_Metadata_TestCase {
 	 * Development and Credits live in the repo, not the wordpress.org readme.
 	 */
 	public function test_the_retired_readme_sections_are_gone() {
-		$this->assertSame( 0, preg_match( '/^### Development/m', $this->readme() ) );
-		$this->assertSame( 0, preg_match( '/^### Credits/m', $this->readme() ) );
+		$this->assertSame( 0, preg_match( '/^### Development/m', $this->readme() ), 'The Development section is gone.' );
+		$this->assertSame( 0, preg_match( '/^### Credits/m', $this->readme() ), 'And the Credits section.' );
 	}
 
 	/**

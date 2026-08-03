@@ -51,7 +51,7 @@ class WP_DBManager_Tables_Test extends WP_DBManager_TestCase {
 	public function test_filter_keeps_a_real_table() {
 		$selected = WP_DBManager_Tables::filter( array( $this->scratch => 'yes' ), 'yes' );
 
-		$this->assertSame( array( $this->scratch ), $selected );
+		$this->assertSame( array( $this->scratch ), $selected, 'A real table survives the filter.' );
 	}
 
 	/**
@@ -61,7 +61,7 @@ class WP_DBManager_Tables_Test extends WP_DBManager_TestCase {
 	 * Optimize screen report success for a name the submitter invented.
 	 */
 	public function test_filter_drops_a_table_that_does_not_exist() {
-		$this->assertSame( array(), WP_DBManager_Tables::filter( array( 'wp_not_a_table' => 'yes' ), 'yes' ) );
+		$this->assertSame( array(), WP_DBManager_Tables::filter( array( 'wp_not_a_table' => 'yes' ), 'yes' ), 'A table that does not exist is dropped rather than passed to the query.' );
 	}
 
 	/**
@@ -72,7 +72,7 @@ class WP_DBManager_Tables_Test extends WP_DBManager_TestCase {
 	 * @param string $name Submitted table name.
 	 */
 	public function test_filter_drops_injection_attempts( $name ) {
-		$this->assertSame( array(), WP_DBManager_Tables::filter( array( $name => 'yes' ), 'yes' ) );
+		$this->assertSame( array(), WP_DBManager_Tables::filter( array( $name => 'yes' ), 'yes' ), 'And so is an injection attempt.' );
 	}
 
 	/**
@@ -96,16 +96,16 @@ class WP_DBManager_Tables_Test extends WP_DBManager_TestCase {
 	public function test_filter_respects_the_wanted_value() {
 		$submitted = array( $this->scratch => 'no' );
 
-		$this->assertSame( array(), WP_DBManager_Tables::filter( $submitted, 'yes' ) );
-		$this->assertSame( array( $this->scratch ), WP_DBManager_Tables::filter( $submitted, 'no' ) );
+		$this->assertSame( array(), WP_DBManager_Tables::filter( $submitted, 'yes' ), 'A row not marked with the wanted value is dropped.' );
+		$this->assertSame( array( $this->scratch ), WP_DBManager_Tables::filter( $submitted, 'no' ), 'And is kept when that is the value asked for.' );
 	}
 
 	/**
 	 * Empty and non-array input is handled.
 	 */
 	public function test_filter_handles_nothing_submitted() {
-		$this->assertSame( array(), WP_DBManager_Tables::filter( array(), 'yes' ) );
-		$this->assertSame( array(), WP_DBManager_Tables::filter( 'not an array', 'yes' ) );
+		$this->assertSame( array(), WP_DBManager_Tables::filter( array(), 'yes' ), 'Nothing submitted selects nothing.' );
+		$this->assertSame( array(), WP_DBManager_Tables::filter( 'not an array', 'yes' ), 'And neither does a string where the array should be.' );
 	}
 
 	/**
@@ -114,8 +114,8 @@ class WP_DBManager_Tables_Test extends WP_DBManager_TestCase {
 	public function test_empty_and_drop_are_separated_from_one_submission() {
 		$submitted = array( $this->scratch => 'drop' );
 
-		$this->assertSame( array(), WP_DBManager_Tables::filter( $submitted, 'empty' ) );
-		$this->assertSame( array( $this->scratch ), WP_DBManager_Tables::filter( $submitted, 'drop' ) );
+		$this->assertSame( array(), WP_DBManager_Tables::filter( $submitted, 'empty' ), 'One submission carrying only drops empties nothing.' );
+		$this->assertSame( array( $this->scratch ), WP_DBManager_Tables::filter( $submitted, 'drop' ), 'And drops the table it named.' );
 	}
 
 	/**
@@ -126,7 +126,7 @@ class WP_DBManager_Tables_Test extends WP_DBManager_TestCase {
 
 		WP_DBManager_Tables::truncate( $this->scratch );
 
-		$this->assertSame( '0', $wpdb->get_var( "SELECT COUNT(*) FROM `{$this->scratch}`" ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$this->assertSame( '0', $wpdb->get_var( "SELECT COUNT(*) FROM `{$this->scratch}`" ), 'Truncating leaves the table with no rows.' ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 	}
 
 	/**
@@ -135,7 +135,7 @@ class WP_DBManager_Tables_Test extends WP_DBManager_TestCase {
 	public function test_drop_removes_the_table() {
 		WP_DBManager_Tables::drop( array( $this->scratch ) );
 
-		$this->assertNotContains( $this->scratch, WP_DBManager_Tables::all() );
+		$this->assertNotContains( $this->scratch, WP_DBManager_Tables::all(), 'And dropping leaves no table at all.' );
 	}
 
 	/**
@@ -193,8 +193,8 @@ class WP_DBManager_Tables_Test extends WP_DBManager_TestCase {
 
 		$tables = WP_DBManager_Tables::all();
 
-		$this->assertContains( $this->scratch, $tables );
-		$this->assertContains( $wpdb->posts, $tables );
+		$this->assertContains( $this->scratch, $tables, 'The scratch table is listed.' );
+		$this->assertContains( $wpdb->posts, $tables, 'And so are the core ones.' );
 	}
 
 	/**
@@ -206,7 +206,7 @@ class WP_DBManager_Tables_Test extends WP_DBManager_TestCase {
 	 * @param string $expected Outcome.
 	 */
 	public function test_run_query_classification( $query, $expected ) {
-		$this->assertSame( $expected, WP_DBManager_Tables::run_query( $query ) );
+		$this->assertSame( $expected, WP_DBManager_Tables::run_query( $query ), 'The query is classified by what it would do.' );
 	}
 
 	/**
@@ -234,8 +234,8 @@ class WP_DBManager_Tables_Test extends WP_DBManager_TestCase {
 	public function test_run_query_executes_an_allowed_statement() {
 		global $wpdb;
 
-		$this->assertSame( 'ok', WP_DBManager_Tables::run_query( "INSERT INTO `{$this->scratch}` (v) VALUES ('c')" ) );
-		$this->assertSame( '3', $wpdb->get_var( "SELECT COUNT(*) FROM `{$this->scratch}`" ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$this->assertSame( 'ok', WP_DBManager_Tables::run_query( "INSERT INTO `{$this->scratch}` (v) VALUES ('c')" ), 'An allowed statement reports success.' );
+		$this->assertSame( '3', $wpdb->get_var( "SELECT COUNT(*) FROM `{$this->scratch}`" ), 'And really ran, leaving the row it inserted.' ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 	}
 
 	/**
@@ -248,7 +248,7 @@ class WP_DBManager_Tables_Test extends WP_DBManager_TestCase {
 
 		WP_DBManager_Tables::run_query( "INSERT INTO `{$this->scratch}` (v) VALUES (LOAD_FILE('/etc/passwd'))" );
 
-		$this->assertSame( $before, $wpdb->get_var( "SELECT COUNT(*) FROM `{$this->scratch}`" ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$this->assertSame( $before, $wpdb->get_var( "SELECT COUNT(*) FROM `{$this->scratch}`" ), 'LOAD DATA never runs, so the table is as it was.' ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 	}
 
 	/**
@@ -257,6 +257,6 @@ class WP_DBManager_Tables_Test extends WP_DBManager_TestCase {
 	public function test_split_queries_drops_blank_lines() {
 		$queries = WP_DBManager_Tables::split_queries( "SELECT 1\n\n  \nSELECT 2\r\n" );
 
-		$this->assertSame( array( 'SELECT 1', 'SELECT 2' ), $queries );
+		$this->assertSame( array( 'SELECT 1', 'SELECT 2' ), $queries, 'Blank lines are dropped, leaving only the statements.' );
 	}
 }

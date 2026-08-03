@@ -36,15 +36,15 @@ class WP_DBManager_Backups_Test extends WP_DBManager_TestCase {
 	 * 2 GiB backup was reported as "2048.0 GiB".
 	 */
 	public function test_format_size_uses_the_right_divisor() {
-		$this->assertStringContainsString( 'bytes', WP_DBManager_Backups::format_size( 512 ) );
-		$this->assertStringContainsString( 'KiB', WP_DBManager_Backups::format_size( 2 * KB_IN_BYTES ) );
-		$this->assertStringContainsString( 'MiB', WP_DBManager_Backups::format_size( 2 * MB_IN_BYTES ) );
+		$this->assertStringContainsString( 'bytes', WP_DBManager_Backups::format_size( 512 ), 'A small size stays in bytes.' );
+		$this->assertStringContainsString( 'KiB', WP_DBManager_Backups::format_size( 2 * KB_IN_BYTES ), 'Two kilobytes are formatted in binary units.' );
+		$this->assertStringContainsString( 'MiB', WP_DBManager_Backups::format_size( 2 * MB_IN_BYTES ), 'And so are megabytes.' );
 
 		$two_gib = WP_DBManager_Backups::format_size( 2 * GB_IN_BYTES );
 
-		$this->assertStringContainsString( 'GiB', $two_gib );
-		$this->assertStringContainsString( '2.0', $two_gib );
-		$this->assertStringNotContainsString( '2,048', $two_gib );
+		$this->assertStringContainsString( 'GiB', $two_gib, 'And gigabytes.' );
+		$this->assertStringContainsString( '2.0', $two_gib, 'Rendered as two of them.' );
+		$this->assertStringNotContainsString( '2,048', $two_gib, 'Rather than as the mebibytes they came in as.' );
 	}
 
 	/**
@@ -53,10 +53,10 @@ class WP_DBManager_Backups_Test extends WP_DBManager_TestCase {
 	public function test_parse_filename_reads_a_checksummed_name() {
 		$file = WP_DBManager_Backups::parse_filename( str_repeat( 'a', 32 ) . '_-_1700000000_-_sitedb.sql' );
 
-		$this->assertSame( str_repeat( 'a', 32 ), $file['checksum'] );
-		$this->assertSame( '1700000000', $file['timestamp'] );
-		$this->assertSame( 'sitedb.sql', $file['database'] );
-		$this->assertNotSame( '-', $file['formatted_date'] );
+		$this->assertSame( str_repeat( 'a', 32 ), $file['checksum'], 'A checksummed name yields its checksum.' );
+		$this->assertSame( '1700000000', $file['timestamp'], 'Its timestamp.' );
+		$this->assertSame( 'sitedb.sql', $file['database'], 'And the database it holds.' );
+		$this->assertNotSame( '-', $file['formatted_date'], 'The timestamp is real, so it formats to a date rather than a dash.' );
 	}
 
 	/**
@@ -65,9 +65,9 @@ class WP_DBManager_Backups_Test extends WP_DBManager_TestCase {
 	public function test_parse_filename_reads_a_legacy_name() {
 		$file = WP_DBManager_Backups::parse_filename( '1700000000_-_sitedb.sql' );
 
-		$this->assertSame( '-', $file['checksum'] );
-		$this->assertSame( '1700000000', $file['timestamp'] );
-		$this->assertSame( 'sitedb.sql', $file['database'] );
+		$this->assertSame( '-', $file['checksum'], 'A legacy name has no checksum, and reads as a dash rather than as garbage.' );
+		$this->assertSame( '1700000000', $file['timestamp'], 'Its timestamp is still read.' );
+		$this->assertSame( 'sitedb.sql', $file['database'], 'And the database it holds.' );
 	}
 
 	/**
@@ -76,8 +76,8 @@ class WP_DBManager_Backups_Test extends WP_DBManager_TestCase {
 	public function test_parse_filename_survives_an_unexpected_name() {
 		$file = WP_DBManager_Backups::parse_filename( 'notabackup.sql' );
 
-		$this->assertSame( '-', $file['formatted_date'] );
-		$this->assertSame( 'notabackup.sql', $file['database'] );
+		$this->assertSame( '-', $file['formatted_date'], 'An unexpected name has no date to format.' );
+		$this->assertSame( 'notabackup.sql', $file['database'], 'But is still named, so it can be shown and deleted.' );
 	}
 
 	/**
@@ -92,11 +92,11 @@ class WP_DBManager_Backups_Test extends WP_DBManager_TestCase {
 
 		$names = wp_list_pluck( WP_DBManager_Backups::all( $this->backup_dir ), 'name' );
 
-		$this->assertContains( 'a_-_1700000000_-_db.sql', $names );
-		$this->assertContains( 'b_-_1700000001_-_db.sql.gz', $names );
-		$this->assertNotContains( '.htaccess', $names );
-		$this->assertNotContains( 'index.php', $names );
-		$this->assertNotContains( 'notes.txt', $names );
+		$this->assertContains( 'a_-_1700000000_-_db.sql', $names, 'A plain backup is listed.' );
+		$this->assertContains( 'b_-_1700000001_-_db.sql.gz', $names, 'And a compressed one.' );
+		$this->assertNotContains( '.htaccess', $names, 'The folder protection file is not.' );
+		$this->assertNotContains( 'index.php', $names, 'Nor the index.' );
+		$this->assertNotContains( 'notes.txt', $names, 'Nor anything else that happens to be sitting there.' );
 	}
 
 	/**
@@ -121,7 +121,7 @@ class WP_DBManager_Backups_Test extends WP_DBManager_TestCase {
 
 		$names = wp_list_pluck( WP_DBManager_Backups::all( $this->backup_dir ), 'name' );
 
-		$this->assertSame( 'older_-_1700000000_-_db.sql', $names[0] );
+		$this->assertSame( 'older_-_1700000000_-_db.sql', $names[0], 'The oldest backup sorts first.' );
 	}
 
 	/**
@@ -160,7 +160,7 @@ class WP_DBManager_Backups_Test extends WP_DBManager_TestCase {
 
 		$names = wp_list_pluck( WP_DBManager_Backups::all( $this->backup_dir ), 'name' );
 
-		$this->assertSame( array( 'new_-_1700000900_-_db.sql' ), $names );
+		$this->assertSame( array( 'new_-_1700000900_-_db.sql' ), $names, 'Pruning removes the oldest and keeps the newest.' );
 	}
 
 	/**
@@ -187,7 +187,7 @@ class WP_DBManager_Backups_Test extends WP_DBManager_TestCase {
 	public function test_resolve_accepts_a_real_backup() {
 		$path = $this->make_backup( 'a_-_1700000000_-_db.sql' );
 
-		$this->assertSame( realpath( $path ), WP_DBManager_Backups::resolve( 'a_-_1700000000_-_db.sql' ) );
+		$this->assertSame( realpath( $path ), WP_DBManager_Backups::resolve( 'a_-_1700000000_-_db.sql' ), 'A real backup resolves to its own path on disk.' );
 	}
 
 	/**
@@ -224,9 +224,9 @@ class WP_DBManager_Backups_Test extends WP_DBManager_TestCase {
 	 * Extensions are read off the end of the name.
 	 */
 	public function test_file_ext() {
-		$this->assertSame( 'sql', WP_DBManager_Backups::file_ext( 'a_-_1700000000_-_db.sql' ) );
-		$this->assertSame( 'gz', WP_DBManager_Backups::file_ext( 'a_-_1700000000_-_db.sql.gz' ) );
-		$this->assertSame( '', WP_DBManager_Backups::file_ext( 'noextension' ) );
+		$this->assertSame( 'sql', WP_DBManager_Backups::file_ext( 'a_-_1700000000_-_db.sql' ), 'A plain dump has the sql extension.' );
+		$this->assertSame( 'gz', WP_DBManager_Backups::file_ext( 'a_-_1700000000_-_db.sql.gz' ), 'A compressed one has gz, not sql.' );
+		$this->assertSame( '', WP_DBManager_Backups::file_ext( 'noextension' ), 'And a name with no extension has none rather than the whole name.' );
 	}
 
 	/**
@@ -255,7 +255,7 @@ class WP_DBManager_Backups_Test extends WP_DBManager_TestCase {
 		);
 
 		$this->assertLessThan( 0, WP_DBManager_Backups::compare( $same_a, $same_b ), 'Backups sharing a time fall back to sorting by name.' );
-		$this->assertSame( 0, WP_DBManager_Backups::compare( $same_a, $same_a ) );
+		$this->assertSame( 0, WP_DBManager_Backups::compare( $same_a, $same_a ), 'A backup compares equal to itself.' );
 	}
 
 	/**
@@ -266,10 +266,10 @@ class WP_DBManager_Backups_Test extends WP_DBManager_TestCase {
 
 		$file = WP_DBManager_Backups::parse_file( $path );
 
-		$this->assertSame( 8, $file['size'] );
-		$this->assertSame( $this->backup_dir, $file['path'] );
-		$this->assertStringContainsString( 'bytes', $file['formatted_size'] );
-		$this->assertSame( str_repeat( 'b', 32 ), $file['checksum'] );
+		$this->assertSame( 8, $file['size'], 'The size is read off the file.' );
+		$this->assertSame( $this->backup_dir, $file['path'], 'And the folder it is in.' );
+		$this->assertStringContainsString( 'bytes', $file['formatted_size'], 'The size is formatted for the screen as well as stored raw.' );
+		$this->assertSame( str_repeat( 'b', 32 ), $file['checksum'], 'While the checksum still comes from the name.' );
 	}
 
 	/**

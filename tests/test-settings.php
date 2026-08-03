@@ -37,18 +37,18 @@ class WP_DBManager_Settings_Test extends WP_DBManager_TestCase {
 
 		$result = WP_DBManager_Settings::sanitize( $input );
 
-		$this->assertSame( 7, $result['max_backup'] );
-		$this->assertSame( 2, $result['backup'] );
-		$this->assertSame( 0, $result['backup_gzip'] );
-		$this->assertSame( 86400, $result['backup_period'] );
-		$this->assertSame( 'harness@example.com', $result['backup_email'] );
-		$this->assertSame( 0, $result['backup_email_attach'] );
-		$this->assertSame( 'Harness Sender', $result['backup_email_from_name'] );
-		$this->assertSame( '%SITE_NAME% dump %POST_DATE%', $result['backup_email_subject'] );
-		$this->assertSame( 3600, $result['optimize_period'] );
-		$this->assertSame( 604800, $result['repair_period'] );
-		$this->assertSame( 1, $result['hide_admin_notices'] );
-		$this->assertSame( $this->backup_dir, $result['path'] );
+		$this->assertSame( 7, $result['max_backup'], 'The backup count is stored.' );
+		$this->assertSame( 2, $result['backup'], 'The backup mode.' );
+		$this->assertSame( 0, $result['backup_gzip'], 'The compression toggle.' );
+		$this->assertSame( 86400, $result['backup_period'], 'The backup interval.' );
+		$this->assertSame( 'harness@example.com', $result['backup_email'], 'The address to mail.' );
+		$this->assertSame( 0, $result['backup_email_attach'], 'The attachment toggle.' );
+		$this->assertSame( 'Harness Sender', $result['backup_email_from_name'], 'The sender name.' );
+		$this->assertSame( '%SITE_NAME% dump %POST_DATE%', $result['backup_email_subject'], 'The subject, tokens and all.' );
+		$this->assertSame( 3600, $result['optimize_period'], 'The optimize interval.' );
+		$this->assertSame( 604800, $result['repair_period'], 'The repair interval.' );
+		$this->assertSame( 1, $result['hide_admin_notices'], 'The notice toggle.' );
+		$this->assertSame( $this->backup_dir, $result['path'], 'And the backup folder.' );
 	}
 
 	/**
@@ -57,7 +57,7 @@ class WP_DBManager_Settings_Test extends WP_DBManager_TestCase {
 	public function test_unresolvable_backup_path_is_refused() {
 		$result = WP_DBManager_Settings::sanitize( array( 'path' => '/no/such/directory/anywhere' ) );
 
-		$this->assertSame( $this->backup_dir, $result['path'] );
+		$this->assertSame( $this->backup_dir, $result['path'], 'A path that does not resolve is refused and the stored one stands.' );
 		$this->assertNotEmpty( get_settings_errors( WP_DBManager_Options::OPTION ), 'An unresolvable backup path is refused with a message rather than saved.' );
 	}
 
@@ -74,7 +74,7 @@ class WP_DBManager_Settings_Test extends WP_DBManager_TestCase {
 
 		$result = WP_DBManager_Settings::sanitize( array( $key => $value ) );
 
-		$this->assertSame( $before, $result[ $key ] );
+		$this->assertSame( $before, $result[ $key ], 'A binary path that is not a binary is refused and the stored one stands.' );
 	}
 
 	/**
@@ -104,7 +104,7 @@ class WP_DBManager_Settings_Test extends WP_DBManager_TestCase {
 
 		$result = WP_DBManager_Settings::sanitize( array( 'backup_period' => '999' ) );
 
-		$this->assertSame( $before, $result['backup_period'] );
+		$this->assertSame( $before, $result['backup_period'], 'An interval off the allow list is refused and the stored one stands.' );
 	}
 
 	/**
@@ -124,17 +124,17 @@ class WP_DBManager_Settings_Test extends WP_DBManager_TestCase {
 	public function test_partial_submission_keeps_untouched_keys() {
 		$result = WP_DBManager_Settings::sanitize( array( 'max_backup' => '3' ) );
 
-		$this->assertSame( 3, $result['max_backup'] );
-		$this->assertSame( WP_DBManager_Options::get( 'backup_email_subject' ), $result['backup_email_subject'] );
-		$this->assertSame( WP_DBManager_Options::get( 'mysqlpath' ), $result['mysqlpath'] );
+		$this->assertSame( 3, $result['max_backup'], 'A partial submission leaves the key it did not mention alone.' );
+		$this->assertSame( WP_DBManager_Options::get( 'backup_email_subject' ), $result['backup_email_subject'], 'Including the subject.' );
+		$this->assertSame( WP_DBManager_Options::get( 'mysqlpath' ), $result['mysqlpath'], 'And the binary paths, which are the expensive ones to lose.' );
 	}
 
 	/**
 	 * Anything that is not an array leaves the settings alone.
 	 */
 	public function test_non_array_input_is_ignored() {
-		$this->assertSame( WP_DBManager_Options::get(), WP_DBManager_Settings::sanitize( 'nonsense' ) );
-		$this->assertSame( WP_DBManager_Options::get(), WP_DBManager_Settings::sanitize( null ) );
+		$this->assertSame( WP_DBManager_Options::get(), WP_DBManager_Settings::sanitize( 'nonsense' ), 'A string where an array was expected changes nothing.' );
+		$this->assertSame( WP_DBManager_Options::get(), WP_DBManager_Settings::sanitize( null ), 'And neither does null.' );
 	}
 
 	/**
@@ -143,7 +143,7 @@ class WP_DBManager_Settings_Test extends WP_DBManager_TestCase {
 	public function test_counts_cannot_go_negative() {
 		$result = WP_DBManager_Settings::sanitize( array( 'max_backup' => '-5' ) );
 
-		$this->assertSame( 0, $result['max_backup'] );
+		$this->assertSame( 0, $result['max_backup'], 'A negative count is floored at zero rather than stored.' );
 	}
 
 	/**
@@ -175,8 +175,8 @@ class WP_DBManager_Settings_Test extends WP_DBManager_TestCase {
 	 * The settings group is the settings row name.
 	 */
 	public function test_the_group_is_the_option_row_name() {
-		$this->assertSame( WP_DBManager_Options::OPTION, WP_DBManager_Settings::GROUP );
-		$this->assertSame( 'wp_dbmanager_options', WP_DBManager_Settings::GROUP );
+		$this->assertSame( WP_DBManager_Options::OPTION, WP_DBManager_Settings::GROUP, 'The settings group is the option row name.' );
+		$this->assertSame( 'wp_dbmanager_options', WP_DBManager_Settings::GROUP, 'Which is this, so a rename has to change both.' );
 	}
 
 	/**
@@ -191,7 +191,7 @@ class WP_DBManager_Settings_Test extends WP_DBManager_TestCase {
 
 		$page = WP_DBManager_Settings::page();
 
-		$this->assertSame( 'wp-dbmanager-options', $page );
+		$this->assertSame( 'wp-dbmanager-options', $page, 'The sections are registered against the options page.' );
 		$this->assertArrayHasKey( $page, $wp_settings_sections, 'The sections are registered against the options page.' );
 
 		$this->assertSame(
@@ -201,7 +201,8 @@ class WP_DBManager_Settings_Test extends WP_DBManager_TestCase {
 				WP_DBManager_Settings::SECTION_EMAIL,
 				WP_DBManager_Settings::SECTION_MISC,
 			),
-			array_keys( $wp_settings_sections[ $page ] )
+			array_keys( $wp_settings_sections[ $page ] ),
+			'And these are the sections, in this order.'
 		);
 	}
 
@@ -261,8 +262,8 @@ class WP_DBManager_Settings_Test extends WP_DBManager_TestCase {
 			$code,
 			'Section 4.2 allows zero hand-written form tables.'
 		);
-		$this->assertStringContainsString( 'do_settings_sections(', $source );
-		$this->assertStringContainsString( 'add_settings_section(', $source );
-		$this->assertStringContainsString( 'add_settings_field(', $source );
+		$this->assertStringContainsString( 'do_settings_sections(', $source, 'The screen renders the sections through core.' );
+		$this->assertStringContainsString( 'add_settings_section(', $source, 'Which are registered through core.' );
+		$this->assertStringContainsString( 'add_settings_field(', $source, 'And so are their fields, rather than a form table written by hand.' );
 	}
 }

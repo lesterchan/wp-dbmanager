@@ -48,9 +48,9 @@ class WP_DBManager_Cron_Test extends WP_DBManager_TestCase {
 
 		$schedules = WP_DBManager_Cron::schedules( array() );
 
-		$this->assertSame( 2 * 86400, $schedules['wp_dbmanager_backup']['interval'] );
-		$this->assertSame( 5 * 3600, $schedules['wp_dbmanager_optimize']['interval'] );
-		$this->assertSame( 4 * 604800, $schedules['wp_dbmanager_repair']['interval'] );
+		$this->assertSame( 2 * 86400, $schedules['wp_dbmanager_backup']['interval'], 'The backup schedule is the configured interval.' );
+		$this->assertSame( 5 * 3600, $schedules['wp_dbmanager_optimize']['interval'], 'And the optimize schedule.' );
+		$this->assertSame( 4 * 604800, $schedules['wp_dbmanager_repair']['interval'], 'And the repair schedule.' );
 	}
 
 	/**
@@ -65,7 +65,7 @@ class WP_DBManager_Cron_Test extends WP_DBManager_TestCase {
 		$schedules = WP_DBManager_Cron::schedules( array() );
 
 		$this->assertArrayHasKey( 'wp_dbmanager_backup', $schedules, 'A disabled job still declares its schedule, so re-enabling it needs no new interval.' );
-		$this->assertSame( YEAR_IN_SECONDS, $schedules['wp_dbmanager_backup']['interval'] );
+		$this->assertSame( YEAR_IN_SECONDS, $schedules['wp_dbmanager_backup']['interval'], 'A disabled job still has a schedule, pushed a year out rather than removed.' );
 	}
 
 	/**
@@ -139,7 +139,7 @@ class WP_DBManager_Cron_Test extends WP_DBManager_TestCase {
 			}
 		}
 
-		$this->assertSame( 1, $count );
+		$this->assertSame( 1, $count, 'Rescheduling leaves one event, not two.' );
 	}
 
 	/**
@@ -198,7 +198,7 @@ class WP_DBManager_Cron_Test extends WP_DBManager_TestCase {
 			}
 		}
 
-		$this->assertSame( 1, $count );
+		$this->assertSame( 1, $count, 'Migrating twice leaves one event, not two.' );
 	}
 
 	/**
@@ -209,7 +209,7 @@ class WP_DBManager_Cron_Test extends WP_DBManager_TestCase {
 
 		WP_DBManager_Cron::backup();
 
-		$this->assertSame( array(), WP_DBManager_Backups::all( $this->backup_dir ) );
+		$this->assertSame( array(), WP_DBManager_Backups::all( $this->backup_dir ), 'A disabled backup job takes no backup.' );
 	}
 
 	/**
@@ -225,7 +225,7 @@ class WP_DBManager_Cron_Test extends WP_DBManager_TestCase {
 
 		WP_DBManager_Cron::backup();
 
-		$this->assertSame( array(), WP_DBManager_Backups::all( $this->backup_dir ) );
+		$this->assertSame( array(), WP_DBManager_Backups::all( $this->backup_dir ), 'A backup job with no folder to write to does nothing.' );
 	}
 
 	/**
@@ -264,7 +264,7 @@ class WP_DBManager_Cron_Test extends WP_DBManager_TestCase {
 
 		WP_DBManager_Cron::optimize();
 
-		$this->assertSame( 0, $ran );
+		$this->assertSame( 0, $ran, 'A disabled optimize job runs no query.' );
 	}
 
 	/**
@@ -286,8 +286,8 @@ class WP_DBManager_Cron_Test extends WP_DBManager_TestCase {
 
 		WP_DBManager_Cron::optimize();
 
-		$this->assertStringContainsString( 'OPTIMIZE TABLE', $seen );
-		$this->assertStringContainsString( $GLOBALS['wpdb']->posts, $seen );
+		$this->assertStringContainsString( 'OPTIMIZE TABLE', $seen, 'An enabled one optimizes.' );
+		$this->assertStringContainsString( $GLOBALS['wpdb']->posts, $seen, 'And reaches the real tables.' );
 	}
 
 	/**
@@ -309,7 +309,7 @@ class WP_DBManager_Cron_Test extends WP_DBManager_TestCase {
 
 		WP_DBManager_Cron::repair();
 
-		$this->assertSame( 0, $ran );
+		$this->assertSame( 0, $ran, 'A disabled repair job runs no query.' );
 	}
 
 	/**
@@ -331,7 +331,7 @@ class WP_DBManager_Cron_Test extends WP_DBManager_TestCase {
 
 		WP_DBManager_Cron::repair();
 
-		$this->assertStringContainsString( 'REPAIR TABLE', $seen );
+		$this->assertStringContainsString( 'REPAIR TABLE', $seen, 'An enabled one repairs.' );
 	}
 
 	/**
@@ -362,7 +362,7 @@ class WP_DBManager_Cron_Test extends WP_DBManager_TestCase {
 
 		WP_DBManager_Cron::backup();
 
-		$this->assertSame( 1, $mails );
+		$this->assertSame( 1, $mails, 'A successful scheduled backup mails once.' );
 	}
 
 	/**
@@ -394,7 +394,7 @@ class WP_DBManager_Cron_Test extends WP_DBManager_TestCase {
 		WP_DBManager_Cron::backup();
 
 		$this->assertCount( 1, WP_DBManager_Backups::all( $this->backup_dir ), 'The backup still ran; only the mail was skipped.' );
-		$this->assertSame( 0, $mails );
+		$this->assertSame( 0, $mails, 'With no address configured there is nobody to mail.' );
 	}
 
 	/**
@@ -424,6 +424,6 @@ class WP_DBManager_Cron_Test extends WP_DBManager_TestCase {
 
 		WP_DBManager_Cron::backup();
 
-		$this->assertSame( 0, $mails );
+		$this->assertSame( 0, $mails, 'And a failed backup mails nothing, rather than mailing an empty file.' );
 	}
 }

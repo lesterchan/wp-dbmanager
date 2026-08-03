@@ -22,8 +22,8 @@ class WP_DBManager_Plugin_Test extends WP_DBManager_TestCase {
 		$this->assertTrue( defined( 'WP_DBMANAGER_DIR' ), 'The directory constant is defined.' );
 		$this->assertTrue( defined( 'WP_DBMANAGER_URL' ), 'The URL constant is defined.' );
 
-		$this->assertStringEndsWith( '/', WP_DBMANAGER_DIR );
-		$this->assertStringEndsWith( '/', WP_DBMANAGER_URL );
+		$this->assertStringEndsWith( '/', WP_DBMANAGER_DIR, 'The directory constant is slash terminated, so it can be concatenated.' );
+		$this->assertStringEndsWith( '/', WP_DBMANAGER_URL, 'And so is the URL constant.' );
 		$this->assertFileExists( WP_DBMANAGER_DIR . 'wp-dbmanager.php', 'The directory constant points at the directory the plugin file is in.' );
 		$this->assertFileExists( WP_DBMANAGER_MAIN_FILE, 'The main file constant points at a file that exists.' );
 	}
@@ -36,7 +36,7 @@ class WP_DBManager_Plugin_Test extends WP_DBManager_TestCase {
 	public function test_the_version_constant_matches_the_header() {
 		$header = get_file_data( WP_DBMANAGER_MAIN_FILE, array( 'Version' => 'Version' ) );
 
-		$this->assertSame( $header['Version'], WP_DBMANAGER_VERSION );
+		$this->assertSame( $header['Version'], WP_DBMANAGER_VERSION, 'The version constant matches the plugin header.' );
 	}
 
 	/**
@@ -45,15 +45,15 @@ class WP_DBManager_Plugin_Test extends WP_DBManager_TestCase {
 	public function test_the_version_matches_the_stable_tag() {
 		$readme = file_get_contents( WP_DBMANAGER_DIR . 'README.md' );
 
-		$this->assertSame( 1, preg_match( '/^Stable tag: ([0-9.]+)/m', $readme, $m ) );
-		$this->assertSame( $m[1], WP_DBMANAGER_VERSION );
+		$this->assertSame( 1, preg_match( '/^Stable tag: ([0-9.]+)/m', $readme, $m ), 'The readme has a stable tag to compare against.' );
+		$this->assertSame( $m[1], WP_DBMANAGER_VERSION, 'And it matches the version, so a release cannot ship half updated.' );
 	}
 
 	/**
 	 * There is one instance.
 	 */
 	public function test_get_instance_is_a_singleton() {
-		$this->assertSame( WP_DBManager::get_instance(), WP_DBManager::get_instance() );
+		$this->assertSame( WP_DBManager::get_instance(), WP_DBManager::get_instance(), 'get_instance() answers with the same object every time.' );
 		$this->assertInstanceOf( 'WP_DBManager', WP_DBManager::get_instance(), 'get_instance() answers with the plugin, and the same one each time.' );
 	}
 
@@ -64,7 +64,7 @@ class WP_DBManager_Plugin_Test extends WP_DBManager_TestCase {
 		$mimes = WP_DBManager::get_instance()->upload_mimes( array() );
 
 		$this->assertArrayHasKey( 'sql', $mimes, 'A .sql upload is allowed, which is how a restore is fed.' );
-		$this->assertSame( 'application/sql', $mimes['sql'] );
+		$this->assertSame( 'application/sql', $mimes['sql'], 'A .sql upload is allowed, which is what a restore needs.' );
 
 		// Whatever was already allowed stays allowed.
 		$this->assertArrayHasKey( 'jpg|jpeg|jpe', WP_DBManager::get_instance()->upload_mimes( array( 'jpg|jpeg|jpe' => 'image/jpeg' ) ), 'The existing mime list survives; sql is added to it rather than replacing it.' );
@@ -145,8 +145,8 @@ class WP_DBManager_Plugin_Test extends WP_DBManager_TestCase {
 		update_option( 'gmt_offset', 8 );
 		$plus_eight = WP_DBManager::format_timestamp( 1700000000, 'Y-m-d H:i' );
 
-		$this->assertSame( '2023-11-14 22:13', $utc );
-		$this->assertSame( '2023-11-15 06:13', $plus_eight );
+		$this->assertSame( '2023-11-14 22:13', $utc, 'At UTC the timestamp reads as it stands.' );
+		$this->assertSame( '2023-11-15 06:13', $plus_eight, 'And the site offset moves it, rather than being ignored.' );
 	}
 
 	/**
@@ -156,7 +156,7 @@ class WP_DBManager_Plugin_Test extends WP_DBManager_TestCase {
 		update_option( 'timezone_string', '' );
 		update_option( 'gmt_offset', -5 );
 
-		$this->assertSame( '2023-11-14 17:13', WP_DBManager::format_timestamp( 1700000000, 'Y-m-d H:i' ) );
+		$this->assertSame( '2023-11-14 17:13', WP_DBManager::format_timestamp( 1700000000, 'Y-m-d H:i' ), 'A negative offset moves it the other way.' );
 	}
 
 	/**
@@ -167,8 +167,8 @@ class WP_DBManager_Plugin_Test extends WP_DBManager_TestCase {
 		update_option( 'time_format', 'H:i' );
 		update_option( 'gmt_offset', 0 );
 
-		$this->assertStringContainsString( '2023-11-14', WP_DBManager::format_timestamp( 1700000000 ) );
-		$this->assertStringContainsString( '22:13', WP_DBManager::format_timestamp( 1700000000 ) );
+		$this->assertStringContainsString( '2023-11-14', WP_DBManager::format_timestamp( 1700000000 ), 'With no format given the site date format is used.' );
+		$this->assertStringContainsString( '22:13', WP_DBManager::format_timestamp( 1700000000 ), 'And the site time format.' );
 	}
 
 	/**
