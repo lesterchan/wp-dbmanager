@@ -35,6 +35,18 @@ const EMPTY_URL = '/wp-admin/admin.php?page=wp-dbmanager-empty';
 const RUN_URL = '/wp-admin/admin.php?page=wp-dbmanager-run';
 const OPTIONS_URL = '/wp-admin/admin.php?page=wp-dbmanager-options';
 
+/** The Dashboard: an ordinary admin request, which is what an update goes through. */
+const DASHBOARD_URL = '/wp-admin/index.php';
+
+/** The option row every setting lives in. */
+const OPTION = 'wp_dbmanager_options';
+
+/** The option row holding the two upgrade markers. */
+const VERSION_OPTION = 'wp_dbmanager_version';
+
+/** The settings row every release up to and including 3.0.0 used. */
+const LEGACY_OPTION = 'dbmanager_options';
+
 /**
  * The error notices an administrator can actually see.
  *
@@ -195,6 +207,228 @@ function resetPlugin() {
 		WP_DBManager_Folder::create();
 		WP_DBManager_Folder::flush();
 		echo '<<<' . $defaults['mysqldumppath'] . '>>>';`,
+	);
+}
+
+/**
+ * The settings row as the database holds it, with no defaults merged in.
+ *
+ * Not the same question as setting() below, and the difference is the whole of
+ * §7.6.1: WP_DBManager_Options::get() merges over the defaults, so it answers
+ * identically for a row holding the defaults and for no row at all -- which is
+ * exactly the state a migration that read, deleted and never wrote leaves
+ * behind. Ask the database when the question is "was it written".
+ *
+ * @return {Object|false} The stored array, or false when there is no row.
+ */
+function rawOptions() {
+	return JSON.parse(
+		wpEval( `echo '<<<' . wp_json_encode( get_option( '${ OPTION }' ) ) . '>>>';` ),
+	);
+}
+
+/**
+ * The defaults the running code would fall back to.
+ *
+ * Asked of the install rather than transcribed: two of them are built from
+ * other site options, and a default copied into a test file is a second place
+ * holding one fact.
+ *
+ * @return {Object} The default settings.
+ */
+function defaultOptions() {
+	return JSON.parse(
+		wpEval( "echo '<<<' . wp_json_encode( WP_DBManager_Options::defaults() ) . '>>>';" ),
+	);
+}
+
+/**
+ * Put the install back into the shape a pre-4.0.0 site is in.
+ *
+ * The prefixed rows go away entirely and the unprefixed one takes their place,
+ * because that is what the migration has to meet: a row called
+ * `dbmanager_options`, no markers, and nothing else.
+ *
+ * **It hands back what it can see, and that is not a convenience.**
+ * maybe_upgrade() runs from add_hooks(), which every request reaches --
+ * including a WP-CLI one. So the moment this call ends, the very next
+ * `wp eval` boots WordPress with the markers missing and performs the upgrade
+ * itself, before it runs a line of the code it was given. A test that seeded the
+ * rows here and then read them back through another helper would find them
+ * already migrated, would be asserting on WP-CLI's run rather than the browser's,
+ * and the browser request it went on to make would have nothing left to do.
+ *
+ * Reading the rows back inside this same process is the only place they can be
+ * observed: the upgrade for this request already ran, at bootstrap, before these
+ * rows existed.
+ *
+ * For the same reason the legacy *cron* events are scheduled from here rather
+ * than from a call of their own: everything a pre-4.0.0 install has to have in
+ * place must be in place before the next request, whatever that request is.
+ *
+ * @param {Object}      legacy            The legacy settings row, exactly as given.
+ * @param {Object}      [also]            Anything else the fixture needs in place first.
+ * @param {Object|null} [also.current]    A row already under the current name.
+ * @param {boolean}     [also.legacyCron] Also schedule the three pre-4.0.0 events.
+ * @return {{legacy: *, options: *, version: *, cron: Object}} The state as just seeded.
+ */
+function installLegacyRow( legacy, also = {} ) {
+	const { current = null, legacyCron = false } = also;
+	const data = Buffer.from( JSON.stringify( legacy ), 'utf8' ).toString( 'base64' );
+	const currentData = Buffer.from( JSON.stringify( current ), 'utf8' ).toString( 'base64' );
+
+	return JSON.parse(
+		wpEval(
+			`delete_option( '${ OPTION }' );
+			delete_option( '${ VERSION_OPTION }' );
+			update_option( '${ LEGACY_OPTION }', json_decode( base64_decode( '${ data }' ), true ) );
+
+			$current = json_decode( base64_decode( '${ currentData }' ), true );
+			if ( null !== $current ) {
+				update_option( '${ OPTION }', $current );
+			}
+
+			foreach ( array_values( WP_DBManager_Cron::jobs() ) as $hook ) {
+				wp_clear_scheduled_hook( $hook );
+			}
+			foreach ( array_values( WP_DBManager_Cron::legacy_jobs() ) as $hook ) {
+				wp_clear_scheduled_hook( $hook );
+				if ( ${ legacyCron ? 'true' : 'false' } ) {
+					wp_schedule_event( time() + HOUR_IN_SECONDS, 'daily', $hook );
+				}
+			}
+
+			$cron = array();
+			foreach ( array_merge(
+				array_values( WP_DBManager_Cron::jobs() ),
+				array_values( WP_DBManager_Cron::legacy_jobs() )
+			) as $hook ) {
+				$cron[ $hook ] = (bool) wp_next_scheduled( $hook );
+			}
+
+			echo '<<<' . wp_json_encode( array(
+				'legacy'  => get_option( '${ LEGACY_OPTION }' ),
+				'options' => get_option( '${ OPTION }' ),
+				'version' => get_option( '${ VERSION_OPTION }' ),
+				'cron'    => $cron,
+			) ) . '>>>';`,
+		),
+	);
+}
+
+/**
+ * The pre-4.0.0 settings row, false once the migration has folded it in.
+ *
+ * @return {Object|false} The stored array, or false.
+ */
+function legacyRow() {
+	return JSON.parse(
+		wpEval( `echo '<<<' . wp_json_encode( get_option( '${ LEGACY_OPTION }' ) ) . '>>>';` ),
+	);
+}
+
+/**
+ * The upgrade markers, as the database holds them.
+ *
+ * @return {Object|false} The stored array, or false when there is no row.
+ */
+function versionRow() {
+	return JSON.parse(
+		wpEval( `echo '<<<' . wp_json_encode( get_option( '${ VERSION_OPTION }' ) ) . '>>>';` ),
+	);
+}
+
+/**
+ * Stamp the upgrade markers, or take them away.
+ *
+ * @param {Object|null} versions The two markers, or null to remove the row.
+ * @return {void}
+ */
+function setVersionRow( versions ) {
+	if ( null === versions ) {
+		wpEval( `delete_option( '${ VERSION_OPTION }' ); echo '<<<done>>>';` );
+
+		return;
+	}
+
+	const data = Buffer.from( JSON.stringify( versions ), 'utf8' ).toString( 'base64' );
+
+	wpEval(
+		`update_option( '${ VERSION_OPTION }', json_decode( base64_decode( '${ data }' ), true ) );
+		echo '<<<done>>>';`,
+	);
+}
+
+/**
+ * The version numbers the running code expects to find stamped.
+ *
+ * @return {{plugin: string, db: string}} The two markers.
+ */
+function runningVersions() {
+	return JSON.parse(
+		wpEval(
+			`echo '<<<' . wp_json_encode( array(
+				'plugin' => WP_DBMANAGER_VERSION,
+				'db'     => WP_DBMANAGER_DB_VERSION,
+			) ) . '>>>';`,
+		),
+	);
+}
+
+/**
+ * Which of the plugin's cron events are scheduled, old names and new.
+ *
+ * The two lists are keyed by job -- backup, optimize, repair -- so they are
+ * walked by value rather than merged: array_merge() on them keeps three entries,
+ * not six, and every question about a current hook would come back undefined.
+ *
+ * @return {Object} Each hook name mapped to true or false.
+ */
+function scheduledCron() {
+	return JSON.parse(
+		wpEval(
+			`$state = array();
+			foreach ( array_merge(
+				array_values( WP_DBManager_Cron::jobs() ),
+				array_values( WP_DBManager_Cron::legacy_jobs() )
+			) as $hook ) {
+				$state[ $hook ] = (bool) wp_next_scheduled( $hook );
+			}
+			echo '<<<' . wp_json_encode( $state ) . '>>>';`,
+		),
+	);
+}
+
+/**
+ * Deactivate and reactivate the plugin, which is the path that fires activate().
+ *
+ * A different entry point from the one a real update takes: updating through
+ * the Plugins screen never fires the activation hook, which is why the
+ * migration cannot live there alone.
+ *
+ * @return {void}
+ */
+function reactivatePlugin() {
+	wpEval(
+		`require_once ABSPATH . 'wp-admin/includes/plugin.php';
+		deactivate_plugins( 'wp-dbmanager/wp-dbmanager.php' );
+		activate_plugin( 'wp-dbmanager/wp-dbmanager.php' );
+		echo '<<<done>>>';`,
+	);
+}
+
+/**
+ * Put the plugin back on, whatever a test left behind.
+ *
+ * @return {void}
+ */
+function ensurePluginActive() {
+	wpEval(
+		`require_once ABSPATH . 'wp-admin/includes/plugin.php';
+		if ( ! is_plugin_active( 'wp-dbmanager/wp-dbmanager.php' ) ) {
+			activate_plugin( 'wp-dbmanager/wp-dbmanager.php' );
+		}
+		echo '<<<done>>>';`,
 	);
 }
 
@@ -429,28 +663,42 @@ async function logInAs( page, requestUtils, username, role ) {
 module.exports = {
 	VISIBLE_ERROR_NOTICE,
 	BACKUP_URL,
+	DASHBOARD_URL,
 	EMPTY_URL,
+	LEGACY_OPTION,
 	MANAGER_URL,
 	MANAGE_URL,
 	OPTIMIZE_URL,
+	OPTION,
 	OPTIONS_URL,
 	REPAIR_URL,
 	RUN_URL,
+	VERSION_OPTION,
 	backupFiles,
 	bulkAction,
 	clearBackups,
 	createScratchTable,
+	defaultOptions,
 	dropScratchTable,
+	ensurePluginActive,
+	installLegacyRow,
 	installMailInterceptor,
 	lastMail,
+	legacyRow,
 	listRow,
 	logInAs,
+	rawOptions,
+	reactivatePlugin,
 	resetMail,
 	resetPlugin,
+	runningVersions,
+	scheduledCron,
 	scratchState,
 	scratchTable,
 	setSetting,
+	setVersionRow,
 	setting,
+	versionRow,
 	wpEval,
 	writeFakeBackup,
 };
