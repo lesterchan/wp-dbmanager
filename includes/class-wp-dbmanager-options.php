@@ -208,7 +208,13 @@ class WP_DBManager_Options {
 		$legacy = get_option( self::LEGACY_OPTION );
 
 		if ( is_array( $legacy ) ) {
-			$current = get_option( self::OPTION );
+			// The explicit default is what makes this read the truth. Without it
+			// the default_option_wp_dbmanager_options filter that
+			// register_setting() installs answers for a row that does not exist,
+			// every absent row reads back as the shipped defaults, and the
+			// migration below is skipped while the legacy row is deleted anyway.
+			// See write() above and §7.6.1.
+			$current = get_option( self::OPTION, false );
 
 			// The new row wins if both somehow exist: it is the one the settings
 			// screen has been writing to since the migration first ran.

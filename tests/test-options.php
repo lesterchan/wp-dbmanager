@@ -35,6 +35,45 @@ class WP_DBManager_Options_Test extends WP_DBManager_TestCase {
 	}
 
 	/**
+	 * A site sitting on the shipped settings still gets its row written.
+	 *
+	 * The fixture above customises max_backup, so its migration produces a value
+	 * that differs from the defaults and lands however the row is read first.
+	 * That fixture cannot see §7.6.1 at all. This one seeds the settings 3.0.0
+	 * shipped, unchanged -- the commonest install there is -- and puts the
+	 * fold-in on the far side of register_setting(), which is where an update
+	 * through the Plugins screen puts it and where WP-CLI never does.
+	 *
+	 * With that `default` in force a one-argument get_option() answers for a row
+	 * that was never written, so the absent row and a defaults row read alike,
+	 * the fold-in is skipped, and dbmanager_options is deleted regardless. The
+	 * result is a site silently back on the defaults with its old row gone.
+	 *
+	 * Asserted on the raw row rather than through get(), which merges over the
+	 * defaults and so cannot tell a write that happened from one that did not.
+	 */
+	public function test_a_legacy_row_equal_to_the_defaults_is_still_written() {
+		delete_option( WP_DBManager_Options::OPTION );
+		delete_option( WP_DBManager_Options::VERSION );
+
+		// The filter that makes an absent row read back as the defaults. It is
+		// live on the admin request every real update takes, and on no other path.
+		WP_DBManager_Settings::register();
+
+		update_option( WP_DBManager_Options::LEGACY_OPTION, WP_DBManager_Options::defaults() );
+
+		$this->assertFalse( get_option( WP_DBManager_Options::OPTION, false ), 'The fixture is only pre-migration if the new row is genuinely absent.' );
+
+		WP_DBManager_Options::maybe_upgrade();
+
+		$stored = get_option( WP_DBManager_Options::OPTION, false );
+
+		$this->assertIsArray( $stored, 'The migration must write the row even when its result equals the shipped defaults.' );
+		$this->assertSame( WP_DBManager_Options::defaults()['max_backup'], $stored['max_backup'], 'And the value is in the row, not merely returned by the registered default.' );
+		$this->assertFalse( get_option( WP_DBManager_Options::LEGACY_OPTION ), 'dbmanager_options must not survive the migration.' );
+	}
+
+	/**
 	 * The migration records both markers and then stops doing any work.
 	 */
 	public function test_the_markers_are_written_once_and_then_left_alone() {
