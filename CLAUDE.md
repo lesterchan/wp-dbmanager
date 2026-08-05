@@ -110,8 +110,10 @@ outside a web request.
 
 `test-database.php` covers command assembly and the defaults file;
 `test-folder.php` the probe's three states; `test-cron.php` the job renaming and
-rescheduling. `tests/e2e/` (4 specs, 50 tests) is among the twelve suites
-`_standards/RESUME.md` lists as never run to green.
+rescheduling. `tests/e2e/` is 5 specs and 56 tests, and every one of them was
+green on 2026-08-05 — **but across two runs, not one**: the whole file was run
+and the 50 older tests passed, then `upgrade.spec.js` was fixed and re-run on
+its own. A single all-green pass of the file has not happened.
 
 `_standards/RESUME.md` measures this plugin at 86.7% of assertions carrying a
 failure message — second only to wp-email.
