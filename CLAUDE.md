@@ -2,10 +2,6 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-WP-DBManager follows `_standards/STANDARDS.md` in the parent folder, which is
-the contract for all nineteen plugins in the collection. Where this file and
-that one disagree, that one wins.
-
 ## What it is
 
 Backs up, restores, optimizes, repairs and empties the WordPress database, runs
@@ -13,23 +9,23 @@ arbitrary SQL, and schedules the first three. It shells out to the `mysqldump`
 and `mysql` binaries — that is the feature, not an implementation detail.
 
 Screens: Backup, Manage Backups, Optimize, Repair, Empty/Drop Tables, Run SQL
-Query, Settings, under one top-level menu with the `archive` dashicon.
-
-**§4.3 names wp-dbmanager as the reference implementation for `WP_List_Table`.**
+Query, Settings, under one top-level menu with the `archive` dashicon. The list
+tables here are the ones to copy when building another.
 
 ## Version
 
-**4.0.0, not 3.0.1** (§14). 3.0.0 is already live on wordpress.org, so the
-repo's unreleased entry collided with shipped history.
+**4.0.0, not 3.0.1.** 3.0.0 is already live on wordpress.org, so the repo's
+unreleased entry collided with shipped history.
 
 ## Data
 
 `wp_dbmanager_options` (from the released `dbmanager_options`) and
-`wp_dbmanager_version`. No custom table — the backups are files on disk.
+`wp_dbmanager_version`, which holds the `plugin` and `db` upgrade markers and
+nothing else. No custom table — the backups are files on disk.
 
 `htaccess.txt` and `Web.config.txt` at the plugin root are **shipped payloads**,
-copied into the backup folder to protect it. §1 exempts them from the layout
-rule; do not move or delete them.
+copied into the backup folder to protect it. They are not stray files; do not
+move or delete them.
 
 ## The two things that make this plugin dangerous
 
@@ -55,10 +51,10 @@ three checked whether the dump had produced a file. Do not add a fourth.
 **2. `install_plugins` is the gate, and it is deliberately as high as installing
 code.** The screens restore over a live database, drop tables and run arbitrary
 SQL. Under multisite core's `map_meta_cap()` returns `do_not_allow` for
-`install_plugins` unless the user is a super admin (§7.2.2) — **that is correct.**
-`_standards/RESUME.md` calls the Run SQL Query console the worst case in the
-whole programme for weakening a gate to make a test pass. Fix the test (commit
-`9860c22`). Delegation goes through `wp_dbmanager_capability`.
+`install_plugins` unless the user is a super admin — **that is correct.** If a
+multisite test fails on it, fix the test (commit `9860c22`); weakening this gate
+would hand the Run SQL Query console to every site administrator on a network.
+Delegation goes through `wp_dbmanager_capability`.
 
 ## The backup folder probe
 
@@ -88,10 +84,13 @@ outside a web request.
   events. The schedule is driven off one `jobs()` list precisely so the "clear,
   test, reschedule" block is not written three times with one copy quietly
   reading the wrong option.
+* **`jobs()` and `legacy_jobs()` are both keyed by job name**, so merging them
+  with `array_merge()` keeps three entries rather than six. Walk their values
+  when you want all six hook names.
 * **The schedule follows the settings however they change** — settings screen,
   WP-CLI, another plugin — because the rebuild hangs off the option update, not
   off the form submit.
-* **Two of §4.3's normal rules are waived here, and the commit messages say
+* **Two normal list-table rules are waived here, and the commit messages say
   why.** No pagination: the tables list carries a totals row, so paging would
   reduce "select all" to "select this page" and its totals to per-page sums, and
   the backups list is already capped by `max_backup`. No hover row actions: every
@@ -101,24 +100,48 @@ outside a web request.
 * **`WP_DBManager_Screens` methods are functions wrapping template markup**, kept
   that way so their locals do not leak into the global namespace. It is not a
   half-finished class.
-* `SHOW VARIABLES` rows are read as arrays (`ARRAY_A`), matching wp-serverinfo —
-  the column names are MySQL's spellings, not ours to rename.
+* `SHOW VARIABLES` rows are read as arrays (`ARRAY_A`) — the column names are
+  MySQL's spellings, not ours to rename.
 * The `NoCaching` suppression on the `basedir` lookup is deliberate: caching where
   the server keeps its binaries would make a moved installation undetectable.
 
+## Migrations, and why they are tested through a browser
+
+`maybe_upgrade()` runs from `add_hooks()`, so **every** request reaches it —
+activation hooks do not fire on a plugin update, which is the usual reason a
+migration never runs at all.
+
+Two consequences for `tests/e2e/upgrade.spec.js`, both of which cost a run
+before they were understood:
+
+* **A `wp eval` call is itself an upgrade request.** WP-CLI boots the plugin
+  before running anything, so seeding the legacy rows in one call and reading
+  them back in a second finds them already migrated — the browser request then
+  has nothing left to do and the test is quietly testing WP-CLI. Seed and read
+  back inside one call, and put everything the fixture needs (the legacy row, an
+  already-current row, the legacy cron events) into that same call.
+* **Read the row raw when the question is "was it written".**
+  `WP_DBManager_Options::get()` merges over the defaults, so it answers
+  identically for a row holding the defaults and for no row at all — which is
+  the state a migration that read, deleted and never wrote leaves behind. Seed
+  the *shipped* defaults for the same reason: a customised fixture's result
+  differs from the defaults, so its write lands whatever the read before it did.
+
+The cron half is the part only a browser can answer: an event cannot be renamed
+in place, so the migration clears three and reschedules three against
+recurrences `WP_DBManager_Cron::init()` must already have registered.
+
 ## Tests
+
+`bin/test.sh` runs PHPUnit, `bin/test-multisite.sh` the network pass, and
+`bin/test-e2e.sh` the Playwright suite. **Run them rather than trusting a note
+about their last result** — CI is the authority, and this file cannot be.
 
 `test-database.php` covers command assembly and the defaults file;
 `test-folder.php` the probe's three states; `test-cron.php` the job renaming and
-rescheduling. `tests/e2e/` is 5 specs and 56 tests, and every one of them was
-green on 2026-08-05 — **but across two runs, not one**: the whole file was run
-and the 50 older tests passed, then `upgrade.spec.js` was fixed and re-run on
-its own. A single all-green pass of the file has not happened.
-
-`_standards/RESUME.md` measures this plugin at 86.7% of assertions carrying a
-failure message — second only to wp-email.
+rescheduling.
 
 ## Pending, not started
 
-Task #17 renames the settings screen heading from "Options" to
+The settings screen heading still reads "Options" and should read
 "WP-DBManager Settings".
