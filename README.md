@@ -79,15 +79,14 @@ The `Backup DB` page requests a file from the folder and reports what the server
 
 ## Screenshots
 
-1. Admin - Backup DB
-2. Admin - Empty/Drop Tables In DB
-3. Admin - DB Information
-4. Admin - Manage DB
-5. Admin - Optimize DB
-6. Admin - Settings
-7. Admin - Settings
-8. Admin - Repair DB
-9. Admin - Run Query in DB
+1. Database, with the size of every table and what the plugin has scheduled
+2. Backup DB, which checks the paths and the folder before it offers to run
+3. Manage Backup DB, every backup with its checksum, date and size
+4. Optimize DB, which reclaims the space MySQL still holds after deletions
+5. Repair DB, for tables the server has marked as crashed
+6. Empty/Drop Tables, one row per table and what emptying it would remove
+7. Run SQL Query, for the statement no screen has a button for
+8. Database Settings: the paths, the schedule, and where a backup is mailed
 
 ## Changelog
 ### 4.0.0
