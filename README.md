@@ -102,7 +102,7 @@ wp dbmanager drop <table>... --yes
 
 ## Screenshots
 
-1. Database, with the size of every table and what the plugin has scheduled
+1. Database, the server it runs on and the size of every table
 2. Backup DB, which checks the paths and the folder before it offers to run
 3. Manage Backup DB, every backup with its checksum, date and size
 4. Optimize DB, which reclaims the space MySQL still holds after deletions
