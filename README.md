@@ -43,6 +43,29 @@ Move `index.php` from `Folder: wp-content/plugins/wp-dbmanager` to `Folder: wp-c
 
 The `Backup DB` page requests a file from the folder and reports what the server actually returns, so you can confirm the folder is closed rather than assume it.
 
+### WP-CLI
+```
+wp dbmanager tables
+wp dbmanager backups
+wp dbmanager backup --yes
+wp dbmanager backup --no-gzip --yes
+wp dbmanager restore <file> --yes
+wp dbmanager delete <file>... --yes
+wp dbmanager email <file> --to=ops@example.org --yes
+wp dbmanager optimize --all --yes
+wp dbmanager repair wp_options --yes
+wp dbmanager empty <table>... --yes
+wp dbmanager drop <table>... --yes
+```
+
+**Everything that changes anything asks first**, so a script has to pass `--yes`. That includes `backup`, which deletes the oldest backups to stay inside `Maximum Backup Files`, and `email`, because a dump holds your users table and a sent message cannot be recalled. `tables` and `backups` only read, and take a `--format` of `table`, `csv`, `json`, `yaml`, `count` or `ids`; their sizes are in bytes rather than the KiB and MiB the screens print, because a shell is better at arithmetic than at parsing `1.2 MiB`.
+
+`optimize` and `repair` take table names or `--all`. `empty` and `drop` take names only: emptying or dropping every table in a database is not maintenance, and the screen at least shows you the list before you tick it.
+
+**There is no `run` subcommand.** WP-CLI already ships `wp db query`, which reaches the same database through the same client, so the `Run SQL Query` screen has no command counterpart. That screen is unchanged and still works.
+
+`wp dbmanager` checks no capability. WP-CLI has no logged-in user unless you ask for one with `--user`, and whoever can run it can already read the credentials in `wp-config.php`, so a check would refuse every scheduled backup script while protecting nothing. The `install_plugins` gate on the admin screens is unchanged.
+
 ## Frequently Asked Questions
 
 ### My database is not backed up / My backup file is 0Kb
@@ -98,6 +121,7 @@ The `Backup DB` page requests a file from the folder and reports what the server
 * BREAKING: A gzipped backup could be written, checksummed and e-mailed to you even when mysqldump had failed and produced nothing at all. See the FAQ. Check that your recent `.sql.gz` backups are not around 20 bytes.
 * BREAKING: `Optimize DB` and `Repair DB` no longer tick every table for you. Select the tables you want, then choose the action from `Bulk actions`. Previously every table was pre-selected, so one click acted on all of them.
 * BREAKING: `Empty/Drop Tables` can no longer empty some tables and drop others in the same submit. Choose `Empty` or `Drop` from `Bulk actions`, then submit again for the other.
+* NEW: A `wp dbmanager` WP-CLI command — `tables`, `backups`, `backup`, `restore`, `delete`, `email`, `optimize`, `repair`, `empty` and `drop`. Everything that changes anything asks first, so scripts need `--yes`. There is no `run` subcommand: `wp db query` already does that, and the `Run SQL Query` screen is unchanged.
 * NEW: A `wp_dbmanager_capability` filter. Every capability check in the plugin goes through it, so the Database screens can be handed to another role in one place. The default is still `install_plugins`.
 * NEW: Every table on the Database, Manage Backup DB, Optimize, Repair and Empty/Drop screens is now a standard WordPress list table. Columns sort, the select-all box works, and the Optimize and Repair screens show each table's size and overhead so you can see what is actually worth acting on.
 * NEW: Several backups can be deleted or e-mailed in one go. Restore and Download still act on one at a time, and say so rather than guessing.

@@ -64,6 +64,10 @@ class WP_DBManager {
 		// single autoloaded read.
 		WP_DBManager_Options::maybe_upgrade();
 
+		// Outside the is_admin() block below, because WP-CLI is not an admin
+		// request and never will be.
+		self::register_command();
+
 		add_filter( 'upload_mimes', array( $this, 'upload_mimes' ) );
 
 		// Both of these answer a POST and then exit, so they have to run before
@@ -75,6 +79,26 @@ class WP_DBManager {
 			WP_DBManager_Admin::init();
 			WP_DBManager_Settings::init();
 		}
+	}
+
+	/**
+	 * Register the WP-CLI command.
+	 *
+	 * The class file is required here rather than at plugin load because it
+	 * extends WP_CLI_Command, which only exists when WP-CLI is the one running
+	 * WordPress. Requiring it unconditionally is a fatal error on every web
+	 * request.
+	 *
+	 * @return void
+	 */
+	public static function register_command() {
+		if ( ! defined( 'WP_CLI' ) || ! WP_CLI ) {
+			return;
+		}
+
+		require_once WP_DBMANAGER_DIR . 'includes/class-wp-dbmanager-command.php';
+
+		WP_CLI::add_command( 'dbmanager', 'WP_DBManager_Command' );
 	}
 
 	/**

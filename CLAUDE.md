@@ -105,6 +105,38 @@ outside a web request.
 * The `NoCaching` suppression on the `basedir` lookup is deliberate: caching where
   the server keeps its binaries would make a moved installation undetectable.
 
+## WP-CLI
+
+`wp dbmanager tables|backups|backup|restore|delete|email|optimize|repair|empty|drop`,
+registered from `add_hooks()` and therefore outside its `is_admin()` block —
+WP-CLI is not an admin request. The class file is required only once `WP_CLI` is
+defined, because it extends `WP_CLI_Command`, which does not exist on a web
+request.
+
+**Every subcommand except the two that read goes through `WP_CLI::confirm()`.**
+Nothing here can be undone, and that includes the two that look harmless:
+`backup` prunes the oldest existing backups to stay inside `max_backup`, and
+`email` attaches a dump holding the users table to a message nobody can recall.
+A test walks all eight rather than trusting the next person to remember.
+
+**Three things are deliberately absent, and each has its own reason.** There is
+no SQL console, because `wp db query` already pipes into the same client and
+refuses less; the allow list in `WP_DBManager_Tables::run_query()` guards a
+browser form, and repeating it here would be a smaller, stranger version of a
+tool the caller already has. There is no `download`, because that streams a file
+to a browser and from a shell the file is already on disk. And `empty` and
+`drop` take no `--all`: the screen shows you the list before you tick it, and a
+shell has no such moment.
+
+**No capability is checked, and that is not an oversight** — the screens' gate
+protects a browser session, while whoever runs WP-CLI can already read
+`wp-config.php`. A check would refuse every scheduled backup script and protect
+nothing.
+
+`--format=ids` reduces the rows to their first column before printing. WP-CLI's
+ids format prints whatever array it is handed, so a list of row arrays comes out
+as the word `Array` once per row.
+
 ## Migrations, and why they are tested through a browser
 
 `maybe_upgrade()` runs from `add_hooks()`, so **every** request reaches it —
@@ -139,7 +171,8 @@ about their last result** — CI is the authority, and this file cannot be.
 
 `test-database.php` covers command assembly and the defaults file;
 `test-folder.php` the probe's three states; `test-cron.php` the job renaming and
-rescheduling.
+rescheduling; `test-cli.php` the command, including the subcommands it
+deliberately does not have.
 
 ## Pending, not started
 
