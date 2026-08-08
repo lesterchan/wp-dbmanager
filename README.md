@@ -17,13 +17,15 @@ WP-DBManager looks after the database behind your site: it backs it up, restores
 ### Donations
 I spent most of my free time creating, updating, maintaining and supporting these plugins, if you really love my plugins and could spare me a couple of bucks, I will really appreciate it. If not feel free to use it without any obligations.
 
-## Usage
-1. Activate `WP-DBManager` Plugin
-1. The script will automatically create a folder called `backup-db` in the wp-content folder if that folder is writable. If it is not created, please create the folder and ensure that the folder is writable
-1. Go to `WP-Admin -> Database -> Settings` to configure the database options
-1. Secure the backup folder, see below
-1. Go to `WP-Admin -> Database -> Backup DB`, which checks whether the folder is actually reachable over HTTP and tells you if it is
+## Installation
 
+1. Install and activate the plugin.
+1. The plugin creates a `backup-db` folder inside `wp-content` if that folder is writable. If it does not appear, create it yourself and make it writable.
+1. **Secure the backup folder**, as described under Usage. Anyone who can reach it over HTTP can download your entire database.
+1. Go to `WP-Admin -> Database -> Settings` to configure the backup, optimize and repair schedules.
+1. Go to `WP-Admin -> Database -> Backup DB`, which checks whether the folder is actually reachable over HTTP and tells you if it is.
+
+## Usage
 ### Securing The Backup Folder
 A database backup contains everything, including your users table. Anyone who can guess a backup file name can download the lot, so the folder must not be served over HTTP.
 
