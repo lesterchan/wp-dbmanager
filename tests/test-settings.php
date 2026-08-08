@@ -52,11 +52,10 @@ class WP_DBManager_Settings_Test extends WP_DBManager_TestCase {
 	}
 
 	/**
-	 * A backup path that does not resolve is refused and the old one kept.
-	 */
-	/**
-	 * create() ran on activation and from the "try to fix" notice and nowhere
-	 * else, so moving the folder on this screen pointed backups at a bare
+	 * Moving the backup folder takes its protection with it.
+	 *
+	 * The folder was created on activation and from the "try to fix" notice and
+	 * nowhere else, so moving the folder on this screen pointed backups at a bare
 	 * directory. The shipped default is inside wp-content, which is served, and
 	 * a dump holds the users table.
 	 */
@@ -77,10 +76,13 @@ class WP_DBManager_Settings_Test extends WP_DBManager_TestCase {
 					wp_delete_file( $destination . $leaf );
 				}
 			}
-			@rmdir( $destination ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged, WordPress.WP.AlternativeFunctions.directory_rmdir -- Fixture clean-up; a leftover empty directory is not worth failing a test over.
+			@rmdir( $destination ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged, WordPress.WP.AlternativeFunctions.file_system_operations_rmdir -- Fixture clean-up; a leftover empty directory is not worth failing a test over.
 		}
 	}
 
+	/**
+	 * A backup path that does not resolve is refused and the old one kept.
+	 */
 	public function test_unresolvable_backup_path_is_refused() {
 		$result = WP_DBManager_Settings::sanitize( array( 'path' => '/no/such/directory/anywhere' ) );
 
