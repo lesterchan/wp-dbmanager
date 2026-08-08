@@ -209,10 +209,18 @@ class WP_DBManager_Folder {
 	/**
 	 * Create the backup folder and drop the protection files into it.
 	 *
+	 * The path is an argument as well as a setting because the settings screen
+	 * has to guard the folder it is *moving to*, and a sanitize callback runs
+	 * before the row is written -- so reading the option there would protect the
+	 * folder the site has just stopped using.
+	 *
+	 * @since 4.0.0 Accepts an explicit path.
+	 *
+	 * @param string $path Folder to guard. Defaults to the configured one.
 	 * @return void
 	 */
-	public static function create() {
-		$path = WP_DBManager_Options::backup_path();
+	public static function create( $path = '' ) {
+		$path = '' !== $path ? $path : WP_DBManager_Options::backup_path();
 
 		if ( '' === $path ) {
 			return;

@@ -54,6 +54,33 @@ class WP_DBManager_Settings_Test extends WP_DBManager_TestCase {
 	/**
 	 * A backup path that does not resolve is refused and the old one kept.
 	 */
+	/**
+	 * create() ran on activation and from the "try to fix" notice and nowhere
+	 * else, so moving the folder on this screen pointed backups at a bare
+	 * directory. The shipped default is inside wp-content, which is served, and
+	 * a dump holds the users table.
+	 */
+	public function test_moving_the_backup_folder_takes_its_protection_with_it() {
+		$destination = WP_CONTENT_DIR . '/wp-dbmanager-moved-' . wp_generate_password( 8, false, false );
+		wp_mkdir_p( $destination );
+
+		$this->assertFileDoesNotExist( $destination . '/index.php', 'The new folder starts bare, or this proves nothing.' );
+
+		try {
+			WP_DBManager_Settings::sanitize( array( 'path' => $destination ) );
+
+			$this->assertFileExists( $destination . '/index.php', 'The folder being moved to is given its silence-is-golden guard.' );
+			$this->assertFileExists( $destination . '/.htaccess', 'And the server rule that keeps a dump from being downloaded.' );
+		} finally {
+			foreach ( array( '/index.php', '/.htaccess', '/Web.config' ) as $leaf ) {
+				if ( file_exists( $destination . $leaf ) ) {
+					wp_delete_file( $destination . $leaf );
+				}
+			}
+			@rmdir( $destination ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged, WordPress.WP.AlternativeFunctions.directory_rmdir -- Fixture clean-up; a leftover empty directory is not worth failing a test over.
+		}
+	}
+
 	public function test_unresolvable_backup_path_is_refused() {
 		$result = WP_DBManager_Settings::sanitize( array( 'path' => '/no/such/directory/anywhere' ) );
 

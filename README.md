@@ -115,6 +115,9 @@ wp dbmanager drop <table>... --yes
 
 ## Changelog
 ### 4.0.0
+* FIXED: Changing the backup folder on the settings screen left the new folder unprotected. The `.htaccess`, the `Web.config`, the silence-is-golden `index.php` and the `0750` were only ever written on activation and from the "try to fix" notice, so backups were then written to a bare directory — and the shipped default lives inside `wp-content`, which is served. A dump contains the users table
+* FIXED: The download and folder-repair handlers were registered on every request, front end included, where neither can legitimately arrive. Appending `?try_fix=1` to any URL on the site turned it into an "Access Denied" page, because the capability check runs before the nonce
+* FIXED: `.sql` was added to the site-wide upload types for everyone, so any Author gained a file type they could put in the public uploads directory — for a feature they cannot reach. Only users who may actually restore a database get it now
 * BREAKING: Requires WordPress 6.8 and PHP 8.2, up from 4.0 and 5.2.
 * BREAKING: The settings row is renamed from `dbmanager_options` to `wp_dbmanager_options`, and a second row, `wp_dbmanager_version`, records the plugin and schema versions. The rename happens by itself the first time the plugin loads.
 * BREAKING: The three cron hooks are renamed `wp_dbmanager_cron_backup`, `wp_dbmanager_cron_optimize` and `wp_dbmanager_cron_repair`, and their recurrences `wp_dbmanager_backup`, `wp_dbmanager_optimize` and `wp_dbmanager_repair`. The scheduled events are rebuilt automatically.

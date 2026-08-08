@@ -75,9 +75,55 @@ class WP_DBManager_Plugin_Test extends WP_DBManager_TestCase {
 	 */
 	public function test_the_hooks_are_registered() {
 		$this->assertNotFalse( has_filter( 'upload_mimes' ), 'The mime filter is registered.' );
-		$this->assertNotFalse( has_action( 'init', array( 'WP_DBManager_Backups', 'maybe_download' ) ), 'The download handler is registered on init.' );
-		$this->assertNotFalse( has_action( 'init', array( 'WP_DBManager_Folder', 'maybe_fix' ) ), 'The folder repair handler is registered on init.' );
 		$this->assertNotFalse( has_filter( 'cron_schedules' ), 'The schedules filter is registered.' );
+	}
+
+	/**
+	 * Both of these answer a POST from a screen behind install_plugins, so an
+	 * admin request is the only kind either can arrive on. Registered on the
+	 * front end they did nothing except let any URL on the site be turned into
+	 * an "Access Denied" page by appending ?try_fix=1 -- the capability check
+	 * runs before the nonce, so it fires for an anonymous visitor.
+	 */
+	public function test_the_post_handlers_are_registered_only_on_an_admin_request() {
+		remove_all_actions( 'init' );
+
+		set_current_screen( 'dashboard' );
+		$this->assertTrue( is_admin(), 'The fixture is an admin request, or the assertion below proves nothing.' );
+
+		WP_DBManager::get_instance()->add_hooks();
+
+		$this->assertNotFalse( has_action( 'init', array( 'WP_DBManager_Backups', 'maybe_download' ) ), 'The download handler is registered on an admin request.' );
+		$this->assertNotFalse( has_action( 'init', array( 'WP_DBManager_Folder', 'maybe_fix' ) ), 'And so is the folder repair handler.' );
+
+		remove_all_actions( 'init' );
+
+		set_current_screen( 'front' );
+		$this->assertFalse( is_admin(), 'And now it is a front-end request.' );
+
+		WP_DBManager::get_instance()->add_hooks();
+
+		$this->assertFalse( has_action( 'init', array( 'WP_DBManager_Backups', 'maybe_download' ) ), 'Neither is registered on the front end.' );
+		$this->assertFalse( has_action( 'init', array( 'WP_DBManager_Folder', 'maybe_fix' ) ), 'Where no submit from those screens can arrive.' );
+	}
+
+	/**
+	 * The upload_mimes filter is site-wide, so adding the type unconditionally
+	 * handed every Author a file type they could put in the public uploads
+	 * directory -- for a feature gated at install_plugins that they cannot reach.
+	 */
+	public function test_only_somebody_who_may_restore_gains_the_sql_upload_type() {
+		wp_set_current_user( self::factory()->user->create( array( 'role' => 'author' ) ) );
+
+		$this->assertArrayNotHasKey(
+			'sql',
+			WP_DBManager::get_instance()->upload_mimes( array() ),
+			'An author gains nothing from a plugin whose screens they cannot open.'
+		);
+
+		wp_set_current_user( 0 );
+
+		$this->assertArrayNotHasKey( 'sql', WP_DBManager::get_instance()->upload_mimes( array() ), 'And neither does a logged-out visitor.' );
 	}
 
 	/**

@@ -70,12 +70,20 @@ class WP_DBManager {
 
 		add_filter( 'upload_mimes', array( $this, 'upload_mimes' ) );
 
-		// Both of these answer a POST and then exit, so they have to run before
-		// anything renders.
-		add_action( 'init', array( 'WP_DBManager_Backups', 'maybe_download' ) );
-		add_action( 'init', array( 'WP_DBManager_Folder', 'maybe_fix' ) );
-
+		/*
+		 * Both of these answer a POST and then exit, so they have to run before
+		 * anything renders -- but only on an admin request, which is the only
+		 * kind either can arrive on. Both are submits from a screen behind
+		 * install_plugins, and both call check_capability() before their nonce,
+		 * so on the front end they did nothing except let any URL on the site be
+		 * turned into an "Access Denied" page by appending ?try_fix=1. Nothing
+		 * was exposed by that and nothing changed, but it is a link an attacker
+		 * can hand around, and neither hook had any business running there.
+		 */
 		if ( is_admin() ) {
+			add_action( 'init', array( 'WP_DBManager_Backups', 'maybe_download' ) );
+			add_action( 'init', array( 'WP_DBManager_Folder', 'maybe_fix' ) );
+
 			WP_DBManager_Admin::init();
 			WP_DBManager_Settings::init();
 		}
@@ -108,6 +116,19 @@ class WP_DBManager {
 	 * @return array
 	 */
 	public function upload_mimes( $mime_types ) {
+		/*
+		 * Only for somebody who may actually use the screens this exists for.
+		 *
+		 * The filter is site-wide, so adding the type unconditionally handed
+		 * every Author and above a new file type they could put in the public
+		 * uploads directory -- a capability this plugin's own screens, gated at
+		 * install_plugins, never needed granted to them. It is not code
+		 * execution, but it is surface added for a feature they cannot reach.
+		 */
+		if ( ! WP_DBManager_Admin::current_user_can( 'upload' ) ) {
+			return $mime_types;
+		}
+
 		$mime_types['sql'] = 'application/sql';
 
 		return $mime_types;

@@ -257,6 +257,22 @@ class WP_DBManager_Settings {
 		// The backup folder may have moved, so the cached reachability answer is
 		// about somewhere else now.
 		WP_DBManager_Folder::flush();
+
+		/*
+		 * A folder the site is moving to gets the protection the old one had.
+		 * create() drops in the .htaccess or the Web.config, the
+		 * silence-is-golden index.php, and the 0750 -- and it ran on activation
+		 * and from the "try to fix" notice and nowhere else. So changing the path
+		 * here pointed backups at a bare directory, and the shipped default is
+		 * inside wp-content, which is served. A dump holds the users table.
+		 *
+		 * The new path is passed explicitly: this is a sanitize callback, so the
+		 * row still holds the old one and create() reading the option would
+		 * guard the folder the site has just stopped using.
+		 */
+		if ( $values['path'] !== $previous['path'] && '' !== $values['path'] ) {
+			WP_DBManager_Folder::create( $values['path'] );
+		}
 	}
 
 	/**
