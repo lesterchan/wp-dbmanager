@@ -12,7 +12,7 @@ License URI: https://www.gnu.org/licenses/gpl-2.0.html
 Manages your WordPress database.
 
 ## Description
-Allows you to optimize database, repair database, backup database, restore database, delete backup database , drop/empty tables and run selected queries. Supports automatic scheduling of backing up, optimizing and repairing of database.
+WP-DBManager looks after the database behind your site: it backs it up, restores it, optimizes and repairs it, empties or drops tables and runs queries you write, all from wp-admin rather than from a shell or phpMyAdmin. Backups, optimization and repair can be left to run on a schedule, and the backup can be emailed to you when it finishes.
 
 ### Donations
 I spent most of my free time creating, updating, maintaining and supporting these plugins, if you really love my plugins and could spare me a couple of bucks, I will really appreciate it. If not feel free to use it without any obligations.
