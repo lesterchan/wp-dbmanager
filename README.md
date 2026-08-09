@@ -163,6 +163,7 @@ wp dbmanager drop <table>... --yes
 * NOTE: The mysqldump and mysql paths are now passed as a single argument. If you added extra flags to either path under Settings, move them out or your backups will fail.
 * NOTE: Backup file names now carry a real Unix timestamp. Backups taken before this release will show a date shifted by your timezone offset. The files themselves are fine.
 * NOTE: The plugin's PHP functions are no longer global. Everything now lives in `WP_DBManager_*` classes under `includes/`. The `wp_dbmanager_before_escapeshellcmd` action is unchanged.
+* NOTE: The bare "To", "From" and "and" labels carry translator context now, because a single word out of context is not enough to translate from. Those three msgids changed, so existing translations of them fall back to English until they are retranslated
 
 ## Upgrade Notice
 

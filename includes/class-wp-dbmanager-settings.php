@@ -115,9 +115,9 @@ class WP_DBManager_Settings {
 			'backup'               => array( __( 'Automatic Backing Up Of DB:', 'wp-dbmanager' ), self::SECTION_SCHEDULE ),
 			'optimize'             => array( __( 'Automatic Optimizing Of DB:', 'wp-dbmanager' ), self::SECTION_SCHEDULE ),
 			'repair'               => array( __( 'Automatic Repairing Of DB:', 'wp-dbmanager' ), self::SECTION_SCHEDULE ),
-			'backup_email'         => array( __( 'To', 'wp-dbmanager' ), self::SECTION_EMAIL ),
+			'backup_email'         => array( _x( 'To', 'Label for the address a backup is mailed to', 'wp-dbmanager' ), self::SECTION_EMAIL ),
 			'backup_email_attach'  => array( __( 'Attach Backup File', 'wp-dbmanager' ), self::SECTION_EMAIL ),
-			'backup_email_from'    => array( __( 'From', 'wp-dbmanager' ), self::SECTION_EMAIL ),
+			'backup_email_from'    => array( _x( 'From', 'Label for the address a backup is mailed from', 'wp-dbmanager' ), self::SECTION_EMAIL ),
 			'backup_email_subject' => array( __( 'Subject:', 'wp-dbmanager' ), self::SECTION_EMAIL ),
 			'hide_admin_notices'   => array( __( 'Hide Admin Notices', 'wp-dbmanager' ), self::SECTION_MISC ),
 		);

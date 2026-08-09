@@ -265,7 +265,7 @@ class WP_DBManager_Screens {
 		}
 		?>
 	<p>
-		<?php esc_html_e( 'Checking PHP Functions', 'wp-dbmanager' ); ?> <span dir="ltr">(<strong>passthru()</strong>, <strong>system()</strong> <?php esc_html_e( 'and', 'wp-dbmanager' ); ?> <strong>exec()</strong>)</span>
+		<?php esc_html_e( 'Checking PHP Functions', 'wp-dbmanager' ); ?> <span dir="ltr">(<strong>passthru()</strong>, <strong>system()</strong> <?php echo esc_html( _x( 'and', 'Joins the last two items of a list of PHP function names', 'wp-dbmanager' ) ); ?> <strong>exec()</strong>)</span>
 	</p>
 		<?php
 		foreach ( array( 'passthru', 'system', 'exec' ) as $function_name ) {
