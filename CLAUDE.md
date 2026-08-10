@@ -14,8 +14,8 @@ tables here are the ones to copy when building another.
 
 ## Version
 
-**4.0.0, not 3.0.1.** 3.0.0 is already live on wordpress.org, so the repo's
-unreleased entry collided with shipped history.
+**4.0.0 — the major skipped a number.** An earlier 3.0.0 was already live on
+wordpress.org, so reusing it would have collided with shipped history.
 
 ## Data
 
@@ -174,7 +174,7 @@ about their last result** — CI is the authority, and this file cannot be.
 rescheduling; `test-cli.php` the command, including the subcommands it
 deliberately does not have.
 
-## Pending, not started
+## Pending
 
-The settings screen heading still reads "Options" and should read
-"WP-DBManager Settings".
+Nothing outstanding. The settings screen heading reads "Database Settings" —
+check `class-wp-dbmanager-settings.php` before renaming anything.
