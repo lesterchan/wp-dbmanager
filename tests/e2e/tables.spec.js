@@ -239,8 +239,14 @@ test.describe( 'Acting on tables', () => {
 		// One order being the exact reverse of the other is the stronger claim
 		// anyway: comparing two single cells passes for a list that is merely
 		// shuffled.
+		// Match the class on whichever element carries it, rather than on a td.
+		// The name column is this screen's primary column, and WordPress 7.1 moved
+		// the primary column out of a td and into a th scope="row", so that a
+		// screen reader announces the row by its name rather than by "Select All".
+		// A td selector finds nothing from 7.1 onwards; a th selector would find
+		// nothing before it.
 		const names = async () =>
-			( await page.locator( '.wp-list-table tbody tr td.column-name' ).allInnerTexts() ).map(
+			( await page.locator( '.wp-list-table tbody tr .column-name' ).allInnerTexts() ).map(
 				( text ) => text.trim(),
 			);
 
