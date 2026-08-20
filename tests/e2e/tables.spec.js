@@ -239,28 +239,16 @@ test.describe( 'Acting on tables', () => {
 		// One order being the exact reverse of the other is the stronger claim
 		// anyway: comparing two single cells passes for a list that is merely
 		// shuffled.
+		const names = async () =>
+			( await page.locator( '.wp-list-table tbody tr td.column-name' ).allInnerTexts() ).map(
+				( text ) => text.trim(),
+			);
 
-		// allInnerTexts() is the one read in this suite that does not auto-wait,
-		// and the click before it starts a full page load. Reading straight after
-		// that click hands back an empty column whenever the runner is still
-		// mid-navigation, and the length assertion below then fails on a screen
-		// that is sorting perfectly well. Waiting for the URL to turn over pins
-		// each read to the screen the click actually produced, and it does so
-		// without assuming which direction that click sorted.
-		const cells = page.locator( '.wp-list-table tbody tr td.column-name' );
+		await page.locator( 'thead #name a' ).click();
+		const oneWay = await names();
 
-		const sortByName = async () => {
-			const before = page.url();
-
-			await page.locator( 'thead #name a' ).click();
-			await page.waitForURL( ( url ) => url.href !== before );
-			await expect( cells.first() ).toBeAttached();
-
-			return ( await cells.allInnerTexts() ).map( ( text ) => text.trim() );
-		};
-
-		const oneWay = await sortByName();
-		const theOther = await sortByName();
+		await page.locator( 'thead #name a' ).click();
+		const theOther = await names();
 
 		expect( oneWay.length ).toBeGreaterThan( 1 );
 		expect( oneWay ).not.toEqual( theOther );
