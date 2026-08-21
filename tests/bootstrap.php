@@ -12,6 +12,12 @@ if ( ! $_tests_dir ) {
 	$_tests_dir = '/wordpress-phpunit';
 }
 
+if ( ! file_exists( $_tests_dir . '/includes/functions.php' ) ) {
+	echo "Could not find the WordPress test library at {$_tests_dir}." . PHP_EOL;
+	echo 'Run the suite through bin/test.sh, or set WP_TESTS_DIR.' . PHP_EOL;
+	exit( 1 );
+}
+
 require_once $_tests_dir . '/includes/functions.php';
 require_once __DIR__ . '/helper-source.php';
 
@@ -20,11 +26,11 @@ require_once __DIR__ . '/helper-source.php';
  *
  * @return void
  */
-function _manually_load_wp_dbmanager() {
+function _wp_dbmanager_manually_load_plugin() {
 	require dirname( __DIR__ ) . '/wp-dbmanager.php';
 }
 
-tests_add_filter( 'muplugins_loaded', '_manually_load_wp_dbmanager' );
+tests_add_filter( 'muplugins_loaded', '_wp_dbmanager_manually_load_plugin' );
 
 require $_tests_dir . '/includes/bootstrap.php';
 
