@@ -22,20 +22,17 @@ class WP_DBManager {
 	private static $instance;
 
 	/**
-	 * Constructor.
-	 *
-	 * The activation hook is registered here rather than on a later hook: this
-	 * runs while the main plugin file is being loaded, which is where WordPress
-	 * requires it to be registered.
+	 * Register hooks.
 	 */
-	public function __construct() {
+	private function __construct() {
+		// Must be registered at file-load time, which is when this runs.
 		register_activation_hook( WP_DBMANAGER_MAIN_FILE, array( $this, 'activate' ) );
 
 		add_action( 'plugins_loaded', array( $this, 'add_hooks' ) );
 	}
 
 	/**
-	 * Initialize the plugin object and return its instance.
+	 * Get the instance, creating it on first call.
 	 *
 	 * @return WP_DBManager
 	 */
@@ -58,10 +55,10 @@ class WP_DBManager {
 		// by the time it is called.
 		WP_DBManager_Cron::init();
 
-		// An activation hook would not do on its own: it does not run for a
-		// plugin that was network-activated before this version, nor for one
-		// dropped into mu-plugins, and once the markers agree the check costs a
-		// single autoloaded read.
+		// Activation does not fire on a plugin update, which is the single most
+		// common reason a migration never runs. Nor does it run for a plugin
+		// network-activated before this version or dropped into mu-plugins, and
+		// once the markers agree the check costs a single autoloaded read.
 		WP_DBManager_Options::maybe_upgrade();
 
 		// Outside the is_admin() block below, because WP-CLI is not an admin
@@ -160,7 +157,7 @@ class WP_DBManager {
 	 *
 	 * @return void
 	 */
-	public static function activate_site() {
+	public static function install() {
 		$binaries = WP_DBManager_Database::detect_binaries();
 		$defaults = WP_DBManager_Options::defaults();
 
@@ -188,14 +185,12 @@ class WP_DBManager {
 	/**
 	 * Create the default options and the backup folder on activation.
 	 *
-	 * @param bool $network_wide Whether the plugin is being activated network wide.
+	 * @param bool $network_wide Whether the plugin is being activated network-wide.
 	 * @return void
 	 */
-	public function activate( $network_wide ) {
+	public function activate( $network_wide = false ) {
 		if ( is_multisite() && $network_wide ) {
-			// number => 0 lifts WP_Site_Query's default cap of 100; a network can
-			// be larger, and the sites past the hundredth would silently get no
-			// options and no backup folder.
+			// 'number' => 0 lifts WP_Site_Query's default cap of 100, which would otherwise skip every site past the hundredth while reporting success.
 			$site_ids = get_sites(
 				array(
 					'fields' => 'ids',
@@ -204,15 +199,15 @@ class WP_DBManager {
 			);
 
 			foreach ( $site_ids as $site_id ) {
+				// Inside the loop: switch_to_blog() pushes onto a stack, so restoring once after the loop unwinds it by exactly one.
 				switch_to_blog( (int) $site_id );
-				self::activate_site();
-				// Paired inside the loop: switch_to_blog() pushes onto a stack.
+				self::install();
 				restore_current_blog();
 			}
 
 			return;
 		}
 
-		self::activate_site();
+		self::install();
 	}
 }

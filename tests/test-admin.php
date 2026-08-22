@@ -77,7 +77,7 @@ class WP_DBManager_Admin_Test extends WP_DBManager_TestCase {
 		$submenu = array();
 
 		wp_set_current_user( $this->create_admin() );
-		WP_DBManager_Admin::menu();
+		WP_DBManager_Admin::add_page();
 
 		$pages = WP_DBManager_Admin::pages();
 
@@ -99,7 +99,7 @@ class WP_DBManager_Admin_Test extends WP_DBManager_TestCase {
 		$menu    = array();
 		$submenu = array();
 
-		WP_DBManager_Admin::menu();
+		WP_DBManager_Admin::add_page();
 
 		foreach ( $submenu[ WP_DBManager_Admin::pages()['manager'] ] as $entry ) {
 			$this->assertSame( 'install_plugins', $entry[1], 'Every screen requires install_plugins, not a weaker capability.' );
@@ -149,7 +149,7 @@ class WP_DBManager_Admin_Test extends WP_DBManager_TestCase {
 			}
 		);
 
-		WP_DBManager_Admin::menu();
+		WP_DBManager_Admin::add_page();
 
 		foreach ( $submenu[ WP_DBManager_Admin::pages()['manager'] ] as $entry ) {
 			$this->assertSame( 'edit_posts', $entry[1], 'The capability filter is honoured by the menu registration.' );

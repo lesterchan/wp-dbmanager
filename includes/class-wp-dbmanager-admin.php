@@ -78,7 +78,7 @@ class WP_DBManager_Admin {
 	 * @return void
 	 */
 	public static function init() {
-		add_action( 'admin_menu', array( __CLASS__, 'menu' ) );
+		add_action( 'admin_menu', array( __CLASS__, 'add_page' ) );
 		add_action( 'admin_notices', array( __CLASS__, 'notices' ) );
 		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue' ) );
 	}
@@ -88,7 +88,7 @@ class WP_DBManager_Admin {
 	 *
 	 * @return void
 	 */
-	public static function menu() {
+	public static function add_page() {
 		$pages = self::pages();
 		$cap   = self::capability( 'menu' );
 

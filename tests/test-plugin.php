@@ -138,7 +138,7 @@ class WP_DBManager_Plugin_Test extends WP_DBManager_TestCase {
 		WP_DBManager_Admin::init();
 		WP_DBManager_Settings::init();
 
-		$this->assertNotFalse( has_action( 'admin_menu', array( 'WP_DBManager_Admin', 'menu' ) ), 'The menu is registered on admin_menu.' );
+		$this->assertNotFalse( has_action( 'admin_menu', array( 'WP_DBManager_Admin', 'add_page' ) ), 'The menu is registered on admin_menu.' );
 		$this->assertNotFalse( has_action( 'admin_notices', array( 'WP_DBManager_Admin', 'notices' ) ), 'The notices are registered on admin_notices.' );
 		$this->assertNotFalse( has_action( 'admin_enqueue_scripts', array( 'WP_DBManager_Admin', 'enqueue' ) ), 'The enqueue is registered on admin_enqueue_scripts.' );
 		$this->assertNotFalse( has_action( 'admin_init', array( 'WP_DBManager_Settings', 'register' ) ), 'The settings registration is on admin_init.' );

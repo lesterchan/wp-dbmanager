@@ -148,7 +148,7 @@ class WP_DBManager_Uninstall_Test extends WP_DBManager_TestCase {
 	public function test_activation_stores_the_detected_binaries() {
 		delete_option( WP_DBManager_Options::OPTION );
 
-		WP_DBManager::activate_site();
+		WP_DBManager::install();
 
 		$stored = get_option( WP_DBManager_Options::OPTION );
 
@@ -165,7 +165,7 @@ class WP_DBManager_Uninstall_Test extends WP_DBManager_TestCase {
 		$options['max_backup'] = 99;
 		update_option( WP_DBManager_Options::OPTION, $options );
 
-		WP_DBManager::activate_site();
+		WP_DBManager::install();
 
 		$this->assertSame( 99, WP_DBManager_Options::get( 'max_backup' ), 'Activating over an existing install leaves the settings alone.' );
 	}
@@ -177,7 +177,7 @@ class WP_DBManager_Uninstall_Test extends WP_DBManager_TestCase {
 		$role = get_role( 'administrator' );
 		$role->add_cap( 'manage_database' );
 
-		WP_DBManager::activate_site();
+		WP_DBManager::install();
 
 		$this->assertFalse( get_role( 'administrator' )->has_cap( 'manage_database' ), 'Activation drops the retired capability rather than leaving it granted.' );
 	}
