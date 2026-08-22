@@ -81,6 +81,29 @@ class WP_DBManager_Admin {
 		add_action( 'admin_menu', array( __CLASS__, 'add_page' ) );
 		add_action( 'admin_notices', array( __CLASS__, 'notices' ) );
 		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue' ) );
+		add_filter(
+			'plugin_action_links_' . plugin_basename( WP_DBMANAGER_MAIN_FILE ),
+			array( __CLASS__, 'action_links' )
+		);
+	}
+
+	/**
+	 * Add a Settings link on the Plugins screen row.
+	 *
+	 * @param string[] $links Existing action links.
+	 * @return string[]
+	 */
+	public static function action_links( $links ) {
+		array_unshift(
+			$links,
+			sprintf(
+				'<a href="%s">%s</a>',
+				esc_url( self::page_url( 'options' ) ),
+				esc_html__( 'Settings', 'wp-dbmanager' )
+			)
+		);
+
+		return $links;
 	}
 
 	/**
