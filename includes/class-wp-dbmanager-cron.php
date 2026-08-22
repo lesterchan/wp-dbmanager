@@ -45,7 +45,7 @@ class WP_DBManager_Cron {
 	}
 
 	/**
-	 * Hook up.
+	 * Hook registration.
 	 *
 	 * @return void
 	 */

@@ -52,7 +52,7 @@ class WP_DBManager_Settings {
 	const SECTION_MISC = 'wp_dbmanager_misc';
 
 	/**
-	 * Hook up.
+	 * Hook registration.
 	 *
 	 * @return void
 	 */

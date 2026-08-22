@@ -73,7 +73,7 @@ class WP_DBManager_Admin {
 	}
 
 	/**
-	 * Hook up.
+	 * Hook registration.
 	 *
 	 * @return void
 	 */
@@ -269,17 +269,17 @@ class WP_DBManager_Admin {
 	 */
 	public static function capability( $context = '' ) {
 		/**
-		 * Filters the capability required to reach WP-DBManager.
+		 * Filters the capability required to reach a WP-DBManager screen.
 		 *
 		 * The default is install_plugins rather than manage_options because
 		 * these screens restore, empty and drop tables.
 		 *
 		 * @since 4.0.0
 		 *
-		 * @param string $capability Capability required.
+		 * @param string $capability The required capability.
 		 * @param string $context    What is being gated.
 		 */
-		return apply_filters( 'wp_dbmanager_capability', self::CAPABILITY, $context );
+		return (string) apply_filters( 'wp_dbmanager_capability', self::CAPABILITY, $context );
 	}
 
 	/**
