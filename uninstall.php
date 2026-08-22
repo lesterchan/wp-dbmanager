@@ -9,9 +9,7 @@
  * @package WP-DBManager
  */
 
-if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
-	exit;
-}
+defined( 'WP_UNINSTALL_PLUGIN' ) || exit;
 
 /**
  * Delete the plugin's data for the current site.
