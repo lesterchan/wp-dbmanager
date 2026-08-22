@@ -9,8 +9,7 @@ arbitrary SQL, and schedules the first three. It shells out to the `mysqldump`
 and `mysql` binaries — that is the feature, not an implementation detail.
 
 Screens: Backup, Manage Backups, Optimize, Repair, Empty/Drop Tables, Run SQL
-Query, Settings, under one top-level menu with the `archive` dashicon. The list
-tables here are the ones to copy when building another.
+Query, Settings, under one top-level menu with the `archive` dashicon.
 
 ## Version
 
