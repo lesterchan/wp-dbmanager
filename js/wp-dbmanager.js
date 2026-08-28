@@ -1,15 +1,10 @@
 /**
  * WP-DBManager admin behaviour.
  *
- * Replaces the inline onclick= attributes the screens carried before 3.0.0.
- * Those built JavaScript string literals out of translated text, which meant
- * every confirmation message went through esc_js( __( ... ) ) - and the \n
- * sequences did not survive the trip, so the dialogs read "Database.nThis
- * Action Is Not Reversible." The data attributes below carry the same values
- * as ordinary escaped HTML attributes instead.
- *
- * One delegated listener on document, so screens that render their table rows
- * in a loop do not each attach a handler per row.
+ * Confirmation text arrives in data attributes, escaped as ordinary HTML rather
+ * than through esc_js(), which used to eat the \n and print "Database.nThis
+ * Action Is Not Reversible." One delegated listener on document, so a screen
+ * rendering rows in a loop attaches no handler per row.
  */
 ( function() {
 	'use strict';
@@ -46,10 +41,8 @@
 	/**
 	 * Confirm destructive bulk actions before the form goes anywhere.
 	 *
-	 * The confirmation belongs to the chosen action rather than to a button:
-	 * a list table has one Apply button per end of the table, and which of
-	 * Empty, Drop, Restore or Delete it is about depends on the dropdown next
-	 * to it.
+	 * The confirmation belongs to the chosen action, not the button: which of
+	 * Empty, Drop, Restore or Delete depends on the dropdown beside it.
 	 *
 	 * @param {Event} event Submit event.
 	 * @return {void}
@@ -117,9 +110,7 @@
 				confirmable.getAttribute( 'data-dbmanager-confirm' ),
 			);
 
-			// A blocking confirm is the existing, deliberate behaviour here:
-			// restoring, dropping and emptying are irreversible and destroy the
-			// site's data, so the interruption is the point.
+			// Blocking confirm on purpose: these destroy the site's data.
 			// eslint-disable-next-line no-alert
 			if ( ! window.confirm( message ) ) {
 				// Returning false from an inline handler used to cancel the
