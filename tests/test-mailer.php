@@ -114,6 +114,46 @@ class WP_DBManager_Mailer_Test extends WP_DBManager_TestCase {
 	}
 
 	/**
+	 * PHPMailer, not just wp_mail()'s arguments, carries the dump.
+	 *
+	 * WordPress's wp_mail() swallows an addAttachment() failure and sends the mail without
+	 * the file, so the test above cannot tell a dropped attachment from a sent
+	 * one. This goes through the real wp_mail() and reads what PHPMailer built.
+	 *
+	 * @dataProvider data_backup_names
+	 *
+	 * @param string $name Backup file name.
+	 */
+	public function test_phpmailer_attaches_the_dump( $name ) {
+		remove_all_filters( 'pre_wp_mail' );
+		reset_phpmailer_instance();
+
+		$path = $this->make_backup( $name );
+
+		$this->assertTrue( WP_DBManager_Mailer::send( 'someone@example.com', $path ), 'wp_mail() reports the mail as handed off.' );
+
+		$mailer      = tests_retrieve_phpmailer_instance();
+		$attachments = $mailer->getAttachments();
+
+		$this->assertCount( 1, $attachments, 'PHPMailer holds exactly one attachment.' );
+		$this->assertSame( $path, $attachments[0][0], 'And it is the dump.' );
+		$this->assertStringContainsString( 'Content-Disposition: attachment', $mailer->get_sent()->body, 'The built message carries the file as an attachment part.' );
+		$this->assertStringContainsString( base64_encode( 'SOME SQL' ), $mailer->get_sent()->body, 'With the dump\'s own bytes in it, not just a reference to the file.' ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- PHPMailer's own transfer encoding, reproduced to find the bytes.
+	}
+
+	/**
+	 * Both file names a backup can have.
+	 *
+	 * @return array
+	 */
+	public static function data_backup_names() {
+		return array(
+			'plain' => array( str_repeat( 'a', 32 ) . '_-_1700000000_-_sitedb.sql' ),
+			'gzip'  => array( str_repeat( 'a', 32 ) . '_-_1700000000_-_sitedb.sql.gz' ),
+		);
+	}
+
+	/**
 	 * Declining the attachment really leaves the database out.
 	 *
 	 * The whole point of the option is keeping a copy of the database out of a

@@ -366,6 +366,67 @@ class WP_DBManager_Cron_Test extends WP_DBManager_TestCase {
 	}
 
 	/**
+	 * The scheduled backup's mail carries the dump only when the setting says so.
+	 *
+	 * Runs the real dump through the real wp_mail() and reads what PHPMailer
+	 * built, so a setting that is saved but never reaches the mailer fails here.
+	 *
+	 * @group requires-mysqldump
+	 * @dataProvider data_attach_settings
+	 *
+	 * @param int  $attach Stored "Attach Backup File" value.
+	 * @param int  $gzip   Stored "GZIP Database Backup File" value.
+	 * @param bool $expect Whether the dump should be attached.
+	 */
+	public function test_the_scheduled_mail_follows_the_attach_setting( $attach, $gzip, $expect ) {
+		if ( ! is_executable( $this->mysqldump_path() ) ) {
+			$this->markTestSkipped( 'mysqldump is not available in this environment.' );
+		}
+
+		// The e2e mail catcher short-circuits wp_mail() before PHPMailer is built.
+		remove_all_filters( 'pre_wp_mail' );
+		reset_phpmailer_instance();
+
+		$this->save(
+			array(
+				'backup_period'       => 86400,
+				'backup_email'        => 'someone@example.com',
+				'backup_email_attach' => $attach,
+				'backup_gzip'         => $gzip,
+			)
+		);
+
+		WP_DBManager_Cron::backup();
+
+		$backups = WP_DBManager_Backups::all( $this->backup_dir );
+		$this->assertCount( 1, $backups, 'The scheduled backup wrote a dump.' );
+
+		$mailer = tests_retrieve_phpmailer_instance();
+		$this->assertNotFalse( $mailer->get_sent(), 'The scheduled backup was mailed.' );
+
+		$attached = array_map( 'basename', array_column( $mailer->getAttachments(), 0 ) );
+
+		if ( $expect ) {
+			$this->assertSame( array( $backups[0]['name'] ), $attached, 'The dump written is the dump attached.' );
+		} else {
+			$this->assertSame( array(), $attached, 'Declining the attachment leaves the dump out of the mail.' );
+		}
+	}
+
+	/**
+	 * Attach on and off, with and without gzip.
+	 *
+	 * @return array
+	 */
+	public static function data_attach_settings() {
+		return array(
+			'attach, plain' => array( 1, 0, true ),
+			'attach, gzip'  => array( 1, 1, true ),
+			'no attach'     => array( 0, 0, false ),
+		);
+	}
+
+	/**
 	 * With no address configured, a successful backup is silent.
 	 *
 	 * @group requires-mysqldump
